@@ -55,9 +55,13 @@ workflows:
       - name: Build IPA
         script: |
           export PATH="$PATH:$HOME/.pub-cache/bin"
-          flutter build ipa --release --export-options-plist=/tmp/export_options.plist
+          flutter build ipa --release --export-options-plist=/tmp/export_options.plist \
+            --obfuscate --split-debug-info=build/symbols \
+            --dart-define=ADMIN_PWD=$ADMIN_PWD \
+            --dart-define=MAPTILER_KEY=$MAPTILER_KEY
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/symbols/**
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
     publishing:

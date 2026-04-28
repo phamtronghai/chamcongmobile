@@ -1,7 +1,8 @@
 /// Cấu hình chung cho ứng dụng
 class AppConfig {
   /// Mật khẩu admin
-  static const String adminPassword = '2914';
+  static const String adminPassword =
+      String.fromEnvironment('ADMIN_PWD', defaultValue: '');
 
   /// Danh sách camera RTSP giám sát
   static const List<({String label, String url})> camerasRTSP = [
@@ -55,7 +56,8 @@ class AppConfig {
   static const String mapLibreStyleUrl =
       'https://basemap.samcom.com.vn/static/samcomstyle.json';
   // MapTiler
-  static const String apiKeyMapTiler = 'lAZxjVRzqkwPfYRyFlbc';
+  static const String apiKeyMapTiler =
+      String.fromEnvironment('MAPTILER_KEY', defaultValue: '');
   static const String mapTilerOSM =
       'https://api.maptiler.com/maps/streets-v2/style.json?key=$apiKeyMapTiler';
   static const String mapTilerSatellite =
