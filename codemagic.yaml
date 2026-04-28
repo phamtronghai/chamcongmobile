@@ -15,6 +15,9 @@ workflows:
     scripts:
       - name: Install Flutter dependencies
         script: flutter pub get
+      - name: Install FlutterFire CLI (required by iOS build phase)
+        script: |
+          dart pub global activate flutterfire_cli
       - name: Install CocoaPods dependencies
         script: |
           cd ios
@@ -23,7 +26,9 @@ workflows:
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
       - name: Build IPA
-        script: flutter build ipa --release
+        script: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
