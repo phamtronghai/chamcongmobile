@@ -1,0 +1,148 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/core/cubits/truc_ban_cubit.dart';
+import 'package:attendancebyface/core/cubits/truc_ban_state.dart';
+import 'package:attendancebyface/models/truc_ban_enums.dart';
+import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_empty_state.dart';
+import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_info_card.dart';
+import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_ui_helpers.dart';
+
+class LichSuRaNgoaiList extends StatelessWidget {
+  const LichSuRaNgoaiList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<TrucBanCubit, TrucBanState>(
+      buildWhen: (previous, current) =>
+          current is TrucBanStateDanhSachRaNgoaiLoaded ||
+          (current is TrucBanStateLoading &&
+              current.target == TrucBanLoadTarget.raNgoaiCaNhan),
+      builder: (context, state) {
+        if (state is TrucBanStateDanhSachRaNgoaiLoaded) {
+          if (state.danhSach.isEmpty) {
+            return const TrucBanEmptyState(
+              icon: Icons.history,
+              message: 'Chưa có lịch sử ra ngoài',
+            );
+          }
+          return Column(
+            children: state.danhSach.map((yeuCau) {
+              final color = TrucBanUIHelpers.getTrangThaiColor(
+                yeuCau.trangThai,
+              );
+              final icon = TrucBanUIHelpers.getTrangThaiIcon(yeuCau.trangThai);
+
+              return TrucBanInfoCard(
+                title: yeuCau.lyDo,
+                badge: Icon(icon, size: 20, color: color),
+                highlightText:
+                    '${DateFormat('HH:mm').format(yeuCau.thoiGianRa.toLocal())} - ${DateFormat('HH:mm').format(yeuCau.thoiGianVao.toLocal())}',
+                subInfoWidget: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    yeuCau.trangThai.moTa,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        }
+        if (state is TrucBanStateLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+class LichSuKhachList extends StatelessWidget {
+  const LichSuKhachList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<TrucBanCubit, TrucBanState>(
+      buildWhen: (previous, current) =>
+          current is TrucBanStateDanhSachKhachLoaded ||
+          (current is TrucBanStateLoading &&
+              current.target == TrucBanLoadTarget.dangKyKhach),
+      builder: (context, state) {
+        if (state is TrucBanStateDanhSachKhachLoaded) {
+          if (state.danhSach.isEmpty) {
+            return const TrucBanEmptyState(
+              icon: Icons.person_off,
+              message: 'Chưa có lịch sử đăng ký khách',
+            );
+          }
+          return Column(
+            children: state.danhSach.map((khach) {
+              IconData badgeIcon = Icons.person;
+              if (khach.loaiPhuongTien == LoaiPhuongTien.oto) {
+                badgeIcon = Icons.directions_car;
+              }
+
+              return TrucBanInfoCard(
+                title: khach.hoTenKhach,
+                badge: Icon(
+                  badgeIcon,
+                  size: 20,
+                  color: ColorConstants.primaryColor,
+                ),
+                highlightText: khach.bienSoXe,
+                subInfoWidget: khach.soCanCuoc.isNotEmpty
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ColorConstants.successColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          khach.soCanCuoc,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : null,
+                detailText: khach.ngayDangKy,
+              );
+            }).toList(),
+          );
+        }
+        if (state is TrucBanStateLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}

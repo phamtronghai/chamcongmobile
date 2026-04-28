@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "133286735264",
+    "project_id": "attendancebyface-1b9a0",
+    "storage_bucket": "attendancebyface-1b9a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:133286735264:android:8f31d1be66085ca52188c5",
+        "android_client_info": {
+          "package_name": "vn.com.samcom.attendancebyface"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_j9xhTIztw-mOaUklNpZ3ySsIMVGcUKo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
