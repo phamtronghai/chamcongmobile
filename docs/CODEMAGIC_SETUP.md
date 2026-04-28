@@ -18,14 +18,20 @@
 
 In Codemagic Team settings:
 
-1. Open `Integrations` -> `App Store Connect`.
-2. Add key with:
-   - Issuer ID
-   - Key ID
-   - Private key content (full text from `.p8`)
-3. Save integration.
+1. Open **Teams** → **Integrations** → **Developer Portal** (Apple Developer Portal integration).
+2. Connect and add your App Store Connect API key. Note the **API key name** you entered — this label is what Codemagic expects in `codemagic.yaml`.
+3. Issuer ID, Key ID, and `.p8` private key content are configured in that integration UI.
 
-The workflow uses:
+Then edit **[codemagic.yaml](../codemagic.yaml)** at the top of workflow `ios-testflight`:
+
+```yaml
+integrations:
+  app_store_connect: YOUR_ASC_API_KEY_NAME
+```
+
+Replace `YOUR_ASC_API_KEY_NAME` with the **exact same string** as the API key name in Codemagic (validation error `"integration" requires workflow -> integrations -> app_store_connect` means this block was missing or the name did not match).
+
+The workflow publishes with:
 
 ```yaml
 publishing:

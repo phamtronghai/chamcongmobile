@@ -1,6 +1,10 @@
 workflows:
   ios-testflight:
     name: iOS TestFlight
+    # MUST match "App Store Connect API key name" from Codemagic Team Settings → Integrations → Developer Portal.
+    # Replace YOUR_ASC_API_KEY_NAME with your actual key label (same string you typed when connecting the integration).
+    integrations:
+      app_store_connect: YOUR_ASC_API_KEY_NAME
     max_build_duration: 60
     environment:
       flutter: stable
