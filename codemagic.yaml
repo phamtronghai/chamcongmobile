@@ -27,10 +27,35 @@ workflows:
           cd ..
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
+      - name: Create export options (App Store)
+        script: |
+          cat > /tmp/export_options.plist <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>SFB7XGV2NZ</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.pth.chamcong</key>
+              <string>ChamCong</string>
+            </dict>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
       - name: Build IPA
         script: |
           export PATH="$PATH:$HOME/.pub-cache/bin"
-          flutter build ipa --release
+          flutter build ipa --release --export-options-plist=/tmp/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
