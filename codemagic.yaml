@@ -10,8 +10,10 @@ workflows:
       xcode: latest
       cocoapods: default
       ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.pth.chamcong
+        provisioning_profiles:
+          - chamcong_appstore_profile
+        certificates:
+          - ChamCong
     scripts:
       - name: Install Flutter dependencies
         script: flutter pub get
