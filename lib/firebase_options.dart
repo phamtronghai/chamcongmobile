@@ -59,10 +59,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyD3jAzcjFcXYm-Hz2IBegUt9_glO49S9So',
-    appId: '1:133286735264:ios:496a0ef489dbd9d62188c5',
+    appId: '1:133286735264:ios:a53f9f008926cd1d2188c5',
     messagingSenderId: '133286735264',
     projectId: 'attendancebyface-1b9a0',
     storageBucket: 'attendancebyface-1b9a0.firebasestorage.app',
-    iosBundleId: 'vn.com.samcom.attendance',
+    iosBundleId: 'com.pth.chamcong',
   );
+
 }
