@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 
 class AttendanceActionButtons extends StatelessWidget {
   final bool hasRegisteredFace;
@@ -7,9 +8,6 @@ class AttendanceActionButtons extends StatelessWidget {
   final VoidCallback onTakeAttendance;
   final VoidCallback onNavigateToRegisterFace;
   final VoidCallback? onManualAttendance;
-  final bool hasPermissionViewReport;
-  final bool isLoadingReport;
-  final VoidCallback onViewReport;
 
   const AttendanceActionButtons({
     super.key,
@@ -18,50 +16,52 @@ class AttendanceActionButtons extends StatelessWidget {
     required this.onTakeAttendance,
     required this.onNavigateToRegisterFace,
     this.onManualAttendance,
-    required this.hasPermissionViewReport,
-    required this.isLoadingReport,
-    required this.onViewReport,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-      child: Row(
-        children: [
-          // Nút chấm công hoặc đăng ký khuôn mặt
-          Expanded(
-            child: CustomButton(
-              text: hasRegisteredFace ? 'CHẤM CÔNG' : 'ĐĂNG KÝ',
-              tooltip: hasRegisteredFace
-                  ? 'Chấm công (Nhấn giữ để chấm công thủ công)'
-                  : 'Đăng ký khuôn mặt',
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              onPressed: isProcessing
-                  ? null
-                  : (hasRegisteredFace
-                      ? onTakeAttendance
-                      : onNavigateToRegisterFace),
-              onLongPress: onManualAttendance,
-            ),
-          ),
-          // Nút quân số (nếu có quyền xem báo cáo quân số)
-          if (hasPermissionViewReport) ...[
-            const SizedBox(width: 12),
-            Expanded(
-              child: CustomButton(
-                text: 'QUÂN SỐ',
-                tooltip: 'Xem báo cáo quân số',
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                textColor: Colors.white,
-                fontSize: 14,
-                isLoading: isLoadingReport,
-                onPressed: isLoadingReport ? null : onViewReport,
+    final primaryTooltip = hasRegisteredFace
+        ? 'Chấm công (Nhấn giữ để chấm công thủ công)'
+        : 'Đăng ký khuôn mặt';
+
+    final primaryIcon = hasRegisteredFace ? Icons.timer : null;
+    final primarySvg = hasRegisteredFace ? null : Assets.icon.faceID.path;
+
+    Widget primaryFab = CustomButton(
+      text: hasRegisteredFace ? 'CHẤM CÔNG' : 'ĐĂNG KÝ',
+      tooltip: primaryTooltip,
+      variant: CustomButtonVariant.iconCircle,
+      icon: primaryIcon,
+      svgPath: primarySvg,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      textColor: Theme.of(context).colorScheme.onPrimary,
+      onPressed: isProcessing
+          ? null
+          : (hasRegisteredFace ? onTakeAttendance : onNavigateToRegisterFace),
+      onLongPress: hasRegisteredFace ? onManualAttendance : null,
+    );
+
+    if (isProcessing) {
+      primaryFab = SizedBox(
+        width: 48,
+        height: 48,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Opacity(opacity: 0.35, child: primaryFab),
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ],
-        ],
-      ),
-    );
+        ),
+      );
+    }
+
+    return primaryFab;
   }
 }

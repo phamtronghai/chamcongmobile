@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:attendancebyface/models/leave_request.dart';
 import 'package:attendancebyface/models/approver.dart';
 import 'package:attendancebyface/core/services/approver_service.dart';
@@ -7,26 +8,25 @@ class LeaveRepository {
   final ApproverService _approverService = ApproverService();
   final ApiClient _apiClient = ApiClient();
 
-  /// Lấy danh sách đơn xin nghỉ theo thời gian
-  /// API không hỗ trợ lọc theo thời gian, trả về tất cả dữ liệu
-  /// Lọc dữ liệu theo tháng/năm ở phía client
-  Future<List<LeaveRequest>> getLeaveRequestsByTime(
-    String yyyyMm,
-    String userId,
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// Lấy danh sách đơn xin nghỉ theo khoảng ngày (lọc client).
+  /// API không hỗ trợ query thời gian — gọi `/leave/getLeaveByUser` rồi giữ đơn có
+  /// `startDate` (phần ngày) nằm trong [range] (biên inclusive).
+  Future<List<LeaveRequest>> getLeaveRequestsInRange(
+    DateTimeRange range,
+    String _,
   ) async {
     try {
-      final parts = yyyyMm.split('-');
-      final year = int.tryParse(parts.first) ?? DateTime.now().year;
-      final month = int.tryParse(parts.last) ?? DateTime.now().month;
+      final start = _dateOnly(range.start);
+      final end = _dateOnly(range.end);
 
-      // API không hỗ trợ query parameters, gọi API để lấy tất cả dữ liệu
       final response = await _apiClient.get('/leave/getLeaveByUser');
 
       final data = response.data;
       if (data is List) {
         final List<LeaveRequest> allRequests = [];
 
-        // API trả về array trực tiếp của LeaveRequest objects
         for (final item in data) {
           if (item is Map<String, dynamic>) {
             final request = LeaveRequest.fromJson(item);
@@ -34,12 +34,10 @@ class LeaveRepository {
           }
         }
 
-        // Lọc dữ liệu theo tháng/năm ở phía client
         final filteredRequests = allRequests.where((request) {
           try {
-            // startDate đã là DateTime object
-            return request.startDate.year == year &&
-                request.startDate.month == month;
+            final sd = _dateOnly(request.startDate);
+            return !sd.isBefore(start) && !sd.isAfter(end);
           } catch (e) {
             return false;
           }
@@ -56,11 +54,7 @@ class LeaveRepository {
 
   /// Lấy danh sách người duyệt từ API thay vì JSON file
   Future<ApproverGroups> getApproverGroups() async {
-    try {
-      final approverGroups = await _approverService.getAllApprovers();
-      return approverGroups;
-    } catch (e) {
-      rethrow;
-    }
+    final approverGroups = await _approverService.getAllApprovers();
+    return approverGroups;
   }
 }

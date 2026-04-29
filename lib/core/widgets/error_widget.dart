@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 
 /// Widget tái sử dụng cho error state
 class AppErrorWidget extends StatelessWidget {
@@ -46,9 +47,10 @@ class AppErrorWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          CustomButton(
+            text: 'Thử lại',
+            width: 140,
             onPressed: onRetry ?? () => context.read<UserCubit>().refresh(),
-            child: const Text('Thử lại'),
           ),
         ],
       ),
@@ -116,7 +118,11 @@ class AppEmptyWidget extends StatelessWidget {
           ],
           if (onAction != null && actionText != null) ...[
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: onAction, child: Text(actionText!)),
+            CustomButton(
+              text: actionText!,
+              width: 180,
+              onPressed: onAction,
+            ),
           ],
         ],
       ),

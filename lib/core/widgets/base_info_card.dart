@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 
-class TrucBanInfoCard extends StatelessWidget {
+/// Khung card list item dùng chung (Trực ban, Nghỉ phép, …).
+class BaseInfoCard extends StatelessWidget {
   final String title;
   final Widget badge;
-  final String? highlightText; // Amber chip
-  final Widget? subInfoWidget; // Green chip area
-  final String? detailText; // Text next to subInfo
+  final String? highlightText;
+  final Widget? subInfoWidget;
+  final String? detailText;
   final int? detailMaxLines;
   final VoidCallback? onTap;
   final bool isActive;
   final EdgeInsetsGeometry? margin;
 
-  const TrucBanInfoCard({
+  const BaseInfoCard({
     super.key,
     required this.title,
     required this.badge,
@@ -34,7 +35,7 @@ class TrucBanInfoCard extends StatelessWidget {
       margin: margin ?? const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(36),
-        side: isActive 
+        side: isActive
             ? BorderSide(color: ColorConstants.primaryColor, width: 1.5)
             : BorderSide.none,
       ),
@@ -45,7 +46,6 @@ class TrucBanInfoCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              // Badge
               Container(
                 width: 40,
                 height: 40,
@@ -56,7 +56,6 @@ class TrucBanInfoCard extends StatelessWidget {
                 child: Center(child: badge),
               ),
               const SizedBox(width: 16),
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +75,10 @@ class TrucBanInfoCard extends StatelessWidget {
                         ),
                         if (highlightText != null && highlightText!.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.amber.withAlpha(50),
                               borderRadius: BorderRadius.circular(12),

@@ -147,7 +147,7 @@ class TraditionalLoginForm extends StatelessWidget {
           CustomButton(
             text: 'Đăng nhập bằng sinh trắc học',
             onPressed: onSwitchToBiometric,
-            buttonType: ButtonType.circular,
+            variant: CustomButtonVariant.iconCircle,
             icon: Icons.arrow_back,
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Colors.white,

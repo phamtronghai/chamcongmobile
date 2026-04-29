@@ -192,7 +192,7 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: const CustomAppBar(title: 'Camera Giám Sát', showAvatar: false),
+      appBar: const CustomAppBar(title: 'Camera Giám Sát'),
       body: Stack(
         fit: StackFit.expand,
         children: [

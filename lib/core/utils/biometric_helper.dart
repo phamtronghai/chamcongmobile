@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 
 /// Utility class để xử lý logic sinh trắc học chung
 class BiometricHelper {
@@ -33,8 +34,8 @@ class BiometricHelper {
       case BiometricType.face:
         return {
           'name': 'Face ID',
-          'icon': null, // Sẽ dùng SVG
-          'svgPath': 'assets/icon/face-id-svgrepo-com.svg',
+          'icon': null,
+          'svgPath': Assets.icon.faceID.path,
         };
       case BiometricType.fingerprint:
         return {'name': 'Vân tay', 'icon': Icons.fingerprint, 'svgPath': null};

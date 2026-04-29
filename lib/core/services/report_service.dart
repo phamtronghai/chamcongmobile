@@ -2,10 +2,11 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
-import 'package:attendancebyface/core/app_config.dart';
+import 'package:attendancebyface/core/services/approver_service.dart';
 
 class ReportService {
   final ApiClient _apiClient = ApiClient();
+  final ApproverService _approverService = ApproverService();
 
   /// Gọi API để lấy báo cáo quân số theo ngày
   /// Trả về đường dẫn file PDF tạm thời
@@ -49,8 +50,14 @@ class ReportService {
     }
   }
 
-  /// Kiểm tra quyền xem báo cáo chấm công dựa trên user ID
-  bool hasPermissionViewAttendanceReport(String userId) {
-    return AppConfig.hasPermissionViewAttendanceReportIds.contains(userId);
+  /// Kiểm tra quyền xem báo cáo quân số:
+  /// user thuộc danh sách Ban giám đốc từ API `/api/ceo`.
+  Future<bool> hasPermissionViewAttendanceReport(String userId) async {
+    try {
+      final directors = await _approverService.getBoardOfDirectors();
+      return directors.any((d) => d.id == userId);
+    } catch (_) {
+      return false;
+    }
   }
 }

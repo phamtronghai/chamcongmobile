@@ -1,15 +1,17 @@
-import 'dart:async';
 import 'package:attendancebyface/models/leave_request.dart';
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/repositories/leave_repository.dart';
 import 'package:attendancebyface/models/approver.dart';
 import 'package:attendancebyface/screens/leaveScreens/leave_create_screen.dart';
-import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
+import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/widgets/leave_request_tile.dart';
-import 'package:attendancebyface/widgets/leave_request_detail_sheet.dart';
+import 'package:attendancebyface/widgets/nav_bar_layout.dart';
+import 'package:attendancebyface/screens/leaveScreens/widgets/leave_request_tile.dart';
+import 'package:attendancebyface/screens/leaveScreens/widgets/leave_request_detail_sheet.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
 
@@ -34,9 +36,10 @@ class LeaveScreenRegisterTab extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(message),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                CustomButton(
+                  text: 'Thử lại',
+                  width: 140,
                   onPressed: () => context.read<UserCubit>().refresh(),
-                  child: const Text('Thử lại'),
                 ),
               ],
             ),
@@ -63,14 +66,25 @@ class _LeaveScreenRegisterTabState
   bool _isLoading = true;
   List<LeaveRequest> _requests = [];
   ApproverGroups? _approverGroups;
-  int _selectedYear = DateTime.now().year;
-  int _selectedMonth = DateTime.now().month;
+
+  /// Mặc định: cả tháng hiện tại.
+  late DateTimeRange _filterRange;
+
+  static DateTimeRange _monthRange([DateTime? ref]) {
+    final n = ref ?? DateTime.now();
+    final start = DateTime(n.year, n.month, 1);
+    final end = DateTime(n.year, n.month + 1, 0);
+    return DateTimeRange(start: start, end: end);
+  }
+
+  static final DateFormat _rangeFmt = DateFormat('dd/MM/yyyy');
 
   @override
   void initState() {
     super.initState();
+    _filterRange = _monthRange();
     _loadApprovers(); // Load approvers một lần
-    _loadData(); // Load data theo tháng/năm
+    _loadData(); // Load data theo khoảng ngày
   }
 
   /// Load danh sách người duyệt một lần duy nhất
@@ -82,13 +96,12 @@ class _LeaveScreenRegisterTabState
     }
   }
 
-  /// Load danh sách đơn xin nghỉ theo tháng/năm
+  /// Load danh sách đơn xin nghỉ theo khoảng ngày đã chọn
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      // Chỉ load danh sách đơn xin nghỉ
-      final list = await _repo.getLeaveRequestsByTime(
-        '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}',
+      final list = await _repo.getLeaveRequestsInRange(
+        _filterRange,
         widget.user.id,
       );
 
@@ -126,125 +139,48 @@ class _LeaveScreenRegisterTabState
     }
   }
 
+  Future<void> _navigateToLeaveCreate() async {
+    if (_approverGroups == null) {
+      setState(() => _isLoading = true);
+      await _loadApprovers();
+      if (mounted) setState(() => _isLoading = false);
+
+      if (_approverGroups == null) {
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    final req = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LeaveCreateScreen(approverGroups: _approverGroups!),
+      ),
+    );
+    if (req is LeaveRequest && mounted) {
+      await _loadData();
+    }
+  }
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: CustomDropdown<int>(
-                  labelText: 'Tháng',
-                  value: _selectedMonth,
-                  items: List.generate(12, (i) => i + 1)
-                      .map(
-                        (m) => DropdownMenuItem(
-                          value: m,
-                          child: Text('Tháng ${m.toString().padLeft(2, '0')}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) async {
-                    if (v == null) return;
-                    setState(() => _selectedMonth = v);
-                    await _loadData();
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CustomDropdown<int>(
-                  labelText: 'Năm',
-                  value: _selectedYear,
-                  items: List.generate(5, (i) => DateTime.now().year - 2 + i)
-                      .map(
-                        (y) =>
-                            DropdownMenuItem(value: y, child: Text('Năm $y')),
-                      )
-                      .toList(),
-                  onChanged: (v) async {
-                    if (v == null) return;
-                    setState(() => _selectedYear = v);
-                    await _loadData();
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          CustomButton(
-            text: 'Đăng ký nghỉ phép',
-            icon: Icons.add_circle,
-            onPressed: () async {
-              // Đảm bảo có approverGroups trước khi điều hướng
-              if (_approverGroups == null) {
-                setState(() => _isLoading = true);
-                await _loadApprovers(); // Sử dụng method đã tách riêng
-                if (mounted) setState(() => _isLoading = false);
-                
-                // Nếu vẫn không có approvers sau khi load, return
-                if (_approverGroups == null) {
-                  return;
-                }
-              }
-
-              // debugPrint('[LeaveRegisterTab] Navigating to LeaveCreateScreen');
-              if (!mounted) return;
-              final req = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      LeaveCreateScreen(approverGroups: _approverGroups!),
-                ),
-              );
-              if (req is LeaveRequest && mounted) {
-                // Reload data từ API để đảm bảo dữ liệu mới nhất
-                await _loadData();
-              }
+          DatePickerField(
+            mode: DatePickerFieldMode.range,
+            selectedRange: _filterRange,
+            label: 'Lọc theo khoảng ngày',
+            dialogTitle: 'Chọn khoảng ngày',
+            dialogSubtitle:
+                'Hiển thị đơn có ngày bắt đầu nằm trong khoảng (theo ngày)',
+            minDate: DateTime(DateTime.now().year - 3),
+            maxDate: DateTime(DateTime.now().year + 2, 12, 31),
+            onRangeChanged: (range) async {
+              setState(() => _filterRange = range);
+              await _loadData();
             },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.event_note_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Chưa có đơn nghỉ trong tháng',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tháng $_selectedMonth/$_selectedYear',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
           ),
         ],
       ),
@@ -256,7 +192,12 @@ class _LeaveScreenRegisterTabState
       onRefresh: _loadData,
       color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + leaveFabBottomInSafeArea(context) + 48 + 8,
+        ),
         itemCount: _requests.length + 1,
         itemBuilder: (context, index) {
           // Header "Danh sách"
@@ -266,9 +207,9 @@ class _LeaveScreenRegisterTabState
               child: Text(
                 'Danh sách',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             );
           }
@@ -314,13 +255,38 @@ class _LeaveScreenRegisterTabState
     //   '[LeaveRegisterTab] Build: isLoading=$_isLoading, requests=${_requests.length}',
     // );
 
-    return Column(
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        _buildHeader(),
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : (_requests.isEmpty ? _buildEmpty() : _buildList()),
+        Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : (_requests.isEmpty
+                        ? BaseEmptyState(
+                            icon: Icons.event_note_outlined,
+                            title: 'Chưa có đơn trong khoảng đã chọn',
+                            subtitle:
+                                '${_rangeFmt.format(_filterRange.start)} – ${_rangeFmt.format(_filterRange.end)}',
+                          )
+                        : _buildList()),
+            ),
+          ],
+        ),
+        Positioned(
+          right: kNavBarHorizontalPadding,
+          bottom: leaveFabBottomInSafeArea(context),
+          child: CustomButton(
+            text: 'Đăng ký nghỉ phép',
+            tooltip: 'Đăng ký nghỉ phép',
+            variant: CustomButtonVariant.iconCircle,
+            icon: Icons.add,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            textColor: Theme.of(context).colorScheme.onPrimary,
+            onPressed: _isLoading ? null : _navigateToLeaveCreate,
+          ),
         ),
       ],
     );

@@ -8,8 +8,9 @@ import 'package:attendancebyface/models/approver.dart';
 import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
-import 'package:attendancebyface/core/widgets/date_picker_dialog.dart';
+import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/base_screen.dart';
+import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 
 class LeaveCreateScreen extends BaseScreen {
   final ApproverGroups approverGroups;
@@ -78,24 +79,41 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CustomDropdown<bool>(
-                labelText: 'Thời gian nghỉ',
-                value: _isMultiDay,
-                items: const [
-                  DropdownMenuItem(value: false, child: Text('1 ngày')),
-                  DropdownMenuItem(value: true, child: Text('Nhiều ngày')),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SamcomChip(
+                    label: '1 ngày',
+                    variant: SamcomChipVariant.filled,
+                    selected: !_isMultiDay,
+                    color: Theme.of(context).colorScheme.primary,
+                    onPressed: () => setState(() => _isMultiDay = false),
+                  ),
+                  const SizedBox(width: 8),
+                  SamcomChip(
+                    label: 'Nhiều ngày',
+                    variant: SamcomChipVariant.filled,
+                    selected: _isMultiDay,
+                    color: Theme.of(context).colorScheme.primary,
+                    onPressed: () => setState(() {
+                      _isMultiDay = true;
+                      _leaveType = LeaveType.fullDay; // ép cả ngày cho nhiều ngày
+                    }),
+                  ),
                 ],
-                onChanged: (v) => setState(() {
-                  _isMultiDay = v ?? false;
-                  if (_isMultiDay) {
-                    _leaveType = LeaveType.fullDay; // ép cả ngày cho nhiều ngày
-                  }
-                }),
               ),
               const SizedBox(height: 8),
 
               if (!_isMultiDay) ...[
-                _buildDatePickerButton(),
+                DatePickerField(
+                  mode: DatePickerFieldMode.single,
+                  selectedDate: _singleDate,
+                  dialogTitle: 'Chọn ngày',
+                  dialogSubtitle: 'Ngày bắt đầu xin nghỉ (một ngày)',
+                  minDate: DateTime(DateTime.now().year - 1),
+                  maxDate: DateTime.now().add(const Duration(days: 366)),
+                  onDateChanged: (d) => setState(() => _singleDate = d),
+                ),
                 const SizedBox(height: 8),
                 // Trưởng/Phó: vẫn giữ lựa chọn Sáng/Chiều/Cả ngày theo yêu cầu
                 _buildSingleDayType(),
@@ -103,7 +121,15 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
                 // Approver theo vai trò
                 if (_isManager) _buildBodApprover() else _buildSingleApprover(),
               ] else ...[
-                _buildRangePickerButton(),
+                DatePickerField(
+                  mode: DatePickerFieldMode.range,
+                  selectedRange: _range,
+                  dialogTitle: 'Chọn khoảng ngày',
+                  dialogSubtitle: 'Từ ngày đến ngày xin nghỉ',
+                  minDate: DateTime(DateTime.now().year - 1),
+                  maxDate: DateTime.now().add(const Duration(days: 366)),
+                  onRangeChanged: (r) => setState(() => _range = r),
+                ),
                 const SizedBox(height: 8),
                 // Nhiều ngày: nhân viên cần 2 cấp; Trưởng/Phó chỉ BGĐ
                 if (_isManager) ...[
@@ -150,95 +176,32 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
     );
   }
 
-  Widget _buildDatePickerButton() {
-    final label = _singleDate == null
-        ? 'Chọn ngày'
-        : 'Ngày: ${_singleDate!.day}/${_singleDate!.month}/${_singleDate!.year}';
-    return CustomButton(
-      text: label,
-      icon: Icons.calendar_month_outlined,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      textColor: Colors.white,
-      onPressed: () {
-        _showSyncfusionDatePicker();
-      },
-    );
-  }
-
-  void _showSyncfusionDatePicker() {
-    AppDatePickerDialog.show(
-      context,
-      initialDate: _singleDate ?? DateTime.now(),
-      onDateSelected: (date) {
-        setState(() {
-          _singleDate = date;
-        });
-      },
-    );
-  }
-
-  Widget _buildRangePickerButton() {
-    final label = _range == null
-        ? 'Chọn khoảng ngày'
-        : 'Từ ${_range!.start.day}/${_range!.start.month} đến ${_range!.end.day}/${_range!.end.month}';
-    return CustomButton(
-      text: label,
-      icon: Icons.date_range_outlined,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      textColor: Colors.white,
-      onPressed: () {
-        _showSyncfusionRangePicker();
-      },
-    );
-  }
-
-  void _showSyncfusionRangePicker() {
-    AppDatePickerDialog.showRange(
-      context,
-      initialRange: _range ??
-          DateTimeRange(
-            start: DateTime.now(),
-            end: DateTime.now().add(const Duration(days: 1)),
-          ),
-      minDate: DateTime(DateTime.now().year - 1),
-      maxDate: DateTime.now().add(const Duration(days: 366)),
-      onRangeSelected: (range) {
-        setState(() {
-          _range = range;
-        });
-      },
-    );
-  }
-
   Widget _buildSingleDayType() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('Thời gian'),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          children: [
-            ChoiceChip(
-              label: const Text('Sáng'),
-              shape: const StadiumBorder(),
-              selected: _leaveType == LeaveType.morning,
-              onSelected: (_) => setState(() => _leaveType = LeaveType.morning),
-            ),
-            ChoiceChip(
-              label: const Text('Chiều'),
-              shape: const StadiumBorder(),
-              selected: _leaveType == LeaveType.afternoon,
-              onSelected: (_) =>
-                  setState(() => _leaveType = LeaveType.afternoon),
-            ),
-            ChoiceChip(
-              label: const Text('Cả ngày'),
-              shape: const StadiumBorder(),
-              selected: _leaveType == LeaveType.fullDay,
-              onSelected: (_) => setState(() => _leaveType = LeaveType.fullDay),
-            ),
-          ],
+        SamcomChip(
+          label: 'Sáng',
+          variant: SamcomChipVariant.filled,
+          selected: _leaveType == LeaveType.morning,
+          color: Theme.of(context).colorScheme.primary,
+          onPressed: () => setState(() => _leaveType = LeaveType.morning),
+        ),
+        const SizedBox(width: 8),
+        SamcomChip(
+          label: 'Chiều',
+          variant: SamcomChipVariant.filled,
+          selected: _leaveType == LeaveType.afternoon,
+          color: Theme.of(context).colorScheme.primary,
+          onPressed: () => setState(() => _leaveType = LeaveType.afternoon),
+        ),
+        const SizedBox(width: 8),
+        SamcomChip(
+          label: 'Cả ngày',
+          variant: SamcomChipVariant.filled,
+          selected: _leaveType == LeaveType.fullDay,
+          color: Theme.of(context).colorScheme.primary,
+          onPressed: () => setState(() => _leaveType = LeaveType.fullDay),
         ),
       ],
     );

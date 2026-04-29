@@ -1,6 +1,7 @@
 import 'package:attendancebyface/core/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:attendancebyface/gen/fonts.gen.dart';
 
 /// Bản đồ MapLibre hình tròn hiển thị vị trí chấm công hiện tại + label vị trí
 class AttendanceLocationMap extends StatelessWidget {
@@ -57,7 +58,7 @@ class AttendanceLocationMap extends StatelessWidget {
               Text.rich(
                 TextSpan(
                   style: TextStyle(
-                    fontFamily: 'Overpass',
+                    fontFamily: FontFamily.overpass,
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                     color: theme.colorScheme.onSurface,
@@ -67,7 +68,7 @@ class AttendanceLocationMap extends StatelessWidget {
                     TextSpan(
                       text: locationLabel!,
                       style: TextStyle(
-                        fontFamily: 'Overpass',
+                        fontFamily: FontFamily.overpass,
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),

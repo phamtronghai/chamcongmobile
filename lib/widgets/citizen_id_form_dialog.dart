@@ -287,7 +287,7 @@ class _CitizenIDFormDialogState extends State<CitizenIDFormDialog> {
                         const SizedBox(width: 12),
                         CustomButton(
                           text: 'Đóng',
-                          buttonType: ButtonType.circular,
+                          variant: CustomButtonVariant.iconCircle,
                           icon: Icons.close,
                           backgroundColor: primaryColor,
                           textColor: primaryColor,

@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/dialog_header.dart';
 
 /// Màn hình camera đơn giản để chụp ảnh khuôn mặt
 class CameraScreen extends StatefulWidget {
@@ -88,18 +92,44 @@ class _CameraScreenState extends State<CameraScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Lỗi'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Đóng dialog
-              Navigator.of(context).pop(); // Quay lại màn hình trước
-            },
-            child: const Text('OK'),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: ColorConstants.shadowColor,
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DialogHeader(
+                icon: Icons.error_rounded,
+                title: 'Lỗi',
+                subtitle: message,
+                primaryColor: Theme.of(context).colorScheme.error,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: CustomButton(
+                  text: 'OK',
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(); // Đóng dialog
+                    Navigator.of(context).pop(); // Quay lại màn hình trước
+                  },
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  textColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -123,13 +153,9 @@ class _CameraScreenState extends State<CameraScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Chụp ảnh'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+      appBar: const CustomAppBar(
+        title: 'Chụp ảnh',
+        automaticallyImplyLeading: true,
       ),
       body: Stack(
         children: [

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
 
@@ -29,10 +28,14 @@ class AppDatePickerDialog extends StatefulWidget {
     required DateTime initialDate,
     DateTime? minDate,
     DateTime? maxDate,
-    required Function(DateTime) onDateSelected,
+    String title = 'Chọn ngày',
+    String? subtitle,
+    required void Function(DateTime) onDateSelected,
   }) {
     return _showBottomSheet(
       context,
+      title: title,
+      subtitle: subtitle,
       AppDatePickerDialog(
         initialDate: initialDate,
         minDate: minDate,
@@ -48,10 +51,14 @@ class AppDatePickerDialog extends StatefulWidget {
     required List<DateTime> initialDates,
     DateTime? minDate,
     DateTime? maxDate,
-    required Function(List<DateTime>) onDatesSelected,
+    String title = 'Chọn các ngày',
+    String? subtitle,
+    required void Function(List<DateTime>) onDatesSelected,
   }) {
     return _showBottomSheet(
       context,
+      title: title,
+      subtitle: subtitle,
       AppDatePickerDialog(
         initialDates: initialDates,
         minDate: minDate,
@@ -67,10 +74,14 @@ class AppDatePickerDialog extends StatefulWidget {
     required DateTimeRange initialRange,
     DateTime? minDate,
     DateTime? maxDate,
-    required Function(DateTimeRange) onRangeSelected,
+    String title = 'Chọn khoảng ngày',
+    String? subtitle,
+    required void Function(DateTimeRange) onRangeSelected,
   }) {
     return _showBottomSheet(
       context,
+      title: title,
+      subtitle: subtitle,
       AppDatePickerDialog(
         initialRange: initialRange,
         minDate: minDate,
@@ -81,7 +92,12 @@ class AppDatePickerDialog extends StatefulWidget {
     );
   }
 
-  static Future<void> _showBottomSheet(BuildContext context, Widget child) {
+  static Future<void> _showBottomSheet(
+    BuildContext context,
+    Widget child, {
+    required String title,
+    String? subtitle,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -108,10 +124,10 @@ class AppDatePickerDialog extends StatefulWidget {
                 ),
               ),
             ),
-            const DialogHeader(
+            DialogHeader(
               icon: Icons.calendar_today,
-              title: 'Chọn ngày',
-              subtitle: 'Xem lịch trực theo ngày',
+              title: title,
+              subtitle: subtitle,
             ),
             Padding(
               padding: const EdgeInsets.all(24),
@@ -182,11 +198,17 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = Theme.of(context).cardColor;
-    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87;
-    final headerColor = Theme.of(context).textTheme.titleMedium?.color ?? Colors.black87;
-    final subTextColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey.shade600;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = theme.cardColor;
+    final textColor =
+        theme.textTheme.bodyLarge?.color ?? Colors.black87;
+    final headerColor =
+        theme.textTheme.titleMedium?.color ?? Colors.black87;
+    final subTextColor =
+        theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
+    final primary = colorScheme.primary;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -213,7 +235,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
               ),
             ),
             monthViewSettings: DateRangePickerMonthViewSettings(
-              firstDayOfWeek: 1, // Monday
+              firstDayOfWeek: 1,
               dayFormat: 'EEE',
               enableSwipeSelection: false,
               showTrailingAndLeadingDates: true,
@@ -227,16 +249,16 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
               ),
             ),
             selectionShape: DateRangePickerSelectionShape.circle,
-            selectionColor: ColorConstants.primaryColor,
-            selectionTextStyle: const TextStyle(
-              color: Colors.white,
+            selectionColor: primary,
+            selectionTextStyle: TextStyle(
+              color: colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
             ),
-            rangeSelectionColor: ColorConstants.primaryColor.withOpacity(0.3),
-            startRangeSelectionColor: ColorConstants.primaryColor,
-            endRangeSelectionColor: ColorConstants.primaryColor,
+            rangeSelectionColor: primary.withValues(alpha: 0.3),
+            startRangeSelectionColor: primary,
+            endRangeSelectionColor: primary,
             rangeTextStyle: TextStyle(
-              color: isDark ? Colors.white : ColorConstants.primaryColor,
+              color: isDark ? Colors.white : primary,
               fontWeight: FontWeight.bold,
             ),
             monthCellStyle: DateRangePickerMonthCellStyle(
@@ -247,7 +269,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
               todayTextStyle: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isDark ? ColorConstants.primaryColor : null,
+                color: isDark ? primary : null,
               ),
             ),
             onSelectionChanged: _onSelectionChanged,
@@ -257,19 +279,20 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-             Expanded(
+            Expanded(
               child: CustomButton(
                 text: 'Hủy',
-                backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                backgroundColor:
+                    isDark ? Colors.grey.shade800 : Colors.grey.shade200,
                 textColor: textColor,
                 onPressed: () => Navigator.pop(context),
               ),
-             ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: CustomButton(
                 text: 'Chọn',
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: primary,
                 onPressed: _onConfirm,
               ),
             ),

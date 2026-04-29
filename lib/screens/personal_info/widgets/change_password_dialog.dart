@@ -188,7 +188,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                         const SizedBox(width: 12),
                         CustomButton(
                           text: 'Đóng',
-                          buttonType: ButtonType.circular,
+                          variant: CustomButtonVariant.iconCircle,
                           icon: Icons.close,
                           backgroundColor: primaryColor,
                           textColor: primaryColor,

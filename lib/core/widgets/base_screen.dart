@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
 import 'package:attendancebyface/models/user_model.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 
 /// Base class cho screens sử dụng `BlocBuilder` pattern
 /// Giảm code trùng lặp cho BlocBuilder pattern
@@ -31,9 +32,10 @@ abstract class BaseScreen extends StatelessWidget {
             Text(message),
             const SizedBox(height: 16),
             Builder(
-              builder: (context) => ElevatedButton(
+              builder: (context) => CustomButton(
+                text: 'Thử lại',
                 onPressed: () => context.read<UserCubit>().refresh(),
-                child: const Text('Thử lại'),
+                width: 140,
               ),
             ),
           ],

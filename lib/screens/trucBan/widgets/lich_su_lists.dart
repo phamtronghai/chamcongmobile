@@ -5,8 +5,8 @@ import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_cubit.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_state.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
-import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_empty_state.dart';
-import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_info_card.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
+import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_ui_helpers.dart';
 
 class LichSuRaNgoaiList extends StatelessWidget {
@@ -22,9 +22,9 @@ class LichSuRaNgoaiList extends StatelessWidget {
       builder: (context, state) {
         if (state is TrucBanStateDanhSachRaNgoaiLoaded) {
           if (state.danhSach.isEmpty) {
-            return const TrucBanEmptyState(
+            return const BaseEmptyState(
               icon: Icons.history,
-              message: 'Chưa có lịch sử ra ngoài',
+              title: 'Chưa có lịch sử ra ngoài',
             );
           }
           return Column(
@@ -34,7 +34,7 @@ class LichSuRaNgoaiList extends StatelessWidget {
               );
               final icon = TrucBanUIHelpers.getTrangThaiIcon(yeuCau.trangThai);
 
-              return TrucBanInfoCard(
+              return BaseInfoCard(
                 title: yeuCau.lyDo,
                 badge: Icon(icon, size: 20, color: color),
                 highlightText:
@@ -88,9 +88,9 @@ class LichSuKhachList extends StatelessWidget {
       builder: (context, state) {
         if (state is TrucBanStateDanhSachKhachLoaded) {
           if (state.danhSach.isEmpty) {
-            return const TrucBanEmptyState(
-              icon: Icons.person_off,
-              message: 'Chưa có lịch sử đăng ký khách',
+            return const BaseEmptyState(
+              icon: Icons.run_circle,
+              title: 'Chưa có lịch sử đăng ký khách',
             );
           }
           return Column(
@@ -100,7 +100,7 @@ class LichSuKhachList extends StatelessWidget {
                 badgeIcon = Icons.directions_car;
               }
 
-              return TrucBanInfoCard(
+              return BaseInfoCard(
                 title: khach.hoTenKhach,
                 badge: Icon(
                   badgeIcon,

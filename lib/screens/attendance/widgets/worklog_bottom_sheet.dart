@@ -3,11 +3,11 @@ import 'package:attendancebyface/core/repositories/worklog_repository.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
+import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:attendancebyface/core/widgets/date_picker_dialog.dart';
 
 /// Bottom sheet nhập công việc (tách riêng từ AttendanceScreen)
 class WorklogBottomSheet extends StatefulWidget {
@@ -29,8 +29,11 @@ class WorklogBottomSheet extends StatefulWidget {
 
 class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
   final TextEditingController _workNameController = TextEditingController();
+  final FocusNode _workNameFocusNode = FocusNode();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
   final Set<int> _selectedSessionIds = <int>{};
-  List<DateTime> _selectedDates = <DateTime>[];
+  DateTimeRange? _selectedRange;
   bool _isSubmitting = false;
 
   @override
@@ -38,13 +41,27 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
     super.initState();
     // Mặc định: hôm nay
     final now = DateTime.now();
-    _selectedDates = <DateTime>[DateTime(now.year, now.month, now.day)];
+    final today = DateTime(now.year, now.month, now.day);
+    _selectedRange = DateTimeRange(start: today, end: today);
+    _workNameFocusNode.addListener(_handleWorkNameFocusChange);
   }
 
   @override
   void dispose() {
+    _workNameFocusNode.removeListener(_handleWorkNameFocusChange);
+    _workNameFocusNode.dispose();
+    _sheetController.dispose();
     _workNameController.dispose();
     super.dispose();
+  }
+
+  void _handleWorkNameFocusChange() {
+    if (!_workNameFocusNode.hasFocus || !_sheetController.isAttached) return;
+    _sheetController.animateTo(
+      0.9,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
   }
 
   Color _sessionColor(ThemeData theme, int sessionId) {
@@ -60,67 +77,50 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
     }
   }
 
-  String _buildDateLabel() {
-    if (_selectedDates.isEmpty) {
-      return 'Chọn ngày';
-    }
-
-    final DateFormat fmt = DateFormat('dd/MM/yyyy');
-    final DateTime today = DateTime.now();
-    final DateTime todayDate =
-        DateTime(today.year, today.month, today.day);
-
-    if (_selectedDates.length == 1) {
-      final DateTime d = _selectedDates.first;
-      final DateTime onlyDate = DateTime(d.year, d.month, d.day);
-      final String formatted = fmt.format(d);
-
-      if (onlyDate == todayDate) {
-        return 'Hôm nay: $formatted';
-      }
-
-      return 'Ngày: $formatted';
-    }
-
-    return 'Đã chọn: ${_selectedDates.length} ngày';
+  List<DateTime> _expandSelectedDates() {
+    if (_selectedRange == null) return <DateTime>[];
+    final start = DateTime(
+      _selectedRange!.start.year,
+      _selectedRange!.start.month,
+      _selectedRange!.start.day,
+    );
+    final end = DateTime(
+      _selectedRange!.end.year,
+      _selectedRange!.end.month,
+      _selectedRange!.end.day,
+    );
+    if (end.isBefore(start)) return <DateTime>[];
+    final days = end.difference(start).inDays;
+    return List<DateTime>.generate(
+      days + 1,
+      (index) => start.add(Duration(days: index)),
+    );
   }
 
-  Future<void> _openDatePicker(BuildContext context) async {
-    List<DateTime> tempSelectedDates =
-        List<DateTime>.from(_selectedDates);
-
+  DateTime _minDateByPolicy() {
     final DateTime now = DateTime.now();
     final bool isUnrestrictedDepartment =
         widget.user.departmentSlug == 'to-ncpt-khoa-hoc-cong-nghe';
-
-    final DateTime minDate = isUnrestrictedDepartment
+    return isUnrestrictedDepartment
         ? DateTime(now.year - 1)
         : now.subtract(
             const Duration(
               days: AppConfig.worklogDateRangeDays,
             ),
           );
-    final DateTime maxDate = isUnrestrictedDepartment
+  }
+
+  DateTime _maxDateByPolicy() {
+    final DateTime now = DateTime.now();
+    final bool isUnrestrictedDepartment =
+        widget.user.departmentSlug == 'to-ncpt-khoa-hoc-cong-nghe';
+    return isUnrestrictedDepartment
         ? DateTime(now.year + 1)
         : now.add(
             const Duration(
               days: AppConfig.worklogDateRangeDays,
             ),
           );
-
-    await AppDatePickerDialog.showMultiple(
-      context,
-      initialDates: tempSelectedDates,
-      minDate: minDate,
-      maxDate: maxDate,
-      onDatesSelected: (dates) {
-        if (dates.isNotEmpty) {
-          setState(() {
-            _selectedDates = dates;
-          });
-        }
-      },
-    );
   }
 
   Future<void> _onSubmit(BuildContext parentContext) async {
@@ -138,16 +138,17 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
     if (_selectedSessionIds.isEmpty) {
       CustomSnackbar.show(
         context: parentContext,
-        message: 'Vui lòng chọn khung giờ (Sáng/Trưa/Ngoài giờ)',
+        message: 'Vui lòng chọn khung giờ (Sáng/Chiều/Ngoài giờ)',
         type: CustomSnackbarType.error,
       );
       return;
     }
 
-    if (_selectedDates.isEmpty) {
+    final selectedDates = _expandSelectedDates();
+    if (selectedDates.isEmpty) {
       CustomSnackbar.show(
         context: parentContext,
-        message: 'Vui lòng chọn ít nhất một ngày',
+        message: 'Vui lòng chọn ngày báo cáo',
         type: CustomSnackbarType.error,
       );
       return;
@@ -162,7 +163,7 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
       final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
       for (final int sessionId in _selectedSessionIds) {
-        for (final DateTime date in _selectedDates) {
+        for (final DateTime date in selectedDates) {
           final String dateStr = dateFormat.format(date);
           final Map<String, dynamic> result =
               await widget.worklogRepository.createWorklog(
@@ -192,7 +193,7 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
         CustomSnackbar.show(
           context: parentContext,
           message:
-              'Nhập công việc thành công cho ${_selectedDates.length} ngày',
+              'Nhập công việc thành công cho ${selectedDates.length} ngày',
           type: CustomSnackbarType.success,
         );
       }
@@ -219,21 +220,23 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
 
     return SafeArea(
       top: false,
+      bottom: false,
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         padding: EdgeInsets.only(bottom: bottomInset),
         child: DraggableScrollableSheet(
+          controller: _sheetController,
           expand: false,
-          minChildSize: 0.4,
-          initialChildSize: 0.55,
+          minChildSize: 0.28,
+          initialChildSize: 0.38,
           maxChildSize: 0.9,
           builder:
               (BuildContext context, ScrollController scrollController) {
             return SingleChildScrollView(
               controller: scrollController,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,64 +263,57 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
                       label: 'Nội dung công việc',
                       fieldType: CustomTextFieldType.multiline,
                       controller: _workNameController,
+                      focusNode: _workNameFocusNode,
                       maxLines: 3,
                       minLines: 1,
                     ),
                     const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildSessionChip(
-                          theme: theme,
-                          label: 'Sáng',
-                          sessionId: 1,
-                        ),
-                        _buildSessionChip(
-                          theme: theme,
-                          label: 'Trưa',
-                          sessionId: 2,
-                        ),
-                        _buildSessionChip(
-                          theme: theme,
-                          label: 'Ngoài giờ',
-                          sessionId: 3,
-                        ),
-                      ],
+                    Center(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _buildSessionChip(
+                            theme: theme,
+                            label: 'Sáng',
+                            sessionId: 1,
+                          ),
+                          _buildSessionChip(
+                            theme: theme,
+                            label: 'Chiều',
+                            sessionId: 2,
+                          ),
+                          _buildSessionChip(
+                            theme: theme,
+                            label: 'Ngoài giờ',
+                            sessionId: 3,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    CustomButton(
-                      text: _buildDateLabel(),
-                      backgroundColor: theme.colorScheme.secondary,
-                      textColor: Colors.white,
-                      onPressed: () => _openDatePicker(context),
+                    DatePickerField(
+                      mode: DatePickerFieldMode.range,
+                      selectedRange: _selectedRange,
+                      minDate: _minDateByPolicy(),
+                      maxDate: _maxDateByPolicy(),
+                      dialogTitle: 'Chọn khoảng ngày',
+                      dialogSubtitle: 'Khoảng ngày báo cáo nhật ký công việc',
+                      hintRange: 'Chọn ngày',
+                      onRangeChanged: (range) {
+                        setState(() => _selectedRange = range);
+                      },
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomButton(
-                            text: 'HỦY',
-                            backgroundColor: Colors.grey.shade200,
-                            textColor: theme.colorScheme.onSurface,
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: CustomButton(
-                            text: 'XÁC NHẬN',
-                            isLoading: _isSubmitting,
-                            backgroundColor: theme.colorScheme.primary,
-                            textColor: Colors.white,
-                            onPressed: _isSubmitting
-                                ? null
-                                : () => _onSubmit(context),
-                          ),
-                        ),
-                      ],
+                    CustomButton(
+                      text: 'XÁC NHẬN',
+                      isLoading: _isSubmitting,
+                      backgroundColor: theme.colorScheme.primary,
+                      textColor: Colors.white,
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _onSubmit(context),
                     ),
                   ],
                 ),

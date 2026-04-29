@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
-import 'package:attendancebyface/core/widgets/custom_footer.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/app_router.dart';
 import 'package:attendancebyface/core/cubits/login_cubit.dart';
 import 'package:attendancebyface/core/cubits/login_state.dart';
 import 'package:attendancebyface/screens/login/widgets/traditional_login_form.dart';
 import 'package:attendancebyface/screens/login/widgets/biometric_carousel.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -63,7 +63,9 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
     return MultiBlocListener(
       listeners: [
         BlocListener<LoginCubit, LoginState>(
-          listenWhen: (previous, current) => previous.status != current.status || previous.errorMessage != current.errorMessage,
+          listenWhen: (previous, current) =>
+              previous.status != current.status ||
+              previous.errorMessage != current.errorMessage,
           listener: (context, state) {
             if (state.status == LoginStatus.success && state.user != null) {
               if (state.showSuccessMessage) {
@@ -78,9 +80,12 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
           },
         ),
         BlocListener<LoginCubit, LoginState>(
-          listenWhen: (previous, current) => previous.selectedBiometricAccount != current.selectedBiometricAccount,
+          listenWhen: (previous, current) =>
+              previous.selectedBiometricAccount !=
+              current.selectedBiometricAccount,
           listener: (context, state) {
-            if (state.biometricAccounts.isNotEmpty && state.selectedBiometricAccount != null) {
+            if (state.biometricAccounts.isNotEmpty &&
+                state.selectedBiometricAccount != null) {
               final index = state.biometricAccounts.indexWhere(
                 (a) => a.id == state.selectedBiometricAccount!.id,
               );
@@ -114,45 +119,53 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Image.asset('assets/images/logo.png', height: 100),
+                              Assets.icon.logoAppChamCongBoTron.image(
+                                height: 100,
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
                           Text(
-                            'Đăng nhập',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                            'CHẤM CÔNG',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                   fontWeight: FontWeight.bold,
                                 ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Chúc một ngày tốt lành!',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 32),
 
-                          if (state.biometricEnabled && !state.showAlternativeLogin) ...[
+                          if (state.biometricEnabled &&
+                              !state.showAlternativeLogin) ...[
                             BiometricCarousel(
                               accounts: state.biometricAccounts,
                               selectedAccount: state.selectedBiometricAccount,
                               pageController: _pageController,
                               isLoading: isLoading,
                               onPageChanged: (index) {
-                                context.read<LoginCubit>().selectBiometricAccount(state.biometricAccounts[index]);
+                                context
+                                    .read<LoginCubit>()
+                                    .selectBiometricAccount(
+                                      state.biometricAccounts[index],
+                                    );
                               },
                               onDeleteAccount: (account) {
-                                context.read<LoginCubit>().deleteBiometricAccount(account);
+                                context
+                                    .read<LoginCubit>()
+                                    .deleteBiometricAccount(account);
                               },
                               onAuthenticate: () {
-                                context.read<LoginCubit>().authenticateWithBiometric();
+                                context
+                                    .read<LoginCubit>()
+                                    .authenticateWithBiometric();
                               },
                               onSwitchToTraditional: () {
-                                context.read<LoginCubit>().toggleAlternativeLogin(true);
+                                context
+                                    .read<LoginCubit>()
+                                    .toggleAlternativeLogin(true);
                               },
                             ),
                           ] else ...[
@@ -168,18 +181,22 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                               passwordController: _passwordController,
                               rememberAccount: state.rememberAccount,
                               onRememberAccountChanged: (value) {
-                                context.read<LoginCubit>().toggleRememberAccount(value ?? false);
+                                context
+                                    .read<LoginCubit>()
+                                    .toggleRememberAccount(value ?? false);
                               },
                               errorMessage: state.errorMessage,
                               onLoginPressed: () {
                                 context.read<LoginCubit>().login(
-                                      _usernameController.text,
-                                      _passwordController.text,
-                                    );
+                                  _usernameController.text,
+                                  _passwordController.text,
+                                );
                               },
                               biometricEnabled: state.biometricEnabled,
                               onSwitchToBiometric: () {
-                                context.read<LoginCubit>().toggleAlternativeLogin(false);
+                                context
+                                    .read<LoginCubit>()
+                                    .toggleAlternativeLogin(false);
                               },
                             ),
                           ],
@@ -189,12 +206,12 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                   ),
                 ),
               ),
-              bottomNavigationBar: const Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [CustomFooter(), SizedBox(height: 32)],
-              ),
+              // bottomNavigationBar: const Column(
+              //   mainAxisSize: MainAxisSize.min,
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   crossAxisAlignment: CrossAxisAlignment.center,
+              //   children: [CustomFooter(), SizedBox(height: 32)],
+              // ),
             ),
           );
         },

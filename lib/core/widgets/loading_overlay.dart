@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 
 class LoadingOverlay extends StatefulWidget {
   final bool isLoading;
@@ -66,30 +67,18 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                   SizedBox(
                     width: sizeLoadingIndicator,
                     height: sizeLoadingIndicator,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/logoToNCPTKHCN.png',
-                          width: sizeLoadingIndicator,
-                          height: sizeLoadingIndicator,
-                          fit: BoxFit.contain,
-                        ),
-                        AnimatedBuilder(
-                          animation: _rotationAnimation,
-                          builder: (context, child) {
-                            return Transform.rotate(
-                              angle: _rotationAnimation.value * 2 * 3.14159,
-                              child: Image.asset(
-                                'assets/images/vienLogoTo.png',
-                                width: sizeLoadingIndicator,
-                                height: sizeLoadingIndicator,
-                                fit: BoxFit.contain,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                    child: AnimatedBuilder(
+                      animation: _rotationAnimation,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _rotationAnimation.value * 2 * 3.14159,
+                          child: Assets.icon.logoAppChamCongBoTron.image(
+                            width: sizeLoadingIndicator,
+                            height: sizeLoadingIndicator,
+                            fit: BoxFit.contain,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

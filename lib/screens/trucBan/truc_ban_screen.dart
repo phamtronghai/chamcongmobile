@@ -15,11 +15,13 @@ import 'package:attendancebyface/models/truc_ban_enums.dart';
 import 'package:attendancebyface/screens/trucBan/tabs/danh_sach_truc_ban_tab.dart';
 import 'package:attendancebyface/screens/trucBan/tabs/dang_ky_tab.dart';
 
-import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_empty_state.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_dialogs.dart';
-import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_info_card.dart';
+import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/screens/trucBan/camera_rtsp_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/widgets/nav_bar_layout.dart';
 
 /// Màn hình chính của chức năng Trực ban
 /// Sử dụng CustomAppBar và design system của app
@@ -54,6 +56,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
 
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
+        setState(() {});
         // Handle tab change if needed
         switch (_tabController.index) {
           case 0:
@@ -104,31 +107,29 @@ class _TrucBanScreenState extends State<TrucBanScreen>
               listener: _handleStateChange,
               child: LoadingOverlay(
                 isLoading: _isProcessing,
-                child: Column(
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    // Menu cho Trực ban/Lãnh đạo
-                    _buildRoleBasedActions(),
-                    // Tab content
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          DanhSachTrucBanTab(
-                            selectedDate: _selectedDate,
-                            onDateChanged: (date) {
-                              setState(() => _selectedDate = date);
-                              _cubit.layDanhSachTrucBan(date);
-                            },
+                    Column(
+                      children: [
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              DanhSachTrucBanTab(
+                                selectedDate: _selectedDate,
+                                onDateChanged: (date) {
+                                  setState(() => _selectedDate = date);
+                                  _cubit.layDanhSachTrucBan(date);
+                                },
+                              ),
+                              const DangKyTab(),
+                            ],
                           ),
-                          const DangKyTab(),
-                          // Hiding TestTab but keeping controller length for now to avoid errors,
-                          // or I should update TabController length.
-                          // User wants to Hide it.
-                          // Setting TabBar tabs to 2 and controller to 2 is cleaner.
-                          // But I'll just keep it here for now and fix controller init.
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                    _buildTrucBanFabStack(),
                   ],
                 ),
               ),
@@ -181,65 +182,83 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     }
   }
 
-  /// Actions dựa trên role
-  Widget _buildRoleBasedActions() {
+  /// FAB iconCircle: cùng thứ tự chip cũ (Camera → Khách đơn vị → Duyệt), Duyệt gần nav nhất.
+  Widget _buildTrucBanFabStack() {
     return BlocBuilder<TrucBanCubit, TrucBanState>(
       buildWhen: (prev, curr) => curr is TrucBanStatePhanQuyenLoaded,
       builder: (context, state) {
-        if (state is TrucBanStatePhanQuyenLoaded) {
-          final phanQuyen = state.phanQuyen;
-          final hasActions =
-              phanQuyen.canViewDonVi ||
-              phanQuyen.canApproveRaNgoai ||
-              phanQuyen.canLockSystem ||
-              phanQuyen.canViewCamera;
+        if (state is! TrucBanStatePhanQuyenLoaded) {
+          return const SizedBox.shrink();
+        }
+        if (_tabController.index != 0) {
+          return const SizedBox.shrink();
+        }
+        final phanQuyen = state.phanQuyen;
+        final cs = Theme.of(context).colorScheme;
+        final items = <Widget>[];
 
-          if (!hasActions) return const SizedBox.shrink();
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  if (phanQuyen.canViewCamera) ...[
-                    _buildActionChip(
-                      icon: Icons.videocam_outlined,
-                      label: 'Camera',
-                      onTap: _showCameraDialog,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (phanQuyen.canViewDonVi)
-                    _buildActionChip(
-                      icon: Icons.people_outline,
-                      label: 'Khách đơn vị',
-                      onTap: _showDsKhachDonViDialog,
-                    ),
-                  if (phanQuyen.canApproveRaNgoai) ...[
-                    const SizedBox(width: 8),
-                    _buildActionChip(
-                      icon: Icons.approval,
-                      label: 'Duyệt ra ngoài',
-                      onTap: _showDuyetRaNgoaiBottomSheet,
-                    ),
-                  ],
-                  if (phanQuyen.canLockSystem) ...[
-                    const SizedBox(width: 8),
-                    // Dynamic Lock Chip
-                    _buildLockStatusChip(),
-                  ],
-                ],
-              ),
+        void pushFab({
+          required IconData icon,
+          required String label,
+          required VoidCallback onTap,
+        }) {
+          if (items.isNotEmpty) items.add(const SizedBox(height: 12));
+          items.add(
+            CustomButton(
+              text: label,
+              tooltip: label,
+              variant: CustomButtonVariant.iconCircle,
+              icon: icon,
+              backgroundColor: cs.primary,
+              textColor: cs.onPrimary,
+              onPressed: onTap,
             ),
           );
         }
-        return const SizedBox.shrink();
+
+        if (phanQuyen.canLockSystem) {
+          if (items.isNotEmpty) items.add(const SizedBox(height: 12));
+          items.add(_buildLockStatusFab());
+        }
+
+        if (phanQuyen.canViewCamera) {
+          pushFab(
+            icon: Icons.videocam_outlined,
+            label: 'Camera',
+            onTap: _showCameraDialog,
+          );
+        }
+        if (phanQuyen.canViewDonVi) {
+          pushFab(
+            icon: Icons.people_outline,
+            label: 'Khách đơn vị',
+            onTap: _showDsKhachDonViDialog,
+          );
+        }
+        if (phanQuyen.canApproveRaNgoai) {
+          pushFab(
+            icon: Icons.approval,
+            label: 'Duyệt ra ngoài',
+            onTap: _showDuyetRaNgoaiBottomSheet,
+          );
+        }
+
+        if (items.isEmpty) return const SizedBox.shrink();
+
+        return Positioned(
+          right: kNavBarHorizontalPadding,
+          bottom: trucBanFabBottomFromScreenBottom(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: items,
+          ),
+        );
       },
     );
   }
 
-  Widget _buildLockStatusChip() {
+  Widget _buildLockStatusFab() {
     final isLocked = _currentLockState == TrangThaiKhoa.khoa;
     // Default blue if state unknown, else Green (Open) or Red (Locked)
     final color = _currentLockState == null
@@ -249,21 +268,14 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     final icon = isLocked ? Icons.lock : Icons.lock_open;
     final label = isLocked ? 'Đã khóa' : 'Đang mở';
 
-    return ActionChip(
-      avatar: Icon(icon, size: 18, color: color),
-      label: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      onPressed: _toggleLockSystem,
-      backgroundColor: color.withAlpha(25),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-        side: BorderSide(color: color.withAlpha(50)),
-      ),
+    return CustomButton(
+      text: 'Trạng thái khóa: $label',
+      tooltip: 'Trạng thái khóa: $label',
+      variant: CustomButtonVariant.iconCircle,
+      icon: icon,
+      backgroundColor: color,
+      textColor: Colors.white,
+      onPressed: _currentLockState == null ? null : _toggleLockSystem,
     );
   }
 
@@ -275,28 +287,6 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     } else {
       _cubit.khoaHeThong();
     }
-  }
-
-  Widget _buildActionChip({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return ActionChip(
-      avatar: Icon(icon, size: 18, color: ColorConstants.primaryColor),
-      label: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      onPressed: onTap,
-      backgroundColor: ColorConstants.primaryColor.withAlpha(25),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-      ),
-    );
   }
 
   // ======== DIALOGS ========
@@ -320,9 +310,9 @@ class _TrucBanScreenState extends State<TrucBanScreen>
           // ... Logic build list view giữ nguyên
           if (state is TrucBanStateDanhSachKhachLoaded) {
             if (state.danhSach.isEmpty) {
-              return const TrucBanEmptyState(
+              return const BaseEmptyState(
                 icon: Icons.people_outline,
-                message: 'Không có khách đăng ký',
+                title: 'Không có khách đăng ký',
               );
             }
             return ListView.builder(
@@ -355,9 +345,9 @@ class _TrucBanScreenState extends State<TrucBanScreen>
         builder: (context, state) {
           if (state is TrucBanStateDanhSachRaNgoaiLoaded) {
             if (state.danhSach.isEmpty) {
-              return const TrucBanEmptyState(
+              return const BaseEmptyState(
                 icon: Icons.check_circle_outline,
-                message: 'Không có yêu cầu cần duyệt',
+                title: 'Không có yêu cầu cần duyệt',
               );
             }
             return ListView.builder(
@@ -420,7 +410,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
             ),
           ],
         ),
-        child: TrucBanInfoCard(
+        child: BaseInfoCard(
           title: yeuCau.nhanVien?.hoTen ?? 'N/A',
           badge: const Icon(Icons.person, color: Colors.blue),
           highlightText: yeuCau.nhanVien?.donVi,
@@ -462,7 +452,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
       badgeIcon = Icons.directions_car;
     }
 
-    return TrucBanInfoCard(
+    return BaseInfoCard(
       title: khach.hoTenKhach,
       badge: Icon(badgeIcon, size: 20, color: ColorConstants.primaryColor),
       highlightText: khach.bienSoXe,

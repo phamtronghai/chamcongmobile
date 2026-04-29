@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:attendancebyface/core/app_theme.dart';
@@ -10,10 +9,10 @@ import 'package:attendancebyface/core/cubits/truc_ban_cubit.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_state.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
-import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_empty_state.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 
-import 'package:attendancebyface/screens/trucBan/widgets/truc_ban_info_card.dart';
-import 'package:attendancebyface/core/widgets/date_picker_dialog.dart';
+import 'package:attendancebyface/core/widgets/base_info_card.dart';
+import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 
 class DanhSachTrucBanTab extends StatefulWidget {
   final DateTime selectedDate;
@@ -31,6 +30,16 @@ class DanhSachTrucBanTab extends StatefulWidget {
 
 class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     with AutomaticKeepAliveClientMixin {
+  bool _isLockStateError(TrucBanState state) {
+    if (state is! TrucBanStateError) return false;
+    final message = state.message.toLowerCase();
+    return message.contains('trạng thái khóa') ||
+        message.contains('khoa he thong') ||
+        message.contains('khóa hệ thống') ||
+        message.contains('mo khoa') ||
+        message.contains('mở khóa');
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -44,16 +53,17 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 current is TrucBanStateDanhSachTrucBanLoaded ||
                 (current is TrucBanStateLoading &&
                     current.target == TrucBanLoadTarget.dsTrucBan) ||
-                current is TrucBanStateError,
+                (current is TrucBanStateError &&
+                    !_isLockStateError(current)),
             builder: (context, state) {
               if (state is TrucBanStateLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (state is TrucBanStateDanhSachTrucBanLoaded) {
                 if (state.danhSach.isEmpty) {
-                  return const TrucBanEmptyState(
+                  return const BaseEmptyState(
                     icon: Icons.calendar_today_outlined,
-                    message: 'Không có lịch trực ban',
+                    title: 'Không có lịch trực ban',
                   );
                 }
                 return RefreshIndicator(
@@ -73,9 +83,9 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 );
               }
               if (state is TrucBanStateError) {
-                return TrucBanEmptyState(
+                return BaseEmptyState(
                   icon: Icons.error_outline,
-                  message: state.message,
+                  title: state.message,
                 );
               }
               return const SizedBox.shrink();
@@ -111,18 +121,16 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
           const SizedBox(width: 8),
-          // Date Chip
-          SamcomChip(
-            label: DateFormat('dd/MM/yyyy').format(widget.selectedDate),
-            leading: Icon(
-              Icons.calendar_today,
-              size: 16,
-              color: Theme.of(context).colorScheme.onSurface,
+          SizedBox(
+            width: 160,
+            child: DatePickerField(
+              compact: true,
+              mode: DatePickerFieldMode.single,
+              selectedDate: widget.selectedDate,
+              dialogTitle: 'Chọn ngày',
+              dialogSubtitle: 'Xem danh sách trực ban theo ngày',
+              onDateChanged: widget.onDateChanged,
             ),
-            onPressed: _showDatePickerDialog,
-            variant: SamcomChipVariant.outlined,
-            color: Theme.of(context).dividerColor,
-            dense: true,
           ),
         ],
       ),
@@ -167,16 +175,6 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
           );
         }
         return const SizedBox.shrink();
-      },
-    );
-  }
-
-  void _showDatePickerDialog() {
-    AppDatePickerDialog.show(
-      context,
-      initialDate: widget.selectedDate,
-      onDateSelected: (date) {
-        widget.onDateChanged(date);
       },
     );
   }
@@ -255,7 +253,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
       );
     }
 
-    return TrucBanInfoCard(
+    return BaseInfoCard(
       title: trucBan.hoTen,
       isActive: isActive,
       onTap: () => _callPhone(trucBan.soDienThoai),

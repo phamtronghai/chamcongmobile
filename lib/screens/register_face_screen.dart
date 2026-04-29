@@ -7,10 +7,10 @@ import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/services/face_service.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/app_router.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 
 class RegisterFaceScreen extends StatefulWidget {
   final UserModel user;
@@ -318,13 +318,12 @@ class _RegisterFaceScreenState extends State<RegisterFaceScreen>
                                       ),
                                     ),
                                     child: Center(
-                                      child: SvgPicture.asset(
-                                        'assets/icon/face-id-svgrepo-com.svg',
-                                        height: size * 0.3,
-                                        width: size * 0.3,
-                                        colorFilter: ColorFilter.mode(
-                                          Colors.grey.shade400,
-                                          BlendMode.srcIn,
+                                      child: Opacity(
+                                        opacity: 0.45,
+                                        child: Assets.icon.faceID.svg(
+                                          height: size * 0.3,
+                                          width: size * 0.3,
+                                          fit: BoxFit.contain,
                                         ),
                                       ),
                                     ),

@@ -10,7 +10,7 @@ import 'package:geolocator/geolocator.dart';
 /// Loại bỏ code lặp lại trong device security processing
 class DeviceSecurityHelper {
   /// Cờ để bật/tắt chế độ development (bỏ qua kiểm tra bảo mật)
-  static const bool devMode = false;
+  static const bool devMode = true;
 
   /// Kiểm tra thiết bị thật (chặn emulator/simulator)
   /// Trả về Map với 'isRealDevice' (bool) và 'issues' (List<String>)

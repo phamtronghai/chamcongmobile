@@ -1,34 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
 
-class CustomPasswordDialog extends StatefulWidget {
-  final String title;
-  final String label;
-  final String hint;
-  final void Function(String password)? onConfirm;
+class ProfileUpdateDialog extends StatefulWidget {
+  final String initialName;
+  final String? initialPhone;
 
-  const CustomPasswordDialog({
+  const ProfileUpdateDialog({
     super.key,
-    this.title = 'Xác nhận mật khẩu',
-    this.label = 'Mật khẩu',
-    this.hint = 'Nhập mật khẩu',
-    this.onConfirm,
+    required this.initialName,
+    this.initialPhone,
   });
 
   @override
-  State<CustomPasswordDialog> createState() => _CustomPasswordDialogState();
+  State<ProfileUpdateDialog> createState() => _ProfileUpdateDialogState();
 }
 
-class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
-  final TextEditingController _controller = TextEditingController();
-  bool _obscure = true;
+class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+    _phoneController = TextEditingController(text: widget.initialPhone ?? '');
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -57,9 +61,9 @@ class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
           children: [
             // Header với gradient background
             DialogHeader(
-              icon: Icons.lock_outline,
-              title: widget.title,
-              subtitle: 'Vui lòng nhập mật khẩu để xác nhận',
+              icon: Icons.person_outline,
+              title: 'Cập nhật thông tin',
+              subtitle: 'Cập nhật họ tên và số điện thoại',
               primaryColor: primaryColor,
             ),
 
@@ -69,25 +73,29 @@ class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
               child: Column(
                 children: [
                   CustomTextField(
-                    controller: _controller,
-                    fieldType: CustomTextFieldType.password,
-                    label: widget.label,
-                    hint: widget.hint,
-                    prefixIcon: Icons.lock_outline,
-                    suffixIcon: _obscure
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    onSuffixIconPressed: () =>
-                        setState(() => _obscure = !_obscure),
-                    onSubmitted: (value) => _onConfirm(),
+                    label: 'Họ và tên',
+                    controller: _nameController,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    label: 'Số điện thoại',
+                    controller: _phoneController,
+                    fieldType: CustomTextFieldType.phone,
+                    textInputAction: TextInputAction.done,
                   ),
                   const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: CustomButton(
-                          text: 'Xác nhận',
-                          onPressed: _onConfirm,
+                          text: 'Cập nhật',
+                          onPressed: () {
+                            Navigator.pop(context, {
+                              'name': _nameController.text.trim(),
+                              'phone': _phoneController.text.trim(),
+                            });
+                          },
                           backgroundColor: primaryColor,
                           textColor: Colors.white,
                         ),
@@ -95,7 +103,7 @@ class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
                       const SizedBox(width: 12),
                       CustomButton(
                         text: 'Hủy',
-                        buttonType: ButtonType.circular,
+                        variant: CustomButtonVariant.iconCircle,
                         icon: Icons.close,
                         backgroundColor: primaryColor,
                         textColor: primaryColor,
@@ -113,12 +121,5 @@ class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
         ),
       ),
     );
-  }
-
-  void _onConfirm() {
-    if (widget.onConfirm != null) {
-      widget.onConfirm!(_controller.text);
-    }
-    Navigator.pop(context, _controller.text);
   }
 }

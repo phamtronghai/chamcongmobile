@@ -23,6 +23,9 @@ class AttendanceResultDialog extends StatelessWidget {
     final Color primaryColor = isSuccess
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.error;
+    final Color closeIconColor = isSuccess
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onError;
     final String title = isSuccess ? 'Thành công' : 'Thất bại';
     final IconData icon = isSuccess
         ? Icons.check_circle_rounded
@@ -68,10 +71,10 @@ class AttendanceResultDialog extends StatelessWidget {
                       children: [
                         CustomButton(
                           text: 'Đóng',
-                          buttonType: ButtonType.circular,
+                          variant: CustomButtonVariant.iconCircle,
                           icon: Icons.close,
                           backgroundColor: primaryColor,
-                          textColor: primaryColor,
+                          textColor: closeIconColor,
                           tooltip: 'Đóng',
                           onPressed: () {
                             Navigator.of(context).pop();
@@ -97,10 +100,10 @@ class AttendanceResultDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   CustomButton(
                     text: 'Đóng',
-                    buttonType: ButtonType.circular,
+                    variant: CustomButtonVariant.iconCircle,
                     icon: Icons.close,
                     backgroundColor: primaryColor,
-                    textColor: primaryColor,
+                    textColor: closeIconColor,
                     tooltip: 'Đóng',
                     onPressed: () {
                       Navigator.of(context).pop();

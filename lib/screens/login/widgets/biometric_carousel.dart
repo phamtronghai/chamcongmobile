@@ -208,7 +208,7 @@ class BiometricCarousel extends StatelessWidget {
         CustomButton(
           text: 'Tài khoản khác',
           onPressed: onSwitchToTraditional,
-          buttonType: ButtonType.circular,
+          variant: CustomButtonVariant.iconCircle,
           icon: Icons.arrow_forward,
           backgroundColor: Theme.of(context).colorScheme.primary,
           textColor: Colors.white,

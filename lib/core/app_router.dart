@@ -15,6 +15,7 @@ import 'package:attendancebyface/screens/trucBan/truc_ban_screen.dart';
 import 'package:attendancebyface/screens/trucBan/camera_rtsp_screen.dart';
 import 'package:attendancebyface/widgets/custom_navbar.dart';
 import 'package:attendancebyface/core/network/error_interceptor.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 
 /// App Router sử dụng go_router để quản lý navigation
 class AppRouter {
@@ -83,10 +84,10 @@ class AppRouter {
             },
           ),
 
-          // Settings tab
+          // Personal info tab
           GoRoute(
-            path: 'settings',
-            name: 'settings',
+            path: 'personal',
+            name: 'personal',
             builder: (context, state) {
               final user = state.extra as UserModel?;
               if (user == null) {
@@ -96,7 +97,7 @@ class AppRouter {
                   ),
                 );
               }
-              return CustomNavBar(user: user, initialIndex: 2);
+              return CustomNavBar(user: user, initialIndex: 3);
             },
           ),
         ],
@@ -191,9 +192,10 @@ class AppRouter {
             const SizedBox(height: 16),
             Text('Trang không tìm thấy: ${state.uri.path}'),
             const SizedBox(height: 16),
-            ElevatedButton(
+            CustomButton(
+              text: 'Về trang chủ',
+              width: 180,
               onPressed: () => context.go('/'),
-              child: const Text('Về trang chủ'),
             ),
           ],
         ),
@@ -229,7 +231,10 @@ class AppRouter {
         path = '/home/attendance';
         break;
       case 2:
-        path = '/home/settings';
+        path = '/home/personal';
+        break;
+      case 3:
+        path = '/home/personal';
         break;
     }
     context.go(path, extra: user);

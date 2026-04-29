@@ -144,7 +144,7 @@ class _ThemeSelectionDialogState extends State<ThemeSelectionDialog>
                         const SizedBox(width: 12),
                         CustomButton(
                           text: 'Hủy',
-                          buttonType: ButtonType.circular,
+                          variant: CustomButtonVariant.iconCircle,
                           icon: Icons.close,
                           tooltip: 'Hủy',
                           width: 48,

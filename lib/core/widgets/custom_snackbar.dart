@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 // import 'package:attendancebyface/core/constants/color_constants.dart';
 // Removed TextConstants; use textTheme instead
 
@@ -66,8 +67,7 @@ class CustomSnackbar {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(
-                      'assets/images/logoToNCPTKHCN.png',
+                    Assets.icon.logoAppChamCongBoTron.image(
                       width: 40,
                       height: 40,
                     ),

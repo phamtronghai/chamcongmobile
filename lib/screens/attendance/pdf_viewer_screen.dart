@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 
 class PdfViewerScreen extends StatefulWidget {
   final String filePath;
@@ -99,9 +100,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
+            CustomButton(
+              text: 'Quay lại',
+              width: 150,
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Quay lại'),
             ),
           ],
         ),
@@ -130,10 +132,14 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Nút trang trước
-          IconButton(
-            onPressed: _currentPage > 0 ? _goToPreviousPage : null,
-            icon: const Icon(Icons.chevron_left),
+          CustomButton(
+            text: 'Trang trước',
+            icon: Icons.chevron_left,
             tooltip: 'Trang trước',
+            variant: CustomButtonVariant.iconCircle,
+            width: 40,
+            height: 40,
+            onPressed: _currentPage > 0 ? _goToPreviousPage : null,
           ),
 
           // Thông tin trang hiện tại
@@ -145,10 +151,14 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           ),
 
           // Nút trang sau
-          IconButton(
-            onPressed: _currentPage < _totalPages - 1 ? _goToNextPage : null,
-            icon: const Icon(Icons.chevron_right),
+          CustomButton(
+            text: 'Trang sau',
+            icon: Icons.chevron_right,
             tooltip: 'Trang sau',
+            variant: CustomButtonVariant.iconCircle,
+            width: 40,
+            height: 40,
+            onPressed: _currentPage < _totalPages - 1 ? _goToNextPage : null,
           ),
         ],
       ),

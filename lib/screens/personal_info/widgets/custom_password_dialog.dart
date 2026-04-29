@@ -1,38 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
 
-class ProfileUpdateDialog extends StatefulWidget {
-  final String initialName;
-  final String? initialPhone;
+class CustomPasswordDialog extends StatefulWidget {
+  final String title;
+  final String label;
+  final String hint;
+  final void Function(String password)? onConfirm;
 
-  const ProfileUpdateDialog({
+  const CustomPasswordDialog({
     super.key,
-    required this.initialName,
-    this.initialPhone,
+    this.title = 'Xác nhận mật khẩu',
+    this.label = 'Mật khẩu',
+    this.hint = 'Nhập mật khẩu',
+    this.onConfirm,
   });
 
   @override
-  State<ProfileUpdateDialog> createState() => _ProfileUpdateDialogState();
+  State<CustomPasswordDialog> createState() => _CustomPasswordDialogState();
 }
 
-class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _phoneController;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.initialName);
-    _phoneController = TextEditingController(text: widget.initialPhone ?? '');
-  }
+class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
+  final TextEditingController _controller = TextEditingController();
+  bool _obscure = true;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -61,9 +57,9 @@ class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
           children: [
             // Header với gradient background
             DialogHeader(
-              icon: Icons.person_outline,
-              title: 'Cập nhật thông tin',
-              subtitle: 'Cập nhật họ tên và số điện thoại',
+              icon: Icons.lock_outline,
+              title: widget.title,
+              subtitle: 'Vui lòng nhập mật khẩu để xác nhận',
               primaryColor: primaryColor,
             ),
 
@@ -73,29 +69,25 @@ class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
               child: Column(
                 children: [
                   CustomTextField(
-                    label: 'Họ và tên',
-                    controller: _nameController,
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    label: 'Số điện thoại',
-                    controller: _phoneController,
-                    fieldType: CustomTextFieldType.phone,
-                    textInputAction: TextInputAction.done,
+                    controller: _controller,
+                    fieldType: CustomTextFieldType.password,
+                    label: widget.label,
+                    hint: widget.hint,
+                    prefixIcon: Icons.lock_outline,
+                    suffixIcon: _obscure
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    onSuffixIconPressed: () =>
+                        setState(() => _obscure = !_obscure),
+                    onSubmitted: (value) => _onConfirm(),
                   ),
                   const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
                         child: CustomButton(
-                          text: 'Cập nhật',
-                          onPressed: () {
-                            Navigator.pop(context, {
-                              'name': _nameController.text.trim(),
-                              'phone': _phoneController.text.trim(),
-                            });
-                          },
+                          text: 'Xác nhận',
+                          onPressed: _onConfirm,
                           backgroundColor: primaryColor,
                           textColor: Colors.white,
                         ),
@@ -103,7 +95,7 @@ class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
                       const SizedBox(width: 12),
                       CustomButton(
                         text: 'Hủy',
-                        buttonType: ButtonType.circular,
+                        variant: CustomButtonVariant.iconCircle,
                         icon: Icons.close,
                         backgroundColor: primaryColor,
                         textColor: primaryColor,
@@ -121,5 +113,12 @@ class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
         ),
       ),
     );
+  }
+
+  void _onConfirm() {
+    if (widget.onConfirm != null) {
+      widget.onConfirm!(_controller.text);
+    }
+    Navigator.pop(context, _controller.text);
   }
 }

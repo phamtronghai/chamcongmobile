@@ -3,7 +3,9 @@ import 'package:attendancebyface/models/user_model.dart';
 import 'package:attendancebyface/models/worklog_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
+import 'package:attendancebyface/gen/fonts.gen.dart';
 
 /// Hiển thị lời chào, lịch sử chấm công + danh sách công việc trong ngày
 class DailyInfoSection extends StatefulWidget {
@@ -14,16 +16,16 @@ class DailyInfoSection extends StatefulWidget {
   final List<AttendanceModel> attendanceRecords;
   final DateTime selectedDate;
   final VoidCallback onRefresh;
-  final VoidCallback onSelectDate;
+  final ValueChanged<DateTime> onDateSelected;
   final Future<void> Function(AttendanceModel) onShowLocation;
 
   final bool isLoadingWorklogs;
   final List<WorklogModel> worklogs;
   final VoidCallback onAddWorklog;
 
-  /// Giờ server dạng text (HH:mm) + callback refresh giờ server
-  final String serverTimeText;
-  final VoidCallback onRefreshServerTime;
+  final bool showQuanSoReportChip;
+  final bool isLoadingQuanSoReport;
+  final VoidCallback? onQuanSoReport;
 
   const DailyInfoSection({
     super.key,
@@ -32,13 +34,14 @@ class DailyInfoSection extends StatefulWidget {
     required this.attendanceRecords,
     required this.selectedDate,
     required this.onRefresh,
-    required this.onSelectDate,
+    required this.onDateSelected,
     required this.onShowLocation,
     required this.isLoadingWorklogs,
     required this.worklogs,
     required this.onAddWorklog,
-    required this.serverTimeText,
-    required this.onRefreshServerTime,
+    required this.showQuanSoReportChip,
+    required this.isLoadingQuanSoReport,
+    this.onQuanSoReport,
   });
 
   @override
@@ -66,7 +69,7 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
     );
   }
 
-  /// HEADER: 2 dòng – Dòng 1: lời chào, Dòng 2: hàng chip (Refresh + Date + Time server)
+  /// HEADER: 2 dòng – Dòng 1: lời chào, Dòng 2: hàng chip.
   Widget _buildHeader(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -83,8 +86,10 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
               _buildRefreshChip(theme),
               const SizedBox(width: 8),
               _buildDateChip(theme),
-              const SizedBox(width: 8),
-              _buildServerTimeChip(theme),
+              if (widget.showQuanSoReportChip) ...[
+                const SizedBox(width: 8),
+                _buildQuanSoChip(theme),
+              ],
             ],
           ),
         ],
@@ -344,29 +349,6 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
     }
   }
 
-  /// Legend nhỏ minh hoạ màu + icon cho từng session (Sáng/Trưa/Ngoài giờ)
-  Widget _buildSessionLegendChip(ThemeData theme, String label, int sessionId) {
-    final Color color = _sessionColor(theme, sessionId);
-    final bool isSelected = _selectedSessionId == sessionId;
-    final Color iconColor = isSelected ? theme.colorScheme.onPrimary : color;
-
-    return SamcomChip(
-      label: label,
-      leading: Icon(_sessionIcon(sessionId), size: 16, color: iconColor),
-      onPressed: () {
-        setState(() {
-          _selectedSessionId = sessionId;
-        });
-      },
-      variant: isSelected
-          ? SamcomChipVariant.filled
-          : SamcomChipVariant.outlined,
-      color: color,
-      selected: isSelected,
-      dense: true,
-    );
-  }
-
   // 1. Widget Chip Refresh
   Widget _buildRefreshChip(ThemeData theme) {
     return SamcomChip(
@@ -380,32 +362,45 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
     );
   }
 
-  // 2. Widget Chip Ngày tháng (Dùng trên Header)
+  /// Đủ chỗ cho ngày `dd/MM/yyyy` trong chip.
+  static const double _dateChipWidth = 160;
+
+  // 2. Chọn ngày xem báo cáo chấm công (định dạng dd/MM/yyyy)
   Widget _buildDateChip(ThemeData theme) {
-    return SamcomChip(
-      label: DateFormat('dd/MM').format(widget.selectedDate),
-      leading: Icon(
-        Icons.calendar_today,
-        size: 16,
-        color: theme.colorScheme.onSurface,
+    return SizedBox(
+      width: _dateChipWidth,
+      child: DatePickerField(
+        compact: true,
+        mode: DatePickerFieldMode.single,
+        selectedDate: widget.selectedDate,
+        dialogTitle: 'Chọn ngày',
+        dialogSubtitle: 'Xem lịch sử chấm công và công việc theo ngày',
+        onDateChanged: widget.onDateSelected,
       ),
-      onPressed: widget.onSelectDate,
-      variant: SamcomChipVariant.outlined,
-      color: theme.dividerColor,
-      dense: true,
     );
   }
 
-  // 3. Widget Chip Time server (HH:mm)
-  Widget _buildServerTimeChip(ThemeData theme) {
+  // 3. Widget Chip Quân số (thay thế hoàn toàn chip giờ server)
+  Widget _buildQuanSoChip(ThemeData theme) {
+    final Widget leading = widget.isLoadingQuanSoReport
+        ? SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: theme.colorScheme.primary,
+            ),
+          )
+        : Icon(
+            Icons.groups_outlined,
+            size: 18,
+            color: theme.colorScheme.primary,
+          );
+
     return SamcomChip(
-      label: widget.serverTimeText,
-      leading: Icon(
-        Icons.access_time,
-        size: 18,
-        color: theme.colorScheme.primary,
-      ),
-      onPressed: widget.onRefreshServerTime,
+      label: 'QUÂN SỐ',
+      leading: leading,
+      onPressed: widget.isLoadingQuanSoReport ? null : widget.onQuanSoReport,
       variant: SamcomChipVariant.outlined,
       color: theme.dividerColor,
       dense: true,
@@ -448,7 +443,7 @@ class GreetingSection extends StatelessWidget {
       child: RichText(
         text: TextSpan(
           style: TextStyle(
-            fontFamily: 'Overpass',
+            fontFamily: FontFamily.overpass,
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurface,
@@ -458,7 +453,7 @@ class GreetingSection extends StatelessWidget {
             TextSpan(
               text: user.name,
               style: TextStyle(
-                fontFamily: 'Overpass',
+                fontFamily: FontFamily.overpass,
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
               ),

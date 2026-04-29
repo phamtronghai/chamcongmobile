@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
-import 'package:attendancebyface/widgets/leave_request_tile.dart';
-import 'package:attendancebyface/widgets/leave_request_detail_sheet.dart';
+import 'package:attendancebyface/screens/leaveScreens/widgets/leave_request_tile.dart';
+import 'package:attendancebyface/screens/leaveScreens/widgets/leave_request_detail_sheet.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
@@ -32,9 +34,10 @@ class LeaveScreenApprovalTab extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(message),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                CustomButton(
+                  text: 'Thử lại',
+                  width: 140,
                   onPressed: () => context.read<UserCubit>().refresh(),
-                  child: const Text('Thử lại'),
                 ),
               ],
             ),
@@ -571,7 +574,10 @@ class _LeaveScreenApprovalTabState
                     padding: const EdgeInsets.all(16),
                     children: [
                       const SizedBox(height: 16),
-                      _buildEmptyState(emptyMsg, emptyIcon),
+                      BaseEmptyState(
+                        icon: emptyIcon,
+                        title: emptyMsg,
+                      ),
                     ],
                   )
                 : ListView.builder(
@@ -590,39 +596,6 @@ class _LeaveScreenApprovalTabState
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildEmptyState(String message, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 }

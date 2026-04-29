@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:attendancebyface/core/cubits/user_cubit.dart';
-import 'package:attendancebyface/core/cubits/user_state.dart';
-import 'package:attendancebyface/core/widgets/gradient_ring.dart';
-import 'package:attendancebyface/core/app_router.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   const CustomAppBar({
@@ -16,8 +11,6 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.tabController,
     this.onTabChanged,
     this.showTabs = false,
-    this.avatarUrl,
-    this.showAvatar = true,
     this.automaticallyImplyLeading = true,
     this.leading,
   });
@@ -30,8 +23,6 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final TabController? tabController;
   final ValueChanged<int>? onTabChanged;
   final bool showTabs;
-  final String? avatarUrl;
-  final bool showAvatar;
   final bool automaticallyImplyLeading;
   final Widget? leading;
 
@@ -74,56 +65,7 @@ class CustomAppBarState extends State<CustomAppBar> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        // // Nút thông báo
-        // if (widget.onNotificationTap != null)
-        //   CustomButton(
-        //     text: '',
-        //     onPressed: widget.onNotificationTap,
-        //     buttonType: ButtonType.circular,
-        //     icon: Icons.notifications_outlined,
-        //     tooltip: 'Thông báo',
-        //   ),
-        // Nút avatar (chỉ hiển thị khi showAvatar = true)
-        if (widget.showAvatar)
-          GestureDetector(
-            onTap: () {
-              AppRouter.goToPersonalInfo(context);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: BlocBuilder<UserCubit, UserState>(
-                builder: (context, state) {
-                  String? imageUrl = widget.avatarUrl;
-                  if ((imageUrl == null || imageUrl.isEmpty) &&
-                      state is UserLoaded) {
-                    imageUrl = state.user.image;
-                  }
-
-                  return GradientAvatarRing(
-                    size: 48,
-                    outerPadding: 2,
-                    innerPadding: 1,
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
-                          ? NetworkImage(imageUrl)
-                          : null,
-                      child: (imageUrl == null || imageUrl.isEmpty)
-                          ? const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 18,
-                            )
-                          : null,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-      ],
+      actions: const [],
       bottom: widget.showTabs && widget.tabs != null
           ? TabBar(
               controller: widget.tabController,

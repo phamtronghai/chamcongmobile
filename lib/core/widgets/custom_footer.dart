@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/gen/assets.gen.dart';
 
 class CustomFooter extends StatelessWidget {
   const CustomFooter({super.key});
@@ -11,12 +12,13 @@ class CustomFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        Image.asset('assets/images/logoToNCPTKHCN.png', height: 60),
+        Assets.images.logoToNCPTKHCN.image(height: 60),
         const SizedBox(height: 16),
         Text.rich(
           TextSpan(
             children: [
-              const TextSpan(text: '© 2025 Bản quyền thuộc về '),
+              TextSpan(text: '© ${DateTime.now().year}. Bản quyền thuộc về '),
+
               TextSpan(
                 text: 'SAMCOM',
                 style: TextStyle(

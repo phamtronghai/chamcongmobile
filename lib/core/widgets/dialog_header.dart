@@ -3,77 +3,87 @@ import 'package:flutter/material.dart';
 class DialogHeader extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
+
+  /// Null hoặc rỗng: không hiển thị dòng phụ.
+  final String? subtitle;
   final Color? primaryColor;
 
   const DialogHeader({
     super.key,
     required this.icon,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.primaryColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectivePrimaryColor = primaryColor ?? theme.colorScheme.primary;
+    final colorScheme = theme.colorScheme;
+    final effectivePrimaryColor = primaryColor ?? colorScheme.primary;
+
+    final headerBg = colorScheme.surfaceContainerHighest.withValues(
+      alpha: 0.55,
+    );
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            effectivePrimaryColor.withValues(alpha: 0.1),
-            effectivePrimaryColor.withValues(alpha: 0.05),
-          ],
-        ),
+        color: headerBg,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
         ),
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.18),
+          ),
+        ),
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon với background circle
-          Container(
-            width: 80,
-            height: 80,
+          DecoratedBox(
             decoration: BoxDecoration(
-              color: effectivePrimaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: effectivePrimaryColor.withValues(alpha: 0.3),
-                width: 2,
-              ),
+              color: effectivePrimaryColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 40, color: effectivePrimaryColor),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(icon, size: 22, color: effectivePrimaryColor),
+            ),
           ),
-          const SizedBox(height: 16),
-
-          // Title
-          Text(
-            title,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: effectivePrimaryColor,
-              letterSpacing: 0.5,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (subtitle != null && subtitle!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.65),
+                      height: 1.25,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 8),
-
-          // Subtitle
-          Text(
-            subtitle,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),

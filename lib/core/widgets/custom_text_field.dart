@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 
 enum CustomTextFieldType { normal, password, email, number, phone, multiline }
 
@@ -173,12 +174,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
         prefixIcon: widget.prefixIcon != null
-            ? IconButton(
-                icon: Icon(
-                  widget.prefixIcon,
-                  color: theme.colorScheme.primary,
-                  size: 22,
-                ),
+            ? CustomButton(
+                text: 'prefix',
+                icon: widget.prefixIcon,
+                tooltip: 'prefix icon',
+                variant: CustomButtonVariant.iconCircle,
+                width: 32,
+                height: 32,
+                iconCircleShowShadow: false,
+                backgroundColor: Colors.transparent,
+                textColor: theme.colorScheme.primary,
                 onPressed: widget.onPrefixIconPressed,
               )
             : widget.prefix,
@@ -225,14 +230,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   Widget? _buildSuffixIcon() {
     if (widget.fieldType == CustomTextFieldType.password) {
-      return IconButton(
-        icon: Icon(
-          _obscureText
-              ? Icons.visibility_outlined
-              : Icons.visibility_off_outlined,
-          color: Theme.of(context).colorScheme.primary,
-          size: 22,
-        ),
+      return CustomButton(
+        text: 'toggle password',
+        icon: _obscureText
+            ? Icons.visibility_outlined
+            : Icons.visibility_off_outlined,
+        tooltip: 'Ẩn/hiện mật khẩu',
+        variant: CustomButtonVariant.iconCircle,
+        width: 32,
+        height: 32,
+        iconCircleShowShadow: false,
+        backgroundColor: Colors.transparent,
+        textColor: Theme.of(context).colorScheme.primary,
         onPressed: () {
           setState(() {
             _obscureText = !_obscureText;
@@ -240,12 +249,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
         },
       );
     } else if (widget.suffixIcon != null) {
-      return IconButton(
-        icon: Icon(
-          widget.suffixIcon,
-          color: Theme.of(context).colorScheme.primary,
-          size: 22,
-        ),
+      return CustomButton(
+        text: 'suffix',
+        icon: widget.suffixIcon,
+        tooltip: 'suffix icon',
+        variant: CustomButtonVariant.iconCircle,
+        width: 32,
+        height: 32,
+        iconCircleShowShadow: false,
+        backgroundColor: Colors.transparent,
+        textColor: Theme.of(context).colorScheme.primary,
         onPressed: widget.onSuffixIconPressed,
       );
     } else {

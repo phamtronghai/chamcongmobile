@@ -1,14 +1,16 @@
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:attendancebyface/screens/attendance_screen.dart';
-import 'package:attendancebyface/screens/settings_screen.dart';
+import 'package:attendancebyface/screens/attendance/attendance_screen.dart';
+import 'package:attendancebyface/screens/personal_info_screen.dart';
 import 'package:attendancebyface/screens/leaveScreens/leave_screen.dart';
 import 'package:attendancebyface/screens/trucBan/truc_ban_screen.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
-import 'package:circle_nav_bar/circle_nav_bar.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:liquid_glass_navbar/liquid_glass_navbar.dart';
+import 'package:attendancebyface/widgets/nav_bar_layout.dart';
 
 class CustomNavBar extends StatefulWidget {
   final UserModel user;
@@ -36,13 +38,13 @@ class _CustomNavBarState extends State<CustomNavBar> {
 
     // Số screens hiện tại
     const int screenCount = 4;
-    
+
     // Đảm bảo initialIndex trong khoảng hợp lệ (0 đến screenCount-1)
     int initialIndex = widget.initialIndex ?? _defaultPageIndex;
     if (initialIndex >= screenCount) {
       initialIndex = _defaultPageIndex;
     }
-    
+
     _currentIndex = initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
 
@@ -59,7 +61,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
       const LeaveScreen(),
       const AttendanceScreen(),
       TrucBanScreen(isActive: _currentIndex == 2),
-      const SettingsScreen(),
+      const PersonalInfoScreen(),
     ];
   }
 
@@ -84,8 +86,11 @@ class _CustomNavBarState extends State<CustomNavBar> {
             isLoading: true,
             child: Scaffold(body: Center(child: CircularProgressIndicator())),
           ),
-          loaded: (user) {
+          loaded: (_) {
             final screens = _buildScreens();
+            const double floatingBottomInset = 0;
+            const double floatingHorizontalInset = 16;
+            final bottomSafe = MediaQuery.of(context).padding.bottom;
             return Scaffold(
               body: PageView(
                 controller: _pageController,
@@ -93,134 +98,61 @@ class _CustomNavBarState extends State<CustomNavBar> {
                 children: screens,
               ),
               extendBody: true,
-              bottomNavigationBar: CircleNavBar(
-                activeIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() => _currentIndex = index);
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                padding: const EdgeInsets.all(16),
-                cornerRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                  bottomRight: Radius.circular(24),
-                  bottomLeft: Radius.circular(24),
+              bottomNavigationBar: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  floatingHorizontalInset,
+                  0,
+                  floatingHorizontalInset,
+                  bottomSafe + floatingBottomInset,
                 ),
-                shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
-                elevation: 10,
-                color: colorScheme.surface,
-                gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  colors: [
-                    colorScheme.surfaceContainer,
-                    colorScheme.surfaceContainerHighest,
-                  ],
-                ),
-                circleGradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  colors: [
-                    colorScheme.primary,
-                    colorScheme.primary.withValues(alpha: 0.8),
-                  ],
-                ),
-                activeIcons: [
-                  Icon(Icons.event_note_rounded, color: colorScheme.onPrimary),
-                  Container(
-                    decoration: const BoxDecoration(color: Colors.transparent),
-                    child: Image.asset(
-                      'assets/images/logoToNCPTKHCN.png',
-                      width: 24,
-                      height: 24,
-                      fit: BoxFit.contain,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  clipBehavior: Clip.none,
+                  children: [
+                    LiquidBottomNavBar(
+                      height: kLiquidBottomNavBarHeight,
+                      currentIndex: _currentIndex,
+                      onTap: (index) {
+                        setState(() => _currentIndex = index);
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      items: const [
+                        LiquidGlassNavItem(
+                          icon: Icons.event_note_outlined,
+                          label: 'Nghỉ phép',
+                        ),
+                        LiquidGlassNavItem(
+                          icon: Icons.timer,
+                          label: 'Chấm công',
+                        ),
+                        LiquidGlassNavItem(
+                          icon: Icons.security_outlined,
+                          label: 'Trực ban',
+                        ),
+                        LiquidGlassNavItem(
+                          icon: Icons.person_outline,
+                          label: 'Cá nhân',
+                        ),
+                      ],
+                      backgroundColor: colorScheme.surface,
+                      itemColor: colorScheme.onSurfaceVariant,
+                      bubbleColor: colorScheme.primary,
+                      backgroundOpacity: 0.18,
+                      bubbleOpacity: 0.28,
+                      blurStrength: 12,
+                      borderRadius: 36,
+                      iconSize: 20,
+                      fontSize: 10,
+                      elevation: 14,
+                      bottomPadding: 0,
+                      horizontalPadding: 0,
                     ),
-                  ),
-                  Icon(Icons.security, color: colorScheme.onPrimary),
-                  Icon(Icons.settings, color: colorScheme.onPrimary),
-                ],
-                inactiveIcons: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.event_note_outlined,
-                        size: 20,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Nghỉ phép',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.timer,
-                        size: 20,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Chấm công',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.security_outlined,
-                        size: 20,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Trực ban',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.settings_outlined,
-                        size: 20,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Cài đặt',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -242,11 +174,12 @@ class _CustomNavBarState extends State<CustomNavBar> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
+                  CustomButton(
+                    text: 'Thử lại',
+                    width: 140,
                     onPressed: () {
                       context.read<UserCubit>().refresh();
                     },
-                    child: const Text('Thử lại'),
                   ),
                 ],
               ),

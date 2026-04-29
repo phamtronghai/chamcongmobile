@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
-import 'package:attendancebyface/core/widgets/date_picker_dialog.dart';
+import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 
 // ================== DIALOG FORMS ==================
 
@@ -63,17 +63,10 @@ class _DangKyRaNgoaiDialogFormState extends State<DangKyRaNgoaiDialogForm> {
             ],
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          CustomTextField(
             controller: _lyDoController,
-            decoration: InputDecoration(
-              labelText: 'Lý do *',
-              prefixIcon: const Icon(Icons.note_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(
-                  ColorConstants.defaultBorderRadius,
-                ),
-              ),
-            ),
+            label: 'Lý do *',
+            prefixIcon: Icons.note_outlined,
             maxLines: 2,
             validator: (v) =>
                 (v == null || v.isEmpty) ? 'Vui lòng nhập lý do' : null,
@@ -206,54 +199,36 @@ class _DangKyKhachDialogFormState extends State<DangKyKhachDialogForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildDateField(
+          DatePickerField(
+            mode: DatePickerFieldMode.single,
+            selectedDate: _ngayDangKy,
             label: 'Ngày đăng ký',
-            date: _ngayDangKy,
-            onTap: _selectDate,
+            dialogTitle: 'Chọn ngày',
+            dialogSubtitle: 'Ngày khách đến làm việc',
+            onDateChanged: (d) => setState(() => _ngayDangKy = d),
           ),
           const SizedBox(height: 12),
-          TextFormField(
+          CustomTextField(
             controller: _hoTenController,
-            decoration: InputDecoration(
-              labelText: 'Họ tên khách *',
-              prefixIcon: const Icon(Icons.person_outline),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(
-                  ColorConstants.defaultBorderRadius,
-                ),
-              ),
-            ),
+            label: 'Họ tên khách *',
+            prefixIcon: Icons.person_outline,
             validator: (v) =>
                 (v == null || v.isEmpty) ? 'Vui lòng nhập họ tên' : null,
           ),
           const SizedBox(height: 12),
-          TextFormField(
+          CustomTextField(
             controller: _cccdController,
-            decoration: InputDecoration(
-              labelText: 'Số căn cước *',
-              prefixIcon: const Icon(Icons.badge_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(
-                  ColorConstants.defaultBorderRadius,
-                ),
-              ),
-            ),
+            label: 'Số căn cước *',
+            prefixIcon: Icons.badge_outlined,
             keyboardType: TextInputType.number,
             validator: (v) =>
                 (v == null || v.isEmpty) ? 'Vui lòng nhập số căn cước' : null,
           ),
           const SizedBox(height: 12),
-          TextFormField(
+          CustomTextField(
             controller: _bienSoController,
-            decoration: InputDecoration(
-              labelText: 'Biển số xe *',
-              prefixIcon: const Icon(Icons.directions_car_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(
-                  ColorConstants.defaultBorderRadius,
-                ),
-              ),
-            ),
+            label: 'Biển số xe *',
+            prefixIcon: Icons.directions_car_outlined,
             textCapitalization: TextCapitalization.characters,
             validator: (v) =>
                 (v == null || v.isEmpty) ? 'Vui lòng nhập biển số xe' : null,
@@ -307,41 +282,4 @@ class _DangKyKhachDialogFormState extends State<DangKyKhachDialogForm> {
     );
   }
 
-  Widget _buildDateField({
-    required String label,
-    required DateTime date,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(Icons.calendar_today),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(
-              ColorConstants.defaultBorderRadius,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-        ),
-        child: Text(
-          DateFormat('dd/MM/yyyy').format(date),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _selectDate() async {
-    AppDatePickerDialog.show(
-      context,
-      initialDate: _ngayDangKy,
-      onDateSelected: (picked) => setState(() => _ngayDangKy = picked),
-    );
-  }
 }
