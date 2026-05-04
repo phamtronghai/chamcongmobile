@@ -1,9 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:attendancebyface/core/app_router.dart';
+import 'package:attendancebyface/core/cubits/user_cubit.dart';
+import 'package:attendancebyface/core/database/app_database.dart';
+import 'package:attendancebyface/core/network/error_interceptor.dart';
+import 'package:attendancebyface/models/notification_item.dart';
+import 'package:attendancebyface/models/user_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get_it/get_it.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:attendancebyface/core/repositories/device_repository.dart';
@@ -66,8 +75,19 @@ class NotificationService {
 
     await _localNotificationsPlugin.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {},
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.notificationResponseType ==
+            NotificationResponseType.selectedNotification) {
+          openNotificationScreenFromTap();
+        }
+      },
     );
+
+    final NotificationAppLaunchDetails? launchDetails =
+        await _localNotificationsPlugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      openNotificationScreenFromTap();
+    }
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       _androidChannelId,
@@ -116,51 +136,111 @@ class NotificationService {
       final RemoteNotification? notification = message.notification;
       final AndroidNotification? android = notification?.android;
 
+      late final String title;
+      late final String body;
+      late final int localNotifId;
+
       // Fallback: Hiển thị local notification cho TẤT CẢ message types
       // để dễ debug và kiểm thử trên iOS
       if (notification != null) {
-        // Có notification payload - hiển thị trực tiếp
-        await _showLocalNotification(
-          id: notification.hashCode,
-          title: notification.title ?? 'Thông báo',
-          body: notification.body ?? '',
-          payload: message.data.isNotEmpty ? message.data.toString() : null,
-        );
+        title = notification.title ?? 'Thông báo';
+        body = notification.body ?? '';
+        localNotifId = notification.hashCode;
       } else if (android != null) {
-        // Android specific notification
-        await _showLocalNotification(
-          id: android.hashCode,
-          title: android.channelId ?? 'Thông báo',
-          body: message.data.toString(),
-          payload: message.data.isNotEmpty ? message.data.toString() : null,
-        );
+        title = android.channelId ?? 'Thông báo';
+        body = message.data.toString();
+        localNotifId = android.hashCode;
       } else {
-        // Data-only message hoặc message không có notification payload
-        // Fallback: Tạo local notification từ data hoặc messageId
-        final String title =
+        title =
             message.data['title'] ?? message.data['message'] ?? 'Thông báo mới';
-        final String body =
+        body =
             message.data['body'] ??
             message.data['content'] ??
             message.data.toString();
-
-        await _showLocalNotification(
-          id: message.hashCode,
-          title: title,
-          body: body,
-          payload: message.data.isNotEmpty ? message.data.toString() : null,
-        );
+        localNotifId = message.hashCode;
       }
+
+      await _persistForegroundPush(message: message, title: title, body: body);
+
+      await _showLocalNotification(
+        id: localNotifId,
+        title: title,
+        body: body,
+        payload: message.data.isNotEmpty ? message.data.toString() : null,
+      );
     }, onError: (error) {});
 
-    // Opened from background
+    // Opened from background (user chạm thông báo / màn khóa khi app nền)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // TODO: route based on message.data if needed
+      openNotificationScreenFromTap();
     }, onError: (error) {});
 
-    // App opened from a terminated state via notification
+    // App cold start sau khi user chạm thông báo FCM
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {}
+    if (initialMessage != null) {
+      openNotificationScreenFromTap();
+    }
+  }
+
+  /// Mở [NotificationScreen] (`/notification`) sau khi Navigator + UserCubit sẵn sàng.
+  void openNotificationScreenFromTap() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? ctx =
+          ErrorInterceptor.navigatorKey.currentContext;
+      if (ctx == null) {
+        debugPrint('Mở thông báo: Navigator chưa gắn context');
+        return;
+      }
+      UserModel? user;
+      try {
+        user = ctx.read<UserCubit>().currentUser;
+      } catch (e) {
+        debugPrint('Mở thông báo: không đọc UserCubit: $e');
+        return;
+      }
+      if (user == null) {
+        AppRouter.router.go('/');
+        return;
+      }
+      AppRouter.router.go('/notification', extra: user);
+    });
+  }
+
+  static int _notificationTypeIndexFromData(Map<String, dynamic> data) {
+    final t = data['type']?.toString().toLowerCase();
+    return switch (t) {
+      'success' => NotificationType.success.index,
+      'warning' => NotificationType.warning.index,
+      'error' => NotificationType.error.index,
+      'info' => NotificationType.info.index,
+      _ => NotificationType.info.index,
+    };
+  }
+
+  static String _stableNotificationId(RemoteMessage message) {
+    final mid = message.messageId;
+    if (mid != null && mid.isNotEmpty) return mid;
+    return 'gen_${message.hashCode}_${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  Future<void> _persistForegroundPush({
+    required RemoteMessage message,
+    required String title,
+    required String body,
+  }) async {
+    try {
+      final db = GetIt.instance<AppDatabase>();
+      final data = Map<String, dynamic>.from(message.data);
+      await db.upsertPushNotification(
+        id: _stableNotificationId(message),
+        title: title,
+        body: body,
+        typeIndex: _notificationTypeIndexFromData(data),
+        rawData: data.isNotEmpty ? jsonEncode(data) : null,
+      );
+    } catch (e, st) {
+      debugPrint('Lưu thông báo local thất bại: $e\n$st');
+    }
   }
 
   Future<void> _showLocalNotification({

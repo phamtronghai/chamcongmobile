@@ -51,6 +51,10 @@ dependencies:
   flutter_slidable: ^4.0.3
   syncfusion_localizations: ^31.2.18
   get_it: ^9.2.1
+  drift: ^2.28.1
+  drift_flutter: ^0.2.7
+  sqlite3_flutter_libs: ^0.5.40
+  path: ^1.9.1
   # flutter_native_splash moved to dev_dependencies
 
 dev_dependencies:
@@ -64,6 +68,7 @@ dev_dependencies:
   json_annotation: ^4.9.0
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
+  drift_dev: ^2.28.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

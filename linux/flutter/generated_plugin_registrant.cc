@@ -10,6 +10,7 @@
 #include <flutter_secure_storage_linux/flutter_secure_storage_linux_plugin.h>
 #include <media_kit_libs_linux/media_kit_libs_linux_plugin.h>
 #include <media_kit_video/media_kit_video_plugin.h>
+#include <sqlite3_flutter_libs/sqlite3_flutter_libs_plugin.h>
 #include <syncfusion_pdfviewer_linux/syncfusion_pdfviewer_linux_plugin.h>
 #include <url_launcher_linux/url_launcher_plugin.h>
 
@@ -26,6 +27,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) media_kit_video_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "MediaKitVideoPlugin");
   media_kit_video_plugin_register_with_registrar(media_kit_video_registrar);
+  g_autoptr(FlPluginRegistrar) sqlite3_flutter_libs_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "Sqlite3FlutterLibsPlugin");
+  sqlite3_flutter_libs_plugin_register_with_registrar(sqlite3_flutter_libs_registrar);
   g_autoptr(FlPluginRegistrar) syncfusion_pdfviewer_linux_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "SyncfusionPdfviewerLinuxPlugin");
   syncfusion_pdfviewer_linux_plugin_register_with_registrar(syncfusion_pdfviewer_linux_registrar);

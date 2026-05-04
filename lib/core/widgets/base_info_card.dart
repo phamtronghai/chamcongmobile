@@ -4,6 +4,8 @@ import 'package:attendancebyface/core/app_theme.dart';
 /// Khung card list item dùng chung (Trực ban, Nghỉ phép, …).
 class BaseInfoCard extends StatelessWidget {
   final String title;
+  /// Hiển thị cùng hàng với [title] (bên phải, trước badge highlight).
+  final Widget? titleTrailing;
   final Widget badge;
   final String? highlightText;
   final Widget? subInfoWidget;
@@ -16,6 +18,7 @@ class BaseInfoCard extends StatelessWidget {
   const BaseInfoCard({
     super.key,
     required this.title,
+    this.titleTrailing,
     required this.badge,
     this.highlightText,
     this.subInfoWidget,
@@ -73,6 +76,10 @@ class BaseInfoCard extends StatelessWidget {
                             maxLines: 2,
                           ),
                         ),
+                        if (titleTrailing != null) ...[
+                          const SizedBox(width: 8),
+                          titleTrailing!,
+                        ],
                         if (highlightText != null && highlightText!.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(

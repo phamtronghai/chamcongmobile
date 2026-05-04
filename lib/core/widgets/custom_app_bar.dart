@@ -1,4 +1,6 @@
+import 'package:attendancebyface/core/database/app_database.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   const CustomAppBar({
@@ -39,6 +41,41 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class CustomAppBarState extends State<CustomAppBar> {
+  Widget _buildNotificationAction() {
+    final onTap = widget.onNotificationTap!;
+
+    Widget iconButton() => IconButton(
+          tooltip: 'Thông báo',
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+          onPressed: onTap,
+        );
+
+    if (!GetIt.instance.isRegistered<AppDatabase>()) {
+      return iconButton();
+    }
+
+    return StreamBuilder<int>(
+      stream: GetIt.instance<AppDatabase>().watchUnreadNotificationCount(),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        final label = count > 99 ? '99+' : '$count';
+        return Badge(
+          isLabelVisible: count > 0,
+          backgroundColor: Colors.redAccent,
+          textColor: Colors.white,
+          label: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          child: iconButton(),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -66,12 +103,7 @@ class CustomAppBarState extends State<CustomAppBar> {
       ),
       centerTitle: true,
       actions: [
-        if (widget.onNotificationTap != null)
-          IconButton(
-            tooltip: 'Thông báo',
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: widget.onNotificationTap,
-          ),
+        if (widget.onNotificationTap != null) _buildNotificationAction(),
       ],
       bottom: widget.showTabs && widget.tabs != null
           ? TabBar(
