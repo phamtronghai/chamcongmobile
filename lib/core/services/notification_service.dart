@@ -16,19 +16,122 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:attendancebyface/core/repositories/device_repository.dart';
+import 'package:attendancebyface/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+// --- Persist FCM (foreground / background / mở từ notification) ---
+
+class _ResolvedPush {
+  const _ResolvedPush(this.title, this.body, this.localNotifId);
+  final String title;
+  final String body;
+  final int localNotifId;
+}
+
+_ResolvedPush _resolvePushDisplay(RemoteMessage message) {
+  final RemoteNotification? notification = message.notification;
+  final AndroidNotification? android = notification?.android;
+
+  late final String title;
+  late final String body;
+  late final int localNotifId;
+
+  if (notification != null) {
+    title = notification.title ?? 'Thông báo';
+    body = notification.body ?? '';
+    localNotifId = notification.hashCode;
+  } else if (android != null) {
+    title = android.channelId ?? 'Thông báo';
+    body = message.data.toString();
+    localNotifId = android.hashCode;
+  } else {
+    title =
+        message.data['title'] ?? message.data['message'] ?? 'Thông báo mới';
+    body =
+        message.data['body'] ??
+        message.data['content'] ??
+        message.data.toString();
+    localNotifId = message.hashCode;
+  }
+  return _ResolvedPush(title, body, localNotifId);
+}
+
+int _pushTypeIndexFromData(Map<String, dynamic> data) {
+  final t = data['type']?.toString().toLowerCase();
+  return switch (t) {
+    'success' => NotificationType.success.index,
+    'warning' => NotificationType.warning.index,
+    'error' => NotificationType.error.index,
+    'info' => NotificationType.info.index,
+    _ => NotificationType.info.index,
+  };
+}
+
+String _stablePushMessageId(RemoteMessage message) {
+  final mid = message.messageId;
+  if (mid != null && mid.isNotEmpty) return mid;
+  return 'gen_${message.hashCode}_${DateTime.now().microsecondsSinceEpoch}';
+}
+
+Future<void> _persistRemoteMessageToDrift(
+  RemoteMessage message,
+  AppDatabase db,
+) async {
+  final r = _resolvePushDisplay(message);
+  final data = Map<String, dynamic>.from(message.data);
+  await db.upsertPushNotification(
+    id: _stablePushMessageId(message),
+    title: r.title,
+    body: r.body,
+    typeIndex: _pushTypeIndexFromData(data),
+    rawData: data.isNotEmpty ? jsonEncode(data) : null,
+  );
+}
+
+Future<void> _persistRemoteMessageWhenDbReady(RemoteMessage message) async {
+  if (!GetIt.instance.isRegistered<AppDatabase>()) return;
+  try {
+    await _persistRemoteMessageToDrift(
+      message,
+      GetIt.instance<AppDatabase>(),
+    );
+  } catch (e, st) {
+    debugPrint('Lưu thông báo local thất bại: $e\n$st');
+  }
+}
 
 /// Top-level background handler for Firebase Messaging.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Khởi tạo Firebase nếu cần
+  WidgetsFlutterBinding.ensureInitialized();
   try {
-    // Intentionally minimal; initialize services here if needed in the future.
-  } catch (e) {
-    debugPrint('Lỗi khi xử lý background message: $e');
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e, st) {
+    debugPrint('FCM background: Firebase init: $e\n$st');
+  }
+
+  final AppDatabase db = AppDatabase();
+  try {
+    await _persistRemoteMessageToDrift(message, db);
+  } catch (e, st) {
+    debugPrint('FCM background: lưu Drift thất bại: $e\n$st');
+  } finally {
+    await db.close();
   }
 }
 
 /// Service to manage push notifications (FCM) and local notifications.
+///
+/// Thông báo FCM được lưu Drift khi: app foreground (`onMessage`), nền
+/// (`firebaseMessagingBackgroundHandler` — Android/data message), mở app từ
+/// push (`onMessageOpenedApp`, `getInitialMessage`).
+///
+/// Trạng thái “đã/chưa đăng ký” theo FCM token trên UI dùng [SamcomChip]
+/// tại [NotificationScreen] (`lib/screens/notification_screen.dart`).
 class NotificationService {
   NotificationService._internal();
 
@@ -133,51 +236,28 @@ class NotificationService {
 
     // Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      final RemoteNotification? notification = message.notification;
-      final AndroidNotification? android = notification?.android;
+      final r = _resolvePushDisplay(message);
 
-      late final String title;
-      late final String body;
-      late final int localNotifId;
-
-      // Fallback: Hiển thị local notification cho TẤT CẢ message types
-      // để dễ debug và kiểm thử trên iOS
-      if (notification != null) {
-        title = notification.title ?? 'Thông báo';
-        body = notification.body ?? '';
-        localNotifId = notification.hashCode;
-      } else if (android != null) {
-        title = android.channelId ?? 'Thông báo';
-        body = message.data.toString();
-        localNotifId = android.hashCode;
-      } else {
-        title =
-            message.data['title'] ?? message.data['message'] ?? 'Thông báo mới';
-        body =
-            message.data['body'] ??
-            message.data['content'] ??
-            message.data.toString();
-        localNotifId = message.hashCode;
-      }
-
-      await _persistForegroundPush(message: message, title: title, body: body);
+      await _persistRemoteMessageWhenDbReady(message);
 
       await _showLocalNotification(
-        id: localNotifId,
-        title: title,
-        body: body,
+        id: r.localNotifId,
+        title: r.title,
+        body: r.body,
         payload: message.data.isNotEmpty ? message.data.toString() : null,
       );
     }, onError: (error) {});
 
-    // Opened from background (user chạm thông báo / màn khóa khi app nền)
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    // Mở app từ thông báo (nền / màn khóa): lưu Drift rồi điều hướng
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      await _persistRemoteMessageWhenDbReady(message);
       openNotificationScreenFromTap();
     }, onError: (error) {});
 
-    // App cold start sau khi user chạm thông báo FCM
+    // Cold start sau khi user chạm thông báo FCM
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
+      await _persistRemoteMessageWhenDbReady(initialMessage);
       openNotificationScreenFromTap();
     }
   }
@@ -204,43 +284,6 @@ class NotificationService {
       }
       AppRouter.router.go('/notification', extra: user);
     });
-  }
-
-  static int _notificationTypeIndexFromData(Map<String, dynamic> data) {
-    final t = data['type']?.toString().toLowerCase();
-    return switch (t) {
-      'success' => NotificationType.success.index,
-      'warning' => NotificationType.warning.index,
-      'error' => NotificationType.error.index,
-      'info' => NotificationType.info.index,
-      _ => NotificationType.info.index,
-    };
-  }
-
-  static String _stableNotificationId(RemoteMessage message) {
-    final mid = message.messageId;
-    if (mid != null && mid.isNotEmpty) return mid;
-    return 'gen_${message.hashCode}_${DateTime.now().microsecondsSinceEpoch}';
-  }
-
-  Future<void> _persistForegroundPush({
-    required RemoteMessage message,
-    required String title,
-    required String body,
-  }) async {
-    try {
-      final db = GetIt.instance<AppDatabase>();
-      final data = Map<String, dynamic>.from(message.data);
-      await db.upsertPushNotification(
-        id: _stableNotificationId(message),
-        title: title,
-        body: body,
-        typeIndex: _notificationTypeIndexFromData(data),
-        rawData: data.isNotEmpty ? jsonEncode(data) : null,
-      );
-    } catch (e, st) {
-      debugPrint('Lưu thông báo local thất bại: $e\n$st');
-    }
   }
 
   Future<void> _showLocalNotification({

@@ -52,16 +52,35 @@ class SamcomChip extends StatelessWidget {
         borderColor = Colors.transparent;
       }
     } else {
-      // outlined
-      backgroundColor = theme.colorScheme.surface;
-      textColor = theme.colorScheme.onSurface;
+      // outlined — nền tách khỏi scaffold, chữ tương phản (tránh ActionChip
+      // disabled dùng onSurface trùng nền trắng ở một số theme).
+      final bool lightBg = theme.brightness == Brightness.light;
+      backgroundColor = lightBg
+          ? const Color(0xFFF1F5F9)
+          : theme.colorScheme.surfaceContainerHighest;
+      textColor = lightBg
+          ? const Color(0xFF0F172A)
+          : theme.colorScheme.onSurface;
       borderColor = baseColor;
     }
 
-    final EdgeInsetsGeometry effectivePadding =
-        padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+    final EdgeInsetsGeometry effectivePadding = padding ??
+        EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: dense ? 4 : 6,
+        );
 
-    final Widget labelWidget = Row(
+    final TextStyle chipTextStyle = (theme.textTheme.bodyMedium ??
+            const TextStyle())
+        .copyWith(
+      color: textColor,
+      fontSize: 16,
+      fontWeight: FontWeight.bold,
+      height: 1.2,
+      leadingDistribution: TextLeadingDistribution.even,
+    );
+
+    final Widget labelRow = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (leading != null) ...[
@@ -70,24 +89,18 @@ class SamcomChip extends StatelessWidget {
         ],
         if (label.isNotEmpty)
           Flexible(
-            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: chipTextStyle,
+            ),
           ),
       ],
     );
 
-    return ActionChip(
-      onPressed: onPressed,
-      label: labelWidget,
-      backgroundColor: backgroundColor,
-      labelStyle: theme.textTheme.bodyMedium?.copyWith(
-        color: textColor,
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        height: 1.2,
-        leadingDistribution: TextLeadingDistribution.even,
-      ),
-      visualDensity: dense ? VisualDensity.compact : VisualDensity.standard,
-      padding: effectivePadding,
+    return Material(
+      color: backgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
@@ -95,6 +108,17 @@ class SamcomChip extends StatelessWidget {
           width: variant == SamcomChipVariant.outlined ? 1.5 : 0,
         ),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: onPressed == null
+          ? Padding(padding: effectivePadding, child: labelRow)
+          : InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: effectivePadding,
+                child: labelRow,
+              ),
+            ),
     );
   }
 }
