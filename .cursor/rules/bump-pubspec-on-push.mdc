@@ -1,0 +1,11 @@
+---
+description: Tăng version pubspec khi push lên GitHub
+alwaysApply: true
+---
+
+# Version trước khi push GitHub
+
+Mỗi lần **commit và push** code lên GitHub (nhánh `main` hoặc bất kỳ), **luôn** tăng trường `version` trong [`pubspec.yaml`](pubspec.yaml) (định dạng `x.y.z+build`, ví dụ `2.3.2+3` → `2.3.2+4` hoặc bump `x.y.z` khi release).
+
+- Chỉ sửa `pubspec.yaml` nếu user yêu cầu commit **chỉ** file đó; nếu không, bump version **cùng** các thay đổi khác trong cùng commit push.
+- Sau khi bump, chạy `dart pub get` nếu cần (thường không bắt buộc khi chỉ đổi version).
