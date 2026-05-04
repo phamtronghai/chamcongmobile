@@ -6,6 +6,9 @@ workflows:
       app_store_connect: ChamCong
     max_build_duration: 60
     environment:
+      # Import group biến Codemagic (ADMIN_PWD, MAPTILER_KEY, …) vào job build
+      groups:
+        - ChamCong
       flutter: stable
       xcode: latest
       cocoapods: default

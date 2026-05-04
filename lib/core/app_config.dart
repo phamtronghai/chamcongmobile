@@ -86,10 +86,4 @@ class AppConfig {
     'defaultBaseUrl': defaultBaseUrl,
     'isUsingDefault': isUsingDefaultUrl.toString(),
   };
-
-  /// Đường dẫn cửa hàng ứng dụng
-  static const String iosAppStoreUrl =
-      'https://apps.apple.com/vn/app/ch%E1%BA%A5m-c%C3%B4ng-b%E1%BA%B1ng-khu%C3%B4n-m%E1%BA%B7t/id6749215450?l=vi';
-  static const String androidPlayStoreUrl =
-      'https://play.google.com/store/apps/details?id=vn.com.samcom.attendancebyface';
 }

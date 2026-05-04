@@ -88,7 +88,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
           ),
           loaded: (_) {
             final screens = _buildScreens();
-            const double floatingBottomInset = 0;
+            const double floatingBottomInset = -20;
             const double floatingHorizontalInset = 16;
             final bottomSafe = MediaQuery.of(context).padding.bottom;
             return Scaffold(

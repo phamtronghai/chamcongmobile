@@ -65,7 +65,14 @@ class CustomAppBarState extends State<CustomAppBar> {
         ),
       ),
       centerTitle: true,
-      actions: const [],
+      actions: [
+        if (widget.onNotificationTap != null)
+          IconButton(
+            tooltip: 'Thông báo',
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+            onPressed: widget.onNotificationTap,
+          ),
+      ],
       bottom: widget.showTabs && widget.tabs != null
           ? TabBar(
               controller: widget.tabController,

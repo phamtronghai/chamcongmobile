@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 class ColorConstants {
   // Brand colors
-  static const Color primaryColor = Color(0xFF6B8E23);
-  static const Color accentColor = Color(0xFFFF8A65);
+  static const Color primaryColor = Color(0xFF4F46E5);
+  static const Color accentColor = Color(0xFF06B6D4);
 
   // Status colors
   static const Color successColor = Color(0xFF4CAF50);
@@ -148,7 +148,7 @@ class AppTheme {
         onPrimary: Colors.white,
         onSecondary: Colors.white,
       ),
-      scaffoldBackgroundColor: const Color(0xFFFFF3E0),
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       textTheme: _commonTextTheme.copyWith(
         bodyLarge: _commonTextTheme.bodyLarge?.copyWith(color: Colors.black),
         bodyMedium: _commonTextTheme.bodyMedium?.copyWith(
@@ -185,7 +185,7 @@ class AppTheme {
         onSecondary: Colors.white,
         onSurface: Colors.white,
       ),
-      scaffoldBackgroundColor: const Color(0xFF222222),
+      scaffoldBackgroundColor: const Color(0xFF0B1220),
       textTheme: _commonTextTheme.copyWith(
         bodyLarge: _commonTextTheme.bodyLarge?.copyWith(color: Colors.white),
         bodyMedium: _commonTextTheme.bodyMedium?.copyWith(

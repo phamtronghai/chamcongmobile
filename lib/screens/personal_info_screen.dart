@@ -407,6 +407,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         appBar: CustomAppBar(
           title: 'Thông tin cá nhân',
           automaticallyImplyLeading: false,
+          onNotificationTap: () =>
+              AppRouter.goToNotification(context, _user),
         ),
         body: SingleChildScrollView(
           child: Column(

@@ -8,7 +8,9 @@ import 'package:attendancebyface/screens/login_screen.dart';
 import 'package:attendancebyface/screens/register_face_screen.dart';
 import 'package:attendancebyface/screens/personal_info_screen.dart';
 import 'package:attendancebyface/screens/leaveScreens/leave_create_screen.dart';
+import 'package:attendancebyface/models/notification_item.dart';
 import 'package:attendancebyface/screens/notification_screen.dart';
+import 'package:attendancebyface/screens/notification_detail_screen.dart';
 import 'package:attendancebyface/screens/qr_scanner_screen.dart';
 import 'package:attendancebyface/screens/camera_screen.dart';
 import 'package:attendancebyface/screens/trucBan/truc_ban_screen.dart';
@@ -159,6 +161,22 @@ class AppRouter {
       ),
 
       GoRoute(
+        path: '/notification-detail',
+        name: 'notification-detail',
+        builder: (context, state) {
+          final item = state.extra as NotificationItem?;
+          if (item == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Lỗi: Không có dữ liệu thông báo'),
+              ),
+            );
+          }
+          return NotificationDetailScreen(notification: item);
+        },
+      ),
+
+      GoRoute(
         path: '/qr-scanner',
         name: 'qr-scanner',
         builder: (context, state) => const QRScannerScreen(),
@@ -261,6 +279,14 @@ class AppRouter {
   /// Navigate to notification
   static void goToNotification(BuildContext context, UserModel user) {
     context.go('/notification', extra: user);
+  }
+
+  /// Mở màn chi tiết một thông báo (push để còn nút quay lại).
+  static void goToNotificationDetail(
+    BuildContext context,
+    NotificationItem item,
+  ) {
+    context.push('/notification-detail', extra: item);
   }
 
   /// Navigate to QR scanner

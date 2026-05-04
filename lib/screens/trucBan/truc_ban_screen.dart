@@ -6,6 +6,7 @@ import 'package:attendancebyface/core/cubits/truc_ban_state.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
+import 'package:attendancebyface/core/app_router.dart';
 
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
@@ -102,6 +103,12 @@ class _TrucBanScreenState extends State<TrucBanScreen>
               ],
               tabController: _tabController,
               automaticallyImplyLeading: false,
+              onNotificationTap: () {
+                final user = context.read<UserCubit>().currentUser;
+                if (user != null) {
+                  AppRouter.goToNotification(context, user);
+                }
+              },
             ),
             body: BlocListener<TrucBanCubit, TrucBanState>(
               listener: _handleStateChange,

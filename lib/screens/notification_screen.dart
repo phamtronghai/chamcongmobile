@@ -1,7 +1,14 @@
+import 'dart:async';
+
 import 'package:attendancebyface/models/user_model.dart';
+import 'package:attendancebyface/models/notification_item.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
-// import 'package:attendancebyface/core/constants/color_constants.dart';
 
 class NotificationScreen extends StatefulWidget {
   final UserModel user;
@@ -21,7 +28,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       message: 'Đừng quên chấm công khi đến văn phòng',
       timestamp: DateTime.now().subtract(const Duration(days: 1)),
       type: NotificationType.info,
-      isRead: true,
+      isRead: false,
     ),
     NotificationItem(
       id: '3',
@@ -33,13 +40,247 @@ class _NotificationScreenState extends State<NotificationScreen> {
     ),
   ];
 
+  String? _fcmToken;
+  String? _apnsToken;
+  bool _tokensLoading = true;
+  String? _tokenLoadError;
+  StreamSubscription<String>? _fcmTokenRefreshSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTokens();
+    _fcmTokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen((
+      t,
+    ) {
+      if (mounted) setState(() => _fcmToken = t);
+    });
+  }
+
+  @override
+  void dispose() {
+    _fcmTokenRefreshSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadTokens() async {
+    setState(() {
+      _tokensLoading = true;
+      _tokenLoadError = null;
+    });
+    try {
+      final fcm = await FirebaseMessaging.instance.getToken();
+      String? apns;
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        apns = await FirebaseMessaging.instance.getAPNSToken();
+      }
+      if (!mounted) return;
+      setState(() {
+        _fcmToken = fcm;
+        _apnsToken = apns;
+        _tokensLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _tokenLoadError = e.toString();
+        _tokensLoading = false;
+      });
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await _loadTokens();
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  Future<void> _copyToClipboard(String label, String? value) async {
+    final text = value ?? '';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          text.isEmpty
+              ? 'Đã copy (rỗng) — $label'
+              : 'Đã sao chép $label',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  bool get _isApple =>
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
+
+  Widget _buildPushTokensSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    if (_tokenLoadError != null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: Text(
+          'Lỗi tải token: $_tokenLoadError',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colorScheme.error,
+          ),
+        ),
+      );
+    }
+
+    final fcmDisplay = _tokensLoading
+        ? 'Đang tải...'
+        : (_fcmToken ?? 'Chưa có');
+    final apnsDisplay = _tokensLoading
+        ? 'Đang tải...'
+        : (!_isApple
+              ? 'Không áp dụng (chỉ iOS/macOS)'
+              : (_apnsToken ?? 'Chưa có'));
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Token push (chạm để sao chép)',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildTokenCard(
+            label: 'FCM token',
+            display: fcmDisplay,
+            copyValue: _fcmToken,
+            enabled: !_tokensLoading,
+          ),
+          const SizedBox(height: 8),
+          _buildTokenCard(
+            label: 'APNs token',
+            display: apnsDisplay,
+            copyValue: _isApple ? _apnsToken : '',
+            enabled: !_tokensLoading,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTokenCard({
+    required String label,
+    required String display,
+    required String? copyValue,
+    required bool enabled,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: enabled
+            ? () => _copyToClipboard(label, copyValue)
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.copy_outlined,
+                    size: 18,
+                    color: enabled
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withValues(alpha: 0.38),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                display,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.85),
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onBack() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      // Mở bằng context.go('/notification', …) không có route để pop
+      context.go('/home', extra: widget.user);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Thông báo'),
-      body: _notifications.isEmpty
-          ? _buildEmptyState()
-          : _buildNotificationList(),
+      appBar: CustomAppBar(
+        title: 'Thông báo',
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          tooltip: 'Quay lại',
+          onPressed: _onBack,
+        ),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildPushTokensSection(),
+          Expanded(
+            child: _notifications.isEmpty
+                ? RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: Theme.of(context).colorScheme.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.45,
+                        child: _buildEmptyState(),
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: Theme.of(context).colorScheme.primary,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                      itemCount: _notifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = _notifications[index];
+                        return _buildNotificationListItem(notification);
+                      },
+                    ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -71,150 +312,59 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Bạn sẽ nhận được thông báo khi có sự kiện mới',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Bạn sẽ nhận được thông báo khi có sự kiện mới',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNotificationList() {
-    return RefreshIndicator(
-      onRefresh: () async {
-        // TODO: Refresh notifications from API
-        await Future.delayed(const Duration(seconds: 1));
-      },
-      color: Theme.of(context).colorScheme.primary,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-        itemCount: _notifications.length,
-        itemBuilder: (context, index) {
-          final notification = _notifications[index];
-          return _buildNotificationCard(notification);
-        },
+  Widget _buildNotificationListItem(NotificationItem notification) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final typeColor = notification.type.foregroundColor(colorScheme);
+
+    return BaseInfoCard(
+      title: notification.title,
+      badge: Icon(
+        notification.type.iconData,
+        size: 22,
+        color: typeColor,
       ),
-    );
-  }
-
-  Widget _buildNotificationCard(NotificationItem notification) {
-    final theme = Theme.of(context);
-
-    final Color bgColor = notification.isRead
-        ? theme.colorScheme.surface
-        : theme.colorScheme.primary.withValues(alpha: 0.06);
-    final Color borderColor = notification.isRead
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
-        : theme.colorScheme.primary.withValues(alpha: 0.25);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(100),
-        onTap: () => _markAsRead(notification.id),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _buildNotificationIcon(notification.type),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontWeight: notification.isRead
-                                      ? FontWeight.w500
-                                      : FontWeight.bold,
-                                  color: theme.colorScheme.onSurface,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatTimestamp(notification.timestamp),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      notification.message,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.8,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+      highlightText: !notification.isRead ? 'Mới' : null,
+      subInfoWidget: Text(
+        _formatTimestamp(notification.timestamp),
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.grey.shade600,
         ),
       ),
+      detailText: notification.message,
+      detailMaxLines: 2,
+      isActive: !notification.isRead,
+      margin: const EdgeInsets.only(bottom: 10),
+      onTap: () => _openNotificationDetail(notification),
     );
   }
 
-  Widget _buildNotificationIcon(NotificationType type) {
-    IconData iconData;
-    Color iconColor;
-
-    switch (type) {
-      case NotificationType.success:
-        iconData = Icons.check_circle_outline;
-        iconColor = Theme.of(context).colorScheme.secondary;
-        break;
-      case NotificationType.warning:
-        iconData = Icons.warning_outlined;
-        iconColor = Theme.of(context).colorScheme.tertiary;
-        break;
-      case NotificationType.error:
-        iconData = Icons.error_outline;
-        iconColor = Theme.of(context).colorScheme.error;
-        break;
-      case NotificationType.info:
-        iconData = Icons.info_outline;
-        iconColor = Theme.of(context).colorScheme.primary;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: 0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(iconData, color: iconColor, size: 24),
+  void _openNotificationDetail(NotificationItem notification) {
+    setState(() {
+      try {
+        _notifications.firstWhere((n) => n.id == notification.id).isRead = true;
+      } catch (_) {}
+    });
+    context.pushNamed(
+      'notification-detail',
+      extra: notification,
     );
   }
 
@@ -233,34 +383,4 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  void _markAsRead(String notificationId) {
-    setState(() {
-      final notification = _notifications.firstWhere(
-        (n) => n.id == notificationId,
-      );
-      notification.isRead = true;
-    });
-  }
 }
-
-// Model cho thông báo
-class NotificationItem {
-  final String id;
-  final String title;
-  final String message;
-  final DateTime timestamp;
-  final NotificationType type;
-  bool isRead;
-
-  NotificationItem({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    required this.type,
-    this.isRead = false,
-  });
-}
-
-// Enum cho loại thông báo
-enum NotificationType { success, warning, error, info }
