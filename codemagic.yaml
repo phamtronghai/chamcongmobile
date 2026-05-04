@@ -1,6 +1,15 @@
 workflows:
   ios-testflight:
     name: iOS TestFlight
+    # Tự chạy build khi push lên GitHub (nhánh main). Cần app Codemagic dùng codemagic.yaml + repo đã kết nối webhook.
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      cancel_previous_builds: true
     # Must match the App Store Connect API key name in Codemagic: Team → Integrations → Developer Portal.
     integrations:
       app_store_connect: ChamCong
