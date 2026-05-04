@@ -3,6 +3,7 @@ import UIKit
 import Firebase
 import FirebaseMessaging
 import FirebaseCore
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -29,7 +30,10 @@ import FirebaseCore
     }
     
     application.registerForRemoteNotifications()
-    
+
+    // FirebaseAppDelegateProxyEnabled = false → phải gán delegate để FCM nhận registration token đúng cách
+    Messaging.messaging().delegate = self
+
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

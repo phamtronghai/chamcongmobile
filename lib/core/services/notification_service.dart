@@ -225,15 +225,20 @@ class NotificationService {
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
 
-    if (isApple) {
-      // iOS/macOS: bắt buộc có APNs token trước khi gọi FCM API
+    if (isApple && defaultTargetPlatform == TargetPlatform.iOS) {
+      // APNs token có thể đến trễ sau didRegister; chờ ngắn trước khi bỏ qua đồng bộ
       String? apnsToken;
-      try {
-        apnsToken = await _messaging.getAPNSToken();
-        if (apnsToken?.isEmpty ?? true) {
-          return;
-        }
-      } catch (e) {
+      for (var i = 0; i < 24; i++) {
+        try {
+          apnsToken = await _messaging.getAPNSToken();
+          if (apnsToken != null && apnsToken.isNotEmpty) break;
+        } catch (_) {}
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+      if (apnsToken == null || apnsToken.isEmpty) {
+        debugPrint(
+          'FCM: không lấy được APNs token sau ~6s — kiểm tra Push capability & provisioning profile',
+        );
         return;
       }
     }
