@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
+import 'package:attendancebyface/core/widgets/dialog_header.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
+import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/app_router.dart';
+import 'package:attendancebyface/core/services/organization_service.dart';
 import 'package:attendancebyface/core/cubits/login_cubit.dart';
 import 'package:attendancebyface/core/cubits/login_state.dart';
 import 'package:attendancebyface/screens/login/widgets/traditional_login_form.dart';
@@ -56,6 +61,78 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
     if (cubit.state.errorMessage != null) {
       cubit.clearError();
     }
+  }
+
+  Future<void> _prepareTrialAndLogin() async {
+    final cubit = context.read<LoginCubit>();
+    final units = cubit.state.units;
+    final target =
+        OrganizationService.normalizeBaseUrl(AppConfig.defaultBaseUrl);
+    OrganizationUnit? match;
+    for (final u in units) {
+      if (OrganizationService.normalizeBaseUrl(u.url) == target) {
+        match = u;
+        break;
+      }
+    }
+    if (match != null) {
+      cubit.selectUnit(match);
+    } else {
+      await OrganizationService.applyBaseUrl(AppConfig.defaultBaseUrl);
+      cubit.clearSelectedUnit();
+    }
+    if (!mounted) return;
+    _usernameController.text = AppConfig.trialLoginUsername;
+    _passwordController.text = AppConfig.trialLoginPassword;
+    cubit.login(AppConfig.trialLoginUsername, AppConfig.trialLoginPassword);
+  }
+
+  void _showForgotPasswordDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: ColorConstants.shadowColor,
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DialogHeader(
+                  icon: Icons.lock_reset_outlined,
+                  title: 'Thông báo',
+                  subtitle:
+                      'Liên hệ với admin để khôi phục mật khẩu.',
+                  primaryColor: colorScheme.primary,
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                  child: CustomButton(
+                    text: 'Đã hiểu',
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    backgroundColor: colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -197,6 +274,10 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                                 context
                                     .read<LoginCubit>()
                                     .toggleAlternativeLogin(false);
+                              },
+                              onForgotPassword: _showForgotPasswordDialog,
+                              onTryApp: () {
+                                _prepareTrialAndLogin();
                               },
                             ),
                           ],

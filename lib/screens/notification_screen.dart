@@ -6,8 +6,10 @@ import 'package:attendancebyface/models/user_model.dart';
 import 'package:attendancebyface/models/notification_item.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
@@ -122,8 +124,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 400));
   }
 
-  bool get _fcmRegistered =>
-      _fcmToken != null && _fcmToken!.trim().isNotEmpty;
+  bool get _fcmRegistered => _fcmToken != null && _fcmToken!.trim().isNotEmpty;
 
   Future<void> _onRegistrationBadgeTap() async {
     final token = _fcmToken?.trim() ?? '';
@@ -174,8 +175,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final String label = registered
         ? 'Đã đăng ký thông báo'
         : 'Chưa đăng ký thông báo';
-    final Color accent =
-        registered ? const Color(0xFF2E7D32) : const Color(0xFFE65100);
+    final Color accent = registered
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFE65100);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -190,9 +192,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             selected: true,
             color: accent,
             leading: Icon(
-              registered
-                  ? Icons.mark_email_read_outlined
-                  : Icons.mail_outline,
+              registered ? Icons.mark_email_read_outlined : Icons.mail_outline,
               size: 20,
               color: Colors.white,
             ),
@@ -323,6 +323,57 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
+  Future<void> _markAllRead() async {
+    await GetIt.instance<AppDatabase>().markAllNotificationsRead();
+    if (!mounted) return;
+    CustomSnackbar.showIfMounted(
+      state: this,
+      message: 'Đã đánh dấu tất cả là đã đọc',
+      type: CustomSnackbarType.success,
+    );
+  }
+
+  Future<void> _deleteNotification(String id) async {
+    await GetIt.instance<AppDatabase>().deleteNotificationById(id);
+    if (!mounted) return;
+    CustomSnackbar.showIfMounted(
+      state: this,
+      message: 'Đã xóa thông báo',
+      type: CustomSnackbarType.success,
+    );
+  }
+
+  Future<void> _seedDemoNotifications() async {
+    await GetIt.instance<AppDatabase>().seedUiDemoNotifications();
+    if (!mounted) return;
+    CustomSnackbar.showIfMounted(
+      state: this,
+      message: 'Đã thêm/cập nhật 2 thông báo demo (đã đọc & chưa đọc)',
+      type: CustomSnackbarType.success,
+    );
+  }
+
+  Widget _buildDebugDemoBanner() {
+    if (!kDebugMode) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SamcomChip(
+          label: 'Thêm dữ liệu demo (2 mục)',
+          dense: true,
+          onPressed: _seedDemoNotifications,
+          variant: SamcomChipVariant.outlined,
+          leading: Icon(
+            Icons.science_outlined,
+            size: 18,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -334,12 +385,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
           tooltip: 'Quay lại',
           onPressed: _onBack,
         ),
+        actionsBeforeNotification: [
+          IconButton(
+            icon: const Icon(Icons.done_all, color: Colors.white),
+            tooltip: 'Đánh dấu tất cả là đã đọc',
+            onPressed: _markAllRead,
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildFcmRegistrationBadge(),
-          _buildServerTokenUploadChip(),
+          // _buildDebugDemoBanner(),
+          // _buildFcmRegistrationBadge(),
+          // _buildServerTokenUploadChip(),
+          SizedBox(height: 16),
           Expanded(
             child: StreamBuilder<List<StoredNotification>>(
               stream: GetIt.instance<AppDatabase>()
@@ -439,28 +499,42 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final typeColor = notification.type.foregroundColor(colorScheme);
 
-    return BaseInfoCard(
-      title: notification.title,
-      titleTrailing: Text(
-        _formatTimestamp(notification.timestamp),
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.grey.shade600,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Slidable(
+        key: ValueKey<String>(notification.id),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (_) => _deleteNotification(notification.id),
+              backgroundColor: Colors.red.shade100,
+              foregroundColor: Colors.red,
+              icon: Icons.delete_outline,
+              label: 'Xóa',
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(36),
+              ),
+            ),
+          ],
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+        child: BaseInfoCard(
+          title: notification.title,
+          titleTrailing: Text(
+            _formatTimestamp(notification.timestamp),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          badge: Icon(notification.type.iconData, size: 22, color: typeColor),
+          highlightText: !notification.isRead ? 'Mới' : null,
+          detailText: notification.message,
+          detailMaxLines: 2,
+          isActive: !notification.isRead,
+          margin: EdgeInsets.zero,
+          onTap: () => _openNotificationDetail(notification),
+        ),
       ),
-      badge: Icon(
-        notification.type.iconData,
-        size: 22,
-        color: typeColor,
-      ),
-      highlightText: !notification.isRead ? 'Mới' : null,
-      detailText: notification.message,
-      detailMaxLines: 2,
-      isActive: !notification.isRead,
-      margin: const EdgeInsets.only(bottom: 10),
-      onTap: () => _openNotificationDetail(notification),
     );
   }
 

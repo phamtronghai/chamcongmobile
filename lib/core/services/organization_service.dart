@@ -33,6 +33,23 @@ class OrganizationService {
     return normalized;
   }
 
+  /// Chuẩn hóa URL để so sánh (chọn đơn vị = chọn base URL).
+  static String normalizeBaseUrl(String url) => _normalizeBaseUrl(url);
+
+  /// Áp dụng base URL giống [selectUnit] nhưng không cần [OrganizationUnit]
+  /// (khi discovery không có đơn vị trùng URL mong muốn).
+  static Future<void> applyBaseUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final normalized = _normalizeBaseUrl(url);
+
+    AppConfig.setBaseUrl(normalized);
+
+    await prefs.setString(AppConfig.selectedBaseUrlKey, normalized);
+
+    final client = ApiClient();
+    await client.setBaseUrl(normalized);
+  }
+
   /// Lấy danh sách đơn vị từ discovery API
   static Future<List<OrganizationUnit>> fetchUnits({
     required String appSlug,
@@ -68,18 +85,7 @@ class OrganizationService {
 
   /// Lưu base url được chọn và cập nhật ApiClient
   static Future<void> selectUnit(OrganizationUnit unit) async {
-    final prefs = await SharedPreferences.getInstance();
-    final normalized = _normalizeBaseUrl(unit.url);
-
-    // Cập nhật AppConfig trước
-    AppConfig.setBaseUrl(normalized);
-
-    // Lưu vào SharedPreferences
-    await prefs.setString(AppConfig.selectedBaseUrlKey, normalized);
-
-    // Cập nhật ApiClient
-    final client = ApiClient();
-    await client.setBaseUrl(normalized);
+    await applyBaseUrl(unit.url);
   }
 
   /// Đọc base url đã chọn và áp dụng cho ApiClient (gọi sớm khi app khởi động)

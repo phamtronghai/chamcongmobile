@@ -15,6 +15,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.showTabs = false,
     this.automaticallyImplyLeading = true,
     this.leading,
+    this.actionsBeforeNotification,
   });
 
   final String title;
@@ -27,6 +28,8 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool showTabs;
   final bool automaticallyImplyLeading;
   final Widget? leading;
+  /// Hiển thị trước nút thông báo (nếu có), ví dụ "đã đọc hết".
+  final List<Widget>? actionsBeforeNotification;
 
   @override
   CustomAppBarState createState() => CustomAppBarState();
@@ -44,34 +47,61 @@ class CustomAppBarState extends State<CustomAppBar> {
   Widget _buildNotificationAction() {
     final onTap = widget.onNotificationTap!;
 
-    Widget iconButton() => IconButton(
-          tooltip: 'Thông báo',
-          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-          onPressed: onTap,
-        );
+    Widget bellIconButton({required int count}) {
+      final label = count > 10 ? '10+' : '$count';
+      return IconButton(
+        tooltip: 'Thông báo',
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        onPressed: onTap,
+        icon: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            const Icon(
+              Icons.notifications_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
+            if (count > 0)
+              Positioned(
+                right: -4,
+                top: -6,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 16),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
 
     if (!GetIt.instance.isRegistered<AppDatabase>()) {
-      return iconButton();
+      return bellIconButton(count: 0);
     }
 
     return StreamBuilder<int>(
       stream: GetIt.instance<AppDatabase>().watchUnreadNotificationCount(),
       builder: (context, snapshot) {
         final count = snapshot.data ?? 0;
-        final label = count > 99 ? '99+' : '$count';
-        return Badge(
-          isLabelVisible: count > 0,
-          backgroundColor: Colors.redAccent,
-          textColor: Colors.white,
-          label: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          child: iconButton(),
-        );
+        return bellIconButton(count: count);
       },
     );
   }
@@ -103,6 +133,7 @@ class CustomAppBarState extends State<CustomAppBar> {
       ),
       centerTitle: true,
       actions: [
+        ...?widget.actionsBeforeNotification,
         if (widget.onNotificationTap != null) _buildNotificationAction(),
       ],
       bottom: widget.showTabs && widget.tabs != null

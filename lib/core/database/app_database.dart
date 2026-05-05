@@ -79,4 +79,46 @@ class AppDatabase extends _$AppDatabase {
     return (update(storedNotifications)..where((t) => t.id.equals(id)))
         .write(const StoredNotificationsCompanion(isRead: Value(true)));
   }
+
+  /// Đánh dấu đã đọc toàn bộ thông báo chưa đọc.
+  Future<void> markAllNotificationsRead() {
+    return (update(storedNotifications)..where((t) => t.isRead.equals(false)))
+        .write(const StoredNotificationsCompanion(isRead: Value(true)));
+  }
+
+  Future<void> deleteNotificationById(String id) {
+    return (delete(storedNotifications)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// Hai bản ghi cố định (1 chưa đọc, 1 đã đọc) để test giao diện. Ghi đè nếu đã tồn tại.
+  static const String uiDemoUnreadId = '__ui_demo_unread__';
+  static const String uiDemoReadId = '__ui_demo_read__';
+
+  Future<void> seedUiDemoNotifications() async {
+    final now = DateTime.now();
+    await into(storedNotifications).insert(
+      StoredNotificationsCompanion.insert(
+        id: uiDemoUnreadId,
+        title: 'Thông báo mẫu (chưa đọc)',
+        body:
+            'Nội dung demo: nhãn "Mới", badge app bar và icon launcher đếm mục chưa đọc.',
+        receivedAt: now.subtract(const Duration(minutes: 3)),
+        typeIndex: 3,
+        isRead: const Value(false),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+    await into(storedNotifications).insert(
+      StoredNotificationsCompanion.insert(
+        id: uiDemoReadId,
+        title: 'Thông báo mẫu (đã đọc)',
+        body:
+            'Nội dung demo: không highlight; có thể vuốt để xóa hoặc mở chi tiết.',
+        receivedAt: now.subtract(const Duration(hours: 1)),
+        typeIndex: 0,
+        isRead: const Value(true),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
 }

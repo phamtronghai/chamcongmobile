@@ -19,6 +19,7 @@ import 'core/cubits/user_cubit.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'core/service_locator.dart';
+import 'core/widgets/app_launcher_badge_sync.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,12 +94,14 @@ class MyApp extends StatelessWidget {
         builder: (context, child) {
           final mq = MediaQuery.of(context);
           // Khóa text scaling toàn ứng dụng về 1.0 (có thể đổi sang clamp nếu muốn)
-          return MediaQuery(
-            data: mq.copyWith(
-              textScaler: TextScaler.linear(1.0),
-              // Với Flutter mới có thể dùng: textScaler: const TextScaler.linear(1.0),
+          return AppLauncherBadgeSync(
+            child: MediaQuery(
+              data: mq.copyWith(
+                textScaler: TextScaler.linear(1.0),
+                // Với Flutter mới có thể dùng: textScaler: const TextScaler.linear(1.0),
+              ),
+              child: child!,
             ),
-            child: child!,
           );
         },
         debugShowCheckedModeBanner: false,

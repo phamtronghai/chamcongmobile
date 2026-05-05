@@ -39,6 +39,11 @@ class LoginCubit extends Cubit<LoginState> {
     OrganizationService.selectUnit(unit);
   }
 
+  /// Khi chỉ đổi base URL (không có đơn vị khớp trong discovery), bỏ chọn dropdown.
+  void clearSelectedUnit() {
+    emit(state.copyWith(selectedUnit: null));
+  }
+
   void selectBiometricAccount(BiometricAccount account) {
     emit(state.copyWith(selectedBiometricAccount: account));
     SecureStorage.setLastSelectedAccountId(account.id);

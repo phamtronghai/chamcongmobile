@@ -16,6 +16,10 @@ class AppConfig {
   /// Base URL mặc định cho API
   static const String defaultBaseUrl = 'https://auth.samcom.com.vn';
 
+  /// Tài khoản dùng thử (đăng nhập nhanh); server gắn với [defaultBaseUrl].
+  static const String trialLoginUsername = 'test';
+  static const String trialLoginPassword = 'test12345';
+
   /// Base URL hiện tại đang sử dụng (có thể thay đổi động)
   static String _currentBaseUrl = defaultBaseUrl;
 

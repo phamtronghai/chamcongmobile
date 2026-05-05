@@ -3,7 +3,7 @@ description: "Chấm công bằng khuôn mặt."
 
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 2.3.2+6
+version: 2.3.6+10
 
 environment:
   sdk: ^3.8.1
@@ -55,6 +55,7 @@ dependencies:
   drift_flutter: ^0.2.7
   sqlite3_flutter_libs: ^0.5.40
   path: ^1.9.1
+  app_badge_plus: ^1.2.0
   # flutter_native_splash moved to dev_dependencies
 
 dev_dependencies:

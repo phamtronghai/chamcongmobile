@@ -17,6 +17,8 @@ class TraditionalLoginForm extends StatelessWidget {
   final VoidCallback onLoginPressed;
   final bool biometricEnabled;
   final VoidCallback onSwitchToBiometric;
+  final VoidCallback? onForgotPassword;
+  final VoidCallback? onTryApp;
 
   const TraditionalLoginForm({
     super.key,
@@ -31,6 +33,8 @@ class TraditionalLoginForm extends StatelessWidget {
     required this.onLoginPressed,
     required this.biometricEnabled,
     required this.onSwitchToBiometric,
+    this.onForgotPassword,
+    this.onTryApp,
   });
 
   @override
@@ -80,6 +84,21 @@ class TraditionalLoginForm extends StatelessWidget {
             return null;
           },
         ),
+        if (onForgotPassword != null) ...[
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onForgotPassword,
+              child: Text(
+                'Quên mật khẩu',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 8),
 
         // Tickbox "Nhớ tài khoản" - căn giữa và hình tròn
@@ -140,6 +159,36 @@ class TraditionalLoginForm extends StatelessWidget {
           onPressed: onLoginPressed,
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
+        if (onTryApp != null) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'Trải nghiệm ứng dụng? ',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: onTryApp,
+                child: Text(
+                  'Thử ngay!',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 16),
 
         // Text "Đăng nhập bằng sinh trắc học" để quay lại giao diện sinh trắc học
