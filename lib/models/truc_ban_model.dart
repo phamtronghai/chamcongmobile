@@ -111,7 +111,7 @@ class TrucChiHuy {
       capBac: json['capBac'] as String?,
       chucVu: json['chucVu'] as String?,
       donVi: json['donVi'] as String?,
-      soDienThoai: json['soDienThoai'] as String?,
+      soDienThoai: (json['soDienThoai'] ?? json['sdt']) as String?,
       thoiGianBatDau: json['thoiGianBatDau'] as String?,
       thoiGianKetThuc: json['thoiGianKetThuc'] as String?,
     );

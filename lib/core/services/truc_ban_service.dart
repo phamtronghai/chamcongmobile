@@ -1,30 +1,11 @@
-import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
-import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
 
 /// Service xử lý các API liên quan đến chức năng trực ban
 class TrucBanService {
-  /// Base URL cố định cho API smartgate
-  static const String _smartgateBaseUrl = 'https://auth.samcom.com.vn';
-
-  /// Tạo Dio instance riêng cho API smartgate (baseURL cố định)
-  Dio _createSmartgateDio() {
-    final dio = Dio(
-      BaseOptions(
-        baseUrl: _smartgateBaseUrl,
-        connectTimeout: Duration(seconds: AppConfig.requestTimeout),
-        receiveTimeout: Duration(seconds: AppConfig.requestTimeout),
-        headers: AppConfig.defaultHeaders,
-      ),
-    );
-    // Dùng chung cookie jar từ ApiClient để gửi cookie xác thực
-    dio.interceptors.add(CookieManager(ApiClient().cookieJar));
-    return dio;
-  }
+  final ApiClient _apiClient = ApiClient();
 
   // ======== API XÁC ĐỊNH NHÓM NGƯỜI DÙNG ========
 
@@ -34,8 +15,7 @@ class TrucBanService {
   /// Response: {"success": true, "role": "TRUC_BAN"}
   Future<PhanQuyen> xacDinhNhomNguoiDung() async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get('/api/smartgate/role/me');
+      final response = await _apiClient.get('/api/smartgate/role/me');
       final data = response.data as Map<String, dynamic>;
 
       if (data['success'] != true) {
@@ -66,8 +46,7 @@ class TrucBanService {
   /// Response: [{ id, ngayTruc, caTruc, batDau, ketThuc, userId, hoTen, sdt, donVi, donViCap }]
   Future<List<TrucBan>> layDanhSachTrucBan(String ngay) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get(
+      final response = await _apiClient.get(
         '/api/smartgate/truc-ban/from-to',
         queryParameters: {'from': ngay, 'to': ngay},
       );
@@ -88,26 +67,27 @@ class TrucBanService {
 
   /// Lấy thông tin trực chỉ huy theo ngày
   ///
-  /// Gọi API: GET /api/smartgate/truc-chi-huy?ngay={ngay}
-  /// Response: { success, data: { hoTen, capBac, ... } }
+  /// Gọi API: GET /api/smartgate/truc-chi-huy/from-to?from={ngay}&to={ngay}
+  /// Response: [{ id, ngayTruc, userId, hoTen, sdt, donVi, donViCap }]
   Future<TrucChiHuy?> layTrucChiHuy(String ngay) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get(
-        '/api/smartgate/truc-chi-huy',
-        queryParameters: {'ngay': ngay},
+      final response = await _apiClient.get(
+        '/api/smartgate/truc-chi-huy/from-to',
+        queryParameters: {'from': ngay, 'to': ngay},
       );
 
-      final responseData = response.data as Map<String, dynamic>;
-      if (responseData['success'] != true) {
+      final data = response.data;
+      if (data is! List || data.isEmpty) {
         debugPrint('⚠️ API không có người trực chỉ huy');
         return null; // Không có chỉ huy trực cũng hợp lệ
       }
 
-      final data = responseData['data'];
-      if (data == null) return null;
-
-      return TrucChiHuy.fromJson(data as Map<String, dynamic>);
+      final first = data.first;
+      if (first is! Map<String, dynamic>) {
+        debugPrint('⚠️ API trực chỉ huy trả dữ liệu không hợp lệ');
+        return null;
+      }
+      return TrucChiHuy.fromJson(first);
     } catch (e) {
       debugPrint('❌ Lỗi lấy trực chỉ huy (bỏ qua): $e');
       return null; // Không throw để tránh lỗi cả màn hình danh sách
@@ -120,8 +100,7 @@ class TrucBanService {
   /// Body: { tenKhach, cccd, bienSo, loaiXe, mucDich, sdt, ngayDangKy }
   Future<bool> dangKyKhach(Khach khach) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.post(
+      final response = await _apiClient.post(
         '/api/smartgate/khach/dang-ky',
         data: khach.toJson(),
       );
@@ -145,8 +124,7 @@ class TrucBanService {
   /// Response: { success, data: [{ id, ten_khach, sdt_khach, can_cuoc_khach, loai_xe, bien_so_xe, muc_dich, trang_thai }] }
   Future<List<Khach>> xemLichSuKhachCaNhan(String ngay) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get(
+      final response = await _apiClient.get(
         '/api/smartgate/khach/ca-nhan',
         queryParameters: {'ngay': ngay},
       );
@@ -175,8 +153,7 @@ class TrucBanService {
   /// Body: { thoiGianRa, thoiGianVao, lyDo }
   Future<bool> dangKyRaNgoai(YeuCauRaNgoai yeuCau) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.post(
+      final response = await _apiClient.post(
         '/api/smartgate/ra-ngoai/dang-ky',
         data: {
           'thoiGianRa': yeuCau.thoiGianRa.toUtc().toIso8601String(),
@@ -204,8 +181,7 @@ class TrucBanService {
   /// Response: { success, data: [{ id, userId, ly_do, trang_thai, bat_dau, ket_thuc, nguoi_duyet_id }] }
   Future<List<YeuCauRaNgoai>> lichSuRaNgoaiCaNhan(String ngay) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get(
+      final response = await _apiClient.get(
         '/api/smartgate/ra-ngoai/ca-nhan',
         queryParameters: {'ngay': ngay},
       );
@@ -235,8 +211,7 @@ class TrucBanService {
   /// Response: { success, data: { message, remainingSec, trangThai } }
   Future<bool> moCua(LoaiPhuongTien loaiPhuongTien) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.post(
+      final response = await _apiClient.post(
         '/api/smartgate/mo-cua',
         data: {'loaiPhuongTien': loaiPhuongTien.value},
       );
@@ -269,8 +244,7 @@ class TrucBanService {
   /// Response: {"success": true, "data": [{ id, tenKhach, bienSo, trangThai, thoiGianDen, nguoiDangKy, donVi }]}
   Future<List<Khach>> dsKhachToanDonVi(String ngay) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get(
+      final response = await _apiClient.get(
         '/api/smartgate/khach/toan-don-vi',
         queryParameters: {'ngay': ngay},
       );
@@ -303,8 +277,9 @@ class TrucBanService {
   /// Response: { success, data: { trangThai: "KHONG_KHOA" | "KHOA" } }
   Future<TrangThaiKhoa> layTrangThaiKhoa() async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.get('/api/smartgate/he-thong/trang-thai-khoa');
+      final response = await _apiClient.get(
+        '/api/smartgate/he-thong/trang-thai-khoa',
+      );
 
       final responseData = response.data as Map<String, dynamic>;
       if (responseData['success'] != true) {
@@ -329,8 +304,7 @@ class TrucBanService {
   /// Payload: { "trangThai": "KHOA" } hoặc { "trangThai": "KHONG_KHOA" }
   Future<bool> thayDoiTrangThaiKhoa(TrangThaiKhoa trangThai) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.put(
+      final response = await _apiClient.put(
         '/api/smartgate/he-thong/thay-doi-trang-thai-khoa',
         data: {'trangThai': trangThai.value},
       );
@@ -359,13 +333,12 @@ class TrucBanService {
     String? trangThai,
   }) async {
     try {
-      final dio = _createSmartgateDio();
       final queryParams = <String, dynamic>{'ngay': ngay};
       if (trangThai != null) {
         queryParams['trangThai'] = trangThai;
       }
 
-      final response = await dio.get(
+      final response = await _apiClient.get(
         '/api/smartgate/ra-ngoai/danh-sach-yeu-cau',
         queryParameters: queryParams,
       );
@@ -404,8 +377,7 @@ class TrucBanService {
     required String hanhDong, // 'DUYET' hoặc 'TU_CHOI'
   }) async {
     try {
-      final dio = _createSmartgateDio();
-      final response = await dio.put(
+      final response = await _apiClient.put(
         '/api/smartgate/ra-ngoai/$id/duyet',
         data: {'hanhDong': hanhDong},
       );
@@ -437,8 +409,7 @@ class TrucBanService {
   }) async {
     if (userId.isEmpty) return;
     try {
-      final dio = _createSmartgateDio();
-      await dio.post(
+      await _apiClient.post(
         '/send-notification',
         data: {'userId': userId, 'title': title, 'message': message},
       );

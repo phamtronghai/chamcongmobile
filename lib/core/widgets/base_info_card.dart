@@ -8,6 +8,8 @@ class BaseInfoCard extends StatelessWidget {
   final Widget? titleTrailing;
   final Widget badge;
   final String? highlightText;
+  final Color? highlightBackgroundColor;
+  final Color? highlightTextColor;
   final Widget? subInfoWidget;
   final String? detailText;
   final int? detailMaxLines;
@@ -21,6 +23,8 @@ class BaseInfoCard extends StatelessWidget {
     this.titleTrailing,
     required this.badge,
     this.highlightText,
+    this.highlightBackgroundColor,
+    this.highlightTextColor,
     this.subInfoWidget,
     this.detailText,
     this.detailMaxLines,
@@ -87,13 +91,17 @@ class BaseInfoCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withAlpha(50),
+                              color:
+                                  highlightBackgroundColor ??
+                                  Colors.amber.withAlpha(50),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               highlightText!,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.amber.shade900,
+                                    color:
+                                        highlightTextColor ??
+                                        Colors.amber.shade900,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),

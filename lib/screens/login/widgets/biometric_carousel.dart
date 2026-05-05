@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:attendancebyface/models/biometric_account.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/gradient_ring.dart';
-import 'package:attendancebyface/core/utils/biometric_helper.dart';
-import 'package:local_auth/local_auth.dart';
 
 class BiometricCarousel extends StatelessWidget {
   final List<BiometricAccount> accounts;
@@ -11,7 +9,7 @@ class BiometricCarousel extends StatelessWidget {
   final PageController? pageController;
   final ValueChanged<int> onPageChanged;
   final ValueChanged<BiometricAccount> onDeleteAccount;
-  final VoidCallback onAuthenticate;
+  final ValueChanged<BiometricAccount> onAuthenticate;
   final VoidCallback onSwitchToTraditional;
   final bool isLoading;
 
@@ -27,7 +25,11 @@ class BiometricCarousel extends StatelessWidget {
     required this.isLoading,
   });
 
-  Widget _buildAccountCard(BuildContext context, BiometricAccount account) {
+  Widget _buildAccountCard(
+    BuildContext context,
+    BiometricAccount account, {
+    required VoidCallback onTapAvatar,
+  }) {
     // Xử lý avatar URL
     String? processedAvatarUrl;
     if (account.avatar.isNotEmpty) {
@@ -51,24 +53,29 @@ class BiometricCarousel extends StatelessWidget {
         // Avatar với nút xóa
         Stack(
           children: [
-            GradientAvatarRing(
-              size: 120,
-              outerPadding: 3,
-              innerPadding: 1,
-              child: CircleAvatar(
-                radius: 48,
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                backgroundImage:
-                    (processedAvatarUrl != null && processedAvatarUrl.isNotEmpty)
-                        ? NetworkImage(processedAvatarUrl)
-                        : null,
-                child: (processedAvatarUrl == null || processedAvatarUrl.isEmpty)
-                    ? Icon(
-                        Icons.person,
-                        size: 60,
-                        color: Theme.of(context).colorScheme.primary,
-                      )
-                    : null,
+            GestureDetector(
+              onTap: isLoading ? null : onTapAvatar,
+              child: GradientAvatarRing(
+                size: 120,
+                outerPadding: 3,
+                innerPadding: 1,
+                child: CircleAvatar(
+                  radius: 48,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
+                  backgroundImage:
+                      (processedAvatarUrl != null && processedAvatarUrl.isNotEmpty)
+                      ? NetworkImage(processedAvatarUrl)
+                      : null,
+                  child: (processedAvatarUrl == null || processedAvatarUrl.isEmpty)
+                      ? Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                ),
               ),
             ),
             // Nút xóa ở góc dưới bên phải
@@ -143,7 +150,17 @@ class BiometricCarousel extends StatelessWidget {
                     final account = accounts[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: _buildAccountCard(context, account),
+                      child: _buildAccountCard(
+                        context,
+                        account,
+                        onTapAvatar: () {
+                          if (!isLoading &&
+                              selectedAccount?.id != account.id) {
+                            onPageChanged(index);
+                          }
+                          onAuthenticate(account);
+                        },
+                      ),
                     );
                   },
                 )
@@ -171,38 +188,7 @@ class BiometricCarousel extends StatelessWidget {
           ),
         const SizedBox(height: 16),
 
-        // Nút đăng nhập sinh trắc học
-        FutureBuilder<BiometricType?>(
-          future: BiometricHelper.getPrimaryBiometricType(),
-          builder: (context, snapshot) {
-            IconData? iconData;
-            String? svgPath;
-
-            if (snapshot.hasData && snapshot.data != null) {
-              final biometricType = snapshot.data!;
-              final info = BiometricHelper.getBiometricInfo(biometricType);
-              iconData = info['icon'] as IconData?;
-              svgPath = info['svgPath'] as String?;
-            } else {
-              iconData = Icons.fingerprint; // Default icon
-            }
-
-            return Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.5,
-                child: CustomButton(
-                  text: 'Đăng nhập',
-                  onPressed: isLoading ? null : onAuthenticate,
-                  textColor: Colors.white,
-                  icon: iconData,
-                  svgPath: svgPath,
-                  isLoading: isLoading,
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
 
         // Nút "Tài khoản khác"
         CustomButton(

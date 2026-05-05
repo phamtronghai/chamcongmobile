@@ -123,12 +123,12 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
           );
   }
 
-  Future<void> _onSubmit(BuildContext parentContext) async {
+  Future<void> _onSubmit() async {
     final String workName = _workNameController.text.trim();
 
     if (workName.isEmpty) {
       CustomSnackbar.show(
-        context: parentContext,
+        context: context,
         message: 'Vui lòng nhập nội dung công việc',
         type: CustomSnackbarType.error,
       );
@@ -137,7 +137,7 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
 
     if (_selectedSessionIds.isEmpty) {
       CustomSnackbar.show(
-        context: parentContext,
+        context: context,
         message: 'Vui lòng chọn khung giờ (Sáng/Chiều/Ngoài giờ)',
         type: CustomSnackbarType.error,
       );
@@ -147,7 +147,7 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
     final selectedDates = _expandSelectedDates();
     if (selectedDates.isEmpty) {
       CustomSnackbar.show(
-        context: parentContext,
+        context: context,
         message: 'Vui lòng chọn ngày báo cáo',
         type: CustomSnackbarType.error,
       );
@@ -189,9 +189,9 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
       }
 
       if (mounted) {
-        Navigator.of(parentContext).pop();
+        Navigator.of(context).pop();
         CustomSnackbar.show(
-          context: parentContext,
+          context: context,
           message:
               'Nhập công việc thành công cho ${selectedDates.length} ngày',
           type: CustomSnackbarType.success,
@@ -200,7 +200,7 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
     } catch (_) {
       if (!mounted) return;
       CustomSnackbar.show(
-        context: parentContext,
+        context: context,
         message: 'Nhập công việc không thành công!',
         type: CustomSnackbarType.error,
       );
@@ -313,7 +313,7 @@ class _WorklogBottomSheetState extends State<WorklogBottomSheet> {
                       textColor: Colors.white,
                       onPressed: _isSubmitting
                           ? null
-                          : () => _onSubmit(context),
+                          : _onSubmit,
                     ),
                   ],
                 ),

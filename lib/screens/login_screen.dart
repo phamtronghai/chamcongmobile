@@ -63,11 +63,31 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
     }
   }
 
+  void _syncCarouselToSelected(LoginState state) {
+    if (!_pageController.hasClients) return;
+    if (state.biometricAccounts.isEmpty ||
+        state.selectedBiometricAccount == null) {
+      return;
+    }
+
+    final index = state.biometricAccounts.indexWhere(
+      (a) => a.id == state.selectedBiometricAccount!.id,
+    );
+    if (index == -1) return;
+
+    final currentPage =
+        _pageController.page?.round() ?? _pageController.initialPage;
+    if (currentPage != index) {
+      _pageController.jumpToPage(index);
+    }
+  }
+
   Future<void> _prepareTrialAndLogin() async {
     final cubit = context.read<LoginCubit>();
     final units = cubit.state.units;
-    final target =
-        OrganizationService.normalizeBaseUrl(AppConfig.defaultBaseUrl);
+    final target = OrganizationService.normalizeBaseUrl(
+      AppConfig.defaultBaseUrl,
+    );
     OrganizationUnit? match;
     for (final u in units) {
       if (OrganizationService.normalizeBaseUrl(u.url) == target) {
@@ -114,13 +134,11 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                 DialogHeader(
                   icon: Icons.lock_reset_outlined,
                   title: 'Thông báo',
-                  subtitle:
-                      'Liên hệ với admin để khôi phục mật khẩu.',
+                  subtitle: 'Liên hệ với admin để khôi phục mật khẩu.',
                   primaryColor: colorScheme.primary,
                 ),
                 Padding(
-                  padding:
-                      const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: CustomButton(
                     text: 'Đã hiểu',
                     onPressed: () => Navigator.of(ctx).pop(),
@@ -178,6 +196,10 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
       ],
       child: BlocBuilder<LoginCubit, LoginState>(
         builder: (context, state) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _syncCarouselToSelected(state);
+          });
           final isLoading = state.status == LoginStatus.loading;
 
           return LoadingOverlay(
@@ -234,10 +256,10 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                                     .read<LoginCubit>()
                                     .deleteBiometricAccount(account);
                               },
-                              onAuthenticate: () {
+                              onAuthenticate: (account) {
                                 context
                                     .read<LoginCubit>()
-                                    .authenticateWithBiometric();
+                                    .authenticateWithBiometric(account);
                               },
                               onSwitchToTraditional: () {
                                 context

@@ -143,32 +143,74 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
         if (state is TrucBanStateDanhSachTrucBanLoaded &&
             state.trucChiHuy != null) {
           final chiHuy = state.trucChiHuy!;
-          final label = [
-            if (chiHuy.capBac != null) chiHuy.capBac,
+          final title = [
+            if (chiHuy.capBac != null && chiHuy.capBac!.isNotEmpty)
+              chiHuy.capBac!,
             chiHuy.hoTen,
           ].join(' ');
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: ColorConstants.primaryColor.withAlpha(25),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: ColorConstants.primaryColor.withAlpha(50),
+            child: Column(
+              children: [
+                BaseInfoCard(
+                  title: title,
+                  onTap:
+                      (chiHuy.soDienThoai != null &&
+                          chiHuy.soDienThoai!.isNotEmpty)
+                      ? () => _callPhone(chiHuy.soDienThoai!)
+                      : null,
+                  badge: const Icon(Icons.shield_outlined, color: Colors.white),
+                  highlightText: 'Trực chỉ huy',
+                  highlightBackgroundColor: ColorConstants.errorColor.withAlpha(
+                    40,
+                  ),
+                  highlightTextColor: ColorConstants.errorColor,
+                  detailText: chiHuy.donVi?.isNotEmpty == true
+                      ? '• ${chiHuy.donVi}'
+                      : null,
+                  subInfoWidget:
+                      (chiHuy.soDienThoai != null &&
+                          chiHuy.soDienThoai!.isNotEmpty)
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: ColorConstants.errorColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.phone,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                chiHuy.soDienThoai!,
+                                style: TextStyle(
+                                  fontSize: TextConstants.caption,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : null,
                 ),
-              ),
-              child: Text(
-                'Trực chỉ huy: $label',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: ColorConstants.primaryColor,
+                Align(
+                  alignment: Alignment.center,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.25,
+                    child: const Divider(height: 10, thickness: 0.5),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
+              ],
             ),
           );
         }
