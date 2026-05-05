@@ -82,29 +82,11 @@ class _CustomPasswordDialogState extends State<CustomPasswordDialog> {
                     onSubmitted: (value) => _onConfirm(),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomButton(
-                          text: 'Xác nhận',
-                          onPressed: _onConfirm,
-                          backgroundColor: primaryColor,
-                          textColor: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      CustomButton(
-                        text: 'Hủy',
-                        variant: CustomButtonVariant.iconCircle,
-                        icon: Icons.close,
-                        backgroundColor: primaryColor,
-                        textColor: primaryColor,
-                        tooltip: 'Hủy',
-                        width: 48,
-                        height: 48,
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
+                  CustomButton(
+                    text: 'Xác nhận',
+                    onPressed: _onConfirm,
+                    backgroundColor: primaryColor,
+                    textColor: Colors.white,
                   ),
                 ],
               ),

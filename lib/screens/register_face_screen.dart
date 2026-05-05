@@ -138,9 +138,10 @@ class _RegisterFaceScreenState extends State<RegisterFaceScreen>
       if (mounted) {
         AppRouter.goToHome(context, widget.user);
       }
-    } catch (e) {
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
-        _bannerMessage = e.toString();
+        _bannerMessage = 'Đăng ký thất bại! Liên hệ admin để trợ giúp.';
         _bannerIsError = true;
       });
     } finally {

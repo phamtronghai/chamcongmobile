@@ -21,6 +21,9 @@ class CustomButton extends StatelessWidget {
   final EdgeInsetsGeometry? contentPadding;
   final bool iconCircleShowShadow;
 
+  /// [true]: chiều ngang vừa icon + chữ (FAB pill); [false]: giữ hành vi cũ ([width] hoặc full ngang).
+  final bool shrinkWrapWidth;
+
   const CustomButton({
     super.key,
     required this.text,
@@ -38,6 +41,7 @@ class CustomButton extends StatelessWidget {
     this.fontSize,
     this.contentPadding,
     this.iconCircleShowShadow = true,
+    this.shrinkWrapWidth = false,
   });
 
   @override
@@ -148,40 +152,67 @@ class CustomButton extends StatelessWidget {
       CustomButtonVariant.iconCircle => textColor ?? colorScheme.onSurface,
     };
 
+    final label = _buildLabelContent(
+      resolvedTextColor,
+      intrinsicWidth: shrinkWrapWidth,
+    );
+
+    final material = switch (variant) {
+      CustomButtonVariant.filled => ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          onLongPress: isLoading ? null : onLongPress,
+          style: style,
+          child: label,
+        ),
+      CustomButtonVariant.tonal => FilledButton(
+          onPressed: isLoading ? null : onPressed,
+          onLongPress: isLoading ? null : onLongPress,
+          style: style,
+          child: label,
+        ),
+      CustomButtonVariant.outlined => OutlinedButton(
+          onPressed: isLoading ? null : onPressed,
+          onLongPress: isLoading ? null : onLongPress,
+          style: style,
+          child: label,
+        ),
+      CustomButtonVariant.text => TextButton(
+          onPressed: isLoading ? null : onPressed,
+          onLongPress: isLoading ? null : onLongPress,
+          style: style,
+          child: label,
+        ),
+      CustomButtonVariant.iconCircle => const SizedBox.shrink(),
+    };
+
+    if (shrinkWrapWidth) {
+      return IntrinsicWidth(child: material);
+    }
+
     return SizedBox(
       width: width ?? double.infinity,
       height: height,
-      child: switch (variant) {
-        CustomButtonVariant.filled => ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: _buildLabelContent(resolvedTextColor),
-        ),
-        CustomButtonVariant.tonal => FilledButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: _buildLabelContent(resolvedTextColor),
-        ),
-        CustomButtonVariant.outlined => OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: _buildLabelContent(resolvedTextColor),
-        ),
-        CustomButtonVariant.text => TextButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: _buildLabelContent(resolvedTextColor),
-        ),
-        CustomButtonVariant.iconCircle => const SizedBox.shrink(),
-      },
+      child: material,
     );
   }
 
-  Widget _buildLabelContent(Color resolvedTextColor) {
+  Widget _buildLabelContent(
+    Color resolvedTextColor, {
+    required bool intrinsicWidth,
+  }) {
+    final textStyle = TextStyle(
+      color: resolvedTextColor,
+      fontSize: fontSize ?? TextConstants.body,
+      fontWeight: FontWeight.bold,
+      height: 1.0,
+    );
+    final textWidget = Text(
+      text,
+      style: textStyle,
+      textAlign: TextAlign.center,
+      overflow: TextOverflow.ellipsis,
+    );
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -200,19 +231,10 @@ class CustomButton extends StatelessWidget {
           _buildIcon(iconColor: resolvedTextColor),
           const SizedBox(width: 8),
         ],
-        Flexible(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: resolvedTextColor,
-              fontSize: fontSize ?? TextConstants.body,
-              fontWeight: FontWeight.bold,
-              height: 1.0,
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+        if (intrinsicWidth)
+          textWidget
+        else
+          Flexible(child: textWidget),
       ],
     );
   }

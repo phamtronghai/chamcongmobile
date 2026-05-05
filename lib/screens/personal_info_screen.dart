@@ -22,6 +22,7 @@ import 'package:attendancebyface/screens/personal_info/widgets/change_password_d
 import 'package:attendancebyface/screens/personal_info/widgets/custom_password_dialog.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:attendancebyface/core/app_router.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/gen/assets.gen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
@@ -130,6 +131,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     if (!_isFaceRegistered) return;
     final result = await showDialog<String>(
       context: context,
+      barrierDismissible: true,
       builder: (context) => const CustomPasswordDialog(
         title: 'Xóa khuôn mặt',
         label: 'Nhập mật khẩu',
@@ -176,6 +178,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void _showChangePasswordDialog() {
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (_) =>
           ChangePasswordDialog(onConfirm: _changePassword, onSuccess: _logout),
     );
@@ -229,9 +232,16 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     VoidCallback? onLongPress,
     Color? color,
     String? logoAssetPath,
+    /// Nền tròn đặc (vd. đăng xuất); null thì dùng [color] mờ như cũ.
+    Color? circleBackgroundColor,
+    /// Màu icon; null thì trùng [color]/primary.
+    Color? iconColor,
   }) {
     final theme = Theme.of(context);
     final Color actionColor = color ?? theme.colorScheme.primary;
+    final Color circleFill =
+        circleBackgroundColor ?? actionColor.withValues(alpha: 0.12);
+    final Color resolvedIconColor = iconColor ?? actionColor;
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -245,7 +255,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: actionColor.withValues(alpha: 0.12),
+                  color: circleFill,
                   shape: BoxShape.circle,
                 ),
                 child: logoAssetPath != null
@@ -258,7 +268,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                               )
                             : Image.asset(logoAssetPath, fit: BoxFit.contain),
                       )
-                    : Icon(icon, color: actionColor, size: 22),
+                    : Icon(icon, color: resolvedIconColor, size: 22),
               ),
               const SizedBox(height: 6),
               Text(
@@ -407,8 +417,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         appBar: CustomAppBar(
           title: 'Thông tin cá nhân',
           automaticallyImplyLeading: false,
-          onNotificationTap: () =>
-              AppRouter.goToNotification(context, _user),
+          onNotificationTap: () => AppRouter.goToNotification(context, _user),
         ),
         body: SingleChildScrollView(
           child: Column(
@@ -550,7 +559,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                               icon: Icons.logout,
                               label: 'Đăng xuất',
                               onTap: _logout,
-                              color: colorScheme.tertiary,
+                              color: ColorConstants.errorColor,
+                              circleBackgroundColor: ColorConstants.errorColor,
+                              iconColor: Colors.white,
                             ),
                           ],
                         ),

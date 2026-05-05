@@ -27,41 +27,20 @@ class AttendanceActionButtons extends StatelessWidget {
     final primaryIcon = hasRegisteredFace ? Icons.timer : null;
     final primarySvg = hasRegisteredFace ? null : Assets.icon.faceID.path;
 
-    Widget primaryFab = CustomButton(
+    return CustomButton(
       text: hasRegisteredFace ? 'CHẤM CÔNG' : 'ĐĂNG KÝ',
       tooltip: primaryTooltip,
-      variant: CustomButtonVariant.iconCircle,
+      variant: CustomButtonVariant.filled,
       icon: primaryIcon,
       svgPath: primarySvg,
+      shrinkWrapWidth: true,
       backgroundColor: Theme.of(context).colorScheme.primary,
       textColor: Theme.of(context).colorScheme.onPrimary,
+      isLoading: isProcessing,
       onPressed: isProcessing
           ? null
           : (hasRegisteredFace ? onTakeAttendance : onNavigateToRegisterFace),
       onLongPress: hasRegisteredFace ? onManualAttendance : null,
     );
-
-    if (isProcessing) {
-      primaryFab = SizedBox(
-        width: 48,
-        height: 48,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Opacity(opacity: 0.35, child: primaryFab),
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return primaryFab;
   }
 }

@@ -212,7 +212,8 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
                 children: [
                   Padding(
                     padding: EdgeInsets.only(
-                      bottom: attendanceFabBottomFromScreenBottom(context),
+                      bottom: fabStackBottomFromScreenBottom(context) +
+                          kFabFilledPillHeight,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -245,7 +246,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
                   if (!state.isCheckingFace)
                     Positioned(
                       right: kNavBarHorizontalPadding,
-                      bottom: attendanceFabBottomFromScreenBottom(context),
+                      bottom: fabStackBottomFromScreenBottom(context),
                       child: AttendanceActionButtons(
                         hasRegisteredFace: state.hasRegisteredFace,
                         isProcessing: state.isProcessing,

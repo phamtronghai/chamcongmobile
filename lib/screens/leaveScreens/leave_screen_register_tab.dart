@@ -196,7 +196,7 @@ class _LeaveScreenRegisterTabState
           16,
           16,
           16,
-          16 + leaveFabBottomInSafeArea(context) + 48 + 8,
+          fabStackBottomFromScreenBottom(context) + kFabFilledPillHeight,
         ),
         itemCount: _requests.length + 1,
         itemBuilder: (context, index) {
@@ -265,11 +265,18 @@ class _LeaveScreenRegisterTabState
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : (_requests.isEmpty
-                        ? BaseEmptyState(
-                            icon: Icons.event_note_outlined,
-                            title: 'Chưa có đơn trong khoảng đã chọn',
-                            subtitle:
-                                '${_rangeFmt.format(_filterRange.start)} – ${_rangeFmt.format(_filterRange.end)}',
+                        ? Padding(
+                            padding: EdgeInsets.only(
+                              bottom:
+                                  fabStackBottomFromScreenBottom(context) +
+                                  kFabFilledPillHeight,
+                            ),
+                            child: BaseEmptyState(
+                              icon: Icons.event_note_outlined,
+                              title: 'Chưa có đơn trong khoảng đã chọn',
+                              subtitle:
+                                  '${_rangeFmt.format(_filterRange.start)} – ${_rangeFmt.format(_filterRange.end)}',
+                            ),
                           )
                         : _buildList()),
             ),
@@ -277,12 +284,13 @@ class _LeaveScreenRegisterTabState
         ),
         Positioned(
           right: kNavBarHorizontalPadding,
-          bottom: leaveFabBottomInSafeArea(context),
+          bottom: fabStackBottomFromScreenBottom(context),
           child: CustomButton(
             text: 'Đăng ký nghỉ phép',
             tooltip: 'Đăng ký nghỉ phép',
-            variant: CustomButtonVariant.iconCircle,
+            variant: CustomButtonVariant.filled,
             icon: Icons.add,
+            shrinkWrapWidth: true,
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Theme.of(context).colorScheme.onPrimary,
             onPressed: _isLoading ? null : _navigateToLeaveCreate,

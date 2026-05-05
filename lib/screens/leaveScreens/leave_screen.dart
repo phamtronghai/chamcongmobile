@@ -73,7 +73,10 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
           AppRouter.goToNotification(context, widget.user);
         },
       ),
-      body: SafeArea(child: _buildBody()),
+      body: SafeArea(
+        bottom: false,
+        child: _buildBody(),
+      ),
     );
   }
 

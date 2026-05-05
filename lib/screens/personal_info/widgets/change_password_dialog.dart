@@ -174,28 +174,11 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                       enabled: !_isLoading,
                     ),
                     const SizedBox(height: 20),
-                    // Nút hành động
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomButton(
-                            text: _isLoading ? 'Đang xử lý...' : 'Đổi mật khẩu',
-                            onPressed: _isLoading ? null : _onConfirm,
-                            backgroundColor: primaryColor,
-                            textColor: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        CustomButton(
-                          text: 'Đóng',
-                          variant: CustomButtonVariant.iconCircle,
-                          icon: Icons.close,
-                          backgroundColor: primaryColor,
-                          textColor: primaryColor,
-                          tooltip: 'Đóng',
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
+                    CustomButton(
+                      text: _isLoading ? 'Đang xử lý...' : 'Đổi mật khẩu',
+                      onPressed: _isLoading ? null : _onConfirm,
+                      backgroundColor: primaryColor,
+                      textColor: Colors.white,
                     ),
                   ],
                 ),

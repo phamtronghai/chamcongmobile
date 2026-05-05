@@ -45,6 +45,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     super.build(context);
     return Column(
       children: [
+        _buildMoCuaSection(),
         _buildDateHeader(),
         _buildTrucChiHuyBanner(),
         Expanded(
@@ -53,8 +54,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 current is TrucBanStateDanhSachTrucBanLoaded ||
                 (current is TrucBanStateLoading &&
                     current.target == TrucBanLoadTarget.dsTrucBan) ||
-                (current is TrucBanStateError &&
-                    !_isLockStateError(current)),
+                (current is TrucBanStateError && !_isLockStateError(current)),
             builder: (context, state) {
               if (state is TrucBanStateLoading) {
                 return const Center(child: CircularProgressIndicator());
@@ -92,8 +92,6 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
             },
           ),
         ),
-        // Nút mở cửa ở cuối
-        _buildMoCuaSection(),
       ],
     );
   }
@@ -181,14 +179,13 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
 
   Widget _buildMoCuaSection() {
     return Container(
-      // Thêm padding dưới lớn để tránh bị navbar che
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      // decoration: BoxDecoration(
+      //   color: Theme.of(context).colorScheme.surface,
+      //   border: Border(
+      //     bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+      //   ),
+      // ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

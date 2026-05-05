@@ -189,7 +189,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     }
   }
 
-  /// FAB iconCircle: cùng thứ tự chip cũ (Camera → Khách đơn vị → Duyệt), Duyệt gần nav nhất.
+  /// FAB iconCircle (chỉ icon): Trạng thái khóa (nếu có) → Camera → Khách đơn vị → Duyệt. [fabStackBottomFromScreenBottom].
   Widget _buildTrucBanFabStack() {
     return BlocBuilder<TrucBanCubit, TrucBanState>(
       buildWhen: (prev, curr) => curr is TrucBanStatePhanQuyenLoaded,
@@ -254,7 +254,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
 
         return Positioned(
           right: kNavBarHorizontalPadding,
-          bottom: trucBanFabBottomFromScreenBottom(context),
+          bottom: fabStackBottomFromScreenBottom(context),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -358,6 +358,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
               );
             }
             return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: state.danhSach.length,
               itemBuilder: (context, index) {
                 final yeuCau = state.danhSach[index];

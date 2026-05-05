@@ -88,9 +88,10 @@ class _CustomNavBarState extends State<CustomNavBar> {
           ),
           loaded: (_) {
             final screens = _buildScreens();
-            const double floatingBottomInset = -20;
-            const double floatingHorizontalInset = 16;
-            final bottomSafe = MediaQuery.of(context).padding.bottom;
+            const double floatingHorizontalInset = kNavBarHorizontalPadding;
+            final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
+            final navBarBottomPad =
+                (bottomSafe + kNavBarFloatingBottomInset).clamp(0.0, double.infinity);
             return Scaffold(
               body: PageView(
                 controller: _pageController,
@@ -103,7 +104,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
                   floatingHorizontalInset,
                   0,
                   floatingHorizontalInset,
-                  bottomSafe + floatingBottomInset,
+                  navBarBottomPad,
                 ),
                 child: Stack(
                   alignment: Alignment.bottomCenter,
