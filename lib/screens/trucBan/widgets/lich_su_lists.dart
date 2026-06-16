@@ -22,10 +22,7 @@ class LichSuRaNgoaiList extends StatelessWidget {
       builder: (context, state) {
         if (state is TrucBanStateDanhSachRaNgoaiLoaded) {
           if (state.danhSach.isEmpty) {
-            return const BaseEmptyState(
-              icon: Icons.history,
-              title: 'Chưa có lịch sử ra ngoài',
-            );
+            return const BaseEmptyState();
           }
           return Column(
             children: state.danhSach.map((yeuCau) {
@@ -88,10 +85,7 @@ class LichSuKhachList extends StatelessWidget {
       builder: (context, state) {
         if (state is TrucBanStateDanhSachKhachLoaded) {
           if (state.danhSach.isEmpty) {
-            return const BaseEmptyState(
-              icon: Icons.run_circle,
-              title: 'Chưa có lịch sử đăng ký khách',
-            );
+            return const BaseEmptyState();
           }
           return Column(
             children: state.danhSach.map((khach) {

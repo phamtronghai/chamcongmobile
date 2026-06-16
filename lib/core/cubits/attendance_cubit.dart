@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/cubits/attendance_state.dart';
 import 'package:attendancebyface/core/services/attendance_service.dart';
-import 'package:attendancebyface/core/services/device_security_service.dart';
 import 'package:attendancebyface/core/repositories/date_time_repository.dart';
 import 'package:attendancebyface/core/services/report_service.dart';
 import 'package:attendancebyface/core/repositories/location_repository.dart';
@@ -15,7 +14,6 @@ import 'package:attendancebyface/core/service_locator.dart';
 
 class AttendanceCubit extends Cubit<AttendanceState> {
   final AttendanceService _attendanceService = locator<AttendanceService>();
-  final DeviceSecurityService _deviceSecurityService = locator<DeviceSecurityService>();
   final DateTimeRepository _dateTimeRepository = DateTimeRepository();
   final ReportService _reportService = locator<ReportService>();
   final LocationRepository _locationRepository = LocationRepository();
@@ -122,9 +120,6 @@ class AttendanceCubit extends Cubit<AttendanceState> {
 
   Future<void> takePicture(BuildContext context, UserModel user) async {
     if (state.isProcessing) return;
-
-    final isDeviceSafe = await _deviceSecurityService.validateDeviceSecurity(context);
-    if (!isDeviceSafe) return;
 
     emit(state.copyWith(
       isProcessing: true,

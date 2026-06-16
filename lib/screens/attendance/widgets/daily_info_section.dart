@@ -4,6 +4,7 @@ import 'package:attendancebyface/models/worklog_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/widgets/date_picker_field.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:attendancebyface/gen/fonts.gen.dart';
 
@@ -114,7 +115,9 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
           ),
           const SizedBox(height: 1),
           SizedBox(
-            height: 50,
+            height: widget.isLoadingRecords || widget.attendanceRecords.isNotEmpty
+                ? 50
+                : 100,
             child: widget.isLoadingRecords
                 ? const Center(
                     child: SizedBox(
@@ -124,23 +127,10 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
                     ),
                   )
                 : widget.attendanceRecords.isEmpty
-                ? _buildEmptyState(theme)
+                ? const BaseEmptyState()
                 : _buildSortedAttendanceList(theme),
           ),
         ],
-      ),
-    );
-  }
-
-  // --- TRẠNG THÁI RỖNG DÙNG CHUNG ---
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: SamcomChip(
-        label: 'Chưa có dữ liệu',
-        onPressed: null,
-        variant: SamcomChipVariant.outlined,
-        color: theme.colorScheme.outline,
-        dense: true,
       ),
     );
   }
@@ -216,7 +206,10 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
             ],
           ),
           const SizedBox(height: 8),
-          SizedBox(height: 50, child: _buildWorklogChipsRow(theme)),
+          SizedBox(
+            height: _worklogRowIsEmpty() ? 100 : 50,
+            child: _buildWorklogChipsRow(theme),
+          ),
         ],
       ),
     );
@@ -274,6 +267,13 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
   }
 
   /// Tạo dải chip công việc trong ngày (kèm chip "+"
+  bool _worklogRowIsEmpty() {
+    if (widget.isLoadingWorklogs) return false;
+    return widget.worklogs
+        .where((w) => w.sessionId == _selectedSessionId)
+        .isEmpty;
+  }
+
   Widget _buildWorklogChipsRow(ThemeData theme) {
     // Lọc theo sessionId đang được chọn
     final List<WorklogModel> items = widget.worklogs
@@ -281,7 +281,7 @@ class _DailyInfoSectionState extends State<DailyInfoSection> {
         .toList();
 
     if (items.isEmpty) {
-      return _buildEmptyState(theme);
+      return const BaseEmptyState();
     }
 
     // Sắp xếp theo thời gian thêm (cũ trước, mới sau)

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'leave_screen_register_tab.dart';
 import 'leave_screen_approval_tab.dart';
+import 'leave_screen_bod_list_tab.dart';
 import 'package:attendancebyface/core/app_router.dart';
 import 'package:attendancebyface/core/widgets/base_screen.dart';
 
@@ -47,7 +48,7 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
   }
 
   int _getTabCount() {
-    if (_isBod) return 1; // Chỉ có tab phê duyệt
+    if (_isBod) return 2; // Phê duyệt + Danh sách
     if (_isManager) return 2; // Cả 2 tab
     return 1; // Chỉ có tab đăng ký
   }
@@ -82,7 +83,7 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
 
   List<Widget>? _buildTabs() {
     if (_isBod) {
-      return [_buildApprovalTab()];
+      return [_buildApprovalTab(), const Tab(text: 'Danh sách')];
     } else if (_isManager) {
       return [const Tab(text: 'Đăng ký'), _buildApprovalTab()];
     } else {
@@ -96,8 +97,13 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
 
   Widget _buildBody() {
     if (_isBod) {
-      // Ban giám đốc: chỉ có tab phê duyệt
-      return const LeaveScreenApprovalTab();
+      return TabBarView(
+        controller: _tabController,
+        children: const [
+          LeaveScreenApprovalTab(),
+          LeaveScreenBodListTab(),
+        ],
+      );
     } else if (_isManager) {
       // Trưởng/Phó: có cả 2 tab
       return TabBarView(

@@ -56,7 +56,7 @@ class TrucBanUIHelpers {
       case NhomQuyen.binhThuong:
         return 'Xem lịch trực, đăng ký khách, ra ngoài';
       case NhomQuyen.trucBan:
-        return 'Xem khách đơn vị, quản lý khóa';
+        return 'Xem khách đơn vị, camera';
       case NhomQuyen.lanhDaoPhong:
         return 'Duyệt yêu cầu ra ngoài';
       case NhomQuyen.lanhDao:

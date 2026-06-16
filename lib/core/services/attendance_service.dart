@@ -9,7 +9,6 @@ import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:dio/dio.dart';
 import 'package:attendancebyface/core/utils/response_parser.dart';
 import 'package:attendancebyface/core/utils/device_id_helper.dart';
-import 'package:attendancebyface/core/utils/device_security_helper.dart';
 import 'base_service.dart';
 
 class AttendanceService extends BaseService {
@@ -131,18 +130,6 @@ class AttendanceService extends BaseService {
       // 2. Lấy vị trí sau khi kiểm tra liveness thành công (hoặc dùng tọa độ override nếu cung cấp)
       double? currentLat = overrideLat;
       double? currentLng = overrideLng;
-
-      // 2.a. Kiểm tra Mock Location trước khi lấy tọa độ thật
-      // Giới hạn Android đã được xử lý bên trong Helper
-      final mockCheckDetails = await DeviceSecurityHelper.checkMockLocation();
-      if (!context.mounted) return result;
-
-      final isFakeGps = mockCheckDetails['isMockLocation'] == true;
-      if (isFakeGps) {
-        result['message'] = 'Phát hiện ứng dụng giả vị trí. Vui lòng tắt và thử lại.';
-        _faceService.clearCapturedImage();
-        return result;
-      }
 
       if (currentLat == null || currentLng == null) {
         final position = await getCurrentLocation(context);

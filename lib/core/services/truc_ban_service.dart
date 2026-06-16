@@ -269,59 +269,6 @@ class TrucBanService {
     }
   }
 
-  // ======== API CHO TRỰC BAN ========
-
-  /// Lấy trạng thái khóa hệ thống
-  ///
-  /// Gọi API: GET /api/smartgate/he-thong/trang-thai-khoa
-  /// Response: { success, data: { trangThai: "KHONG_KHOA" | "KHOA" } }
-  Future<TrangThaiKhoa> layTrangThaiKhoa() async {
-    try {
-      final response = await _apiClient.get(
-        '/api/smartgate/he-thong/trang-thai-khoa',
-      );
-
-      final responseData = response.data as Map<String, dynamic>;
-      if (responseData['success'] != true) {
-        throw Exception('API trả về lỗi khi lấy trạng thái khóa');
-      }
-
-      final data = responseData['data'] as Map<String, dynamic>;
-      final trangThaiStr = data['trangThai'] as String? ?? 'KHONG_KHOA';
-      final trangThai = TrangThaiKhoa.fromValue(trangThaiStr);
-
-      debugPrint('🔒 Trạng thái khóa: ${trangThai.moTa} ($trangThaiStr)');
-      return trangThai;
-    } catch (e) {
-      debugPrint('❌ Lỗi lấy trạng thái khóa: $e');
-      rethrow;
-    }
-  }
-
-  /// Thay đổi trạng thái khóa hệ thống
-  ///
-  /// Gọi API: PUT /api/smartgate/he-thong/thay-doi-trang-thai-khoa
-  /// Payload: { "trangThai": "KHOA" } hoặc { "trangThai": "KHONG_KHOA" }
-  Future<bool> thayDoiTrangThaiKhoa(TrangThaiKhoa trangThai) async {
-    try {
-      final response = await _apiClient.put(
-        '/api/smartgate/he-thong/thay-doi-trang-thai-khoa',
-        data: {'trangThai': trangThai.value},
-      );
-
-      final responseData = response.data as Map<String, dynamic>;
-      if (responseData['success'] != true) {
-        throw Exception('API trả về lỗi khi thay đổi trạng thái khóa');
-      }
-
-      debugPrint('✅ Thay đổi trạng thái khóa thành công: ${trangThai.value}');
-      return true;
-    } catch (e) {
-      debugPrint('❌ Lỗi thay đổi trạng thái khóa: $e');
-      rethrow;
-    }
-  }
-
   // ======== API CHO LÃNH ĐẠO ========
 
   /// Lấy danh sách yêu cầu ra ngoài

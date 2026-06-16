@@ -346,15 +346,8 @@ class PhanQuyen {
   bool get canViewDonVi =>
       nhomQuyen == NhomQuyen.trucBan || nhomQuyen == NhomQuyen.lanhDao;
 
-  /// Kiểm tra có quyền khóa/mở khóa hệ thống không
-  bool get canLockSystem => nhomQuyen == NhomQuyen.trucBan;
-
   /// Kiểm tra có quyền duyệt yêu cầu ra ngoài không
   bool get canApproveRaNgoai => nhomQuyen == NhomQuyen.lanhDaoPhong;
-
-  /// Kiểm tra có quyền mở cửa khi bị khóa không
-  bool get canOpenWhenLocked =>
-      nhomQuyen == NhomQuyen.trucBan || nhomQuyen == NhomQuyen.lanhDao;
 
   /// Kiểm tra có quyền xem camera không
   bool get canViewCamera =>

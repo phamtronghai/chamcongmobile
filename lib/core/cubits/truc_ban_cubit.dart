@@ -94,11 +94,17 @@ class TrucBanCubit extends Cubit<TrucBanState> {
 
   /// Lấy lịch sử khách cá nhân
   Future<void> layLichSuKhachCaNhan(DateTime ngay) async {
+    debugPrint('[TrucBan/Cubit] layLichSuKhachCaNhan START ngay=$ngay');
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.dangKyKhach));
     try {
       final danhSach = await _repository.layLichSuKhachCaNhan(ngay);
+      debugPrint(
+        '[TrucBan/Cubit] layLichSuKhachCaNhan OK → ${danhSach.length} khách',
+      );
       emit(TrucBanState.danhSachKhachLoaded(danhSach: danhSach));
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[TrucBan/Cubit] layLichSuKhachCaNhan FAIL → emit Error: $e');
+      debugPrint('$st');
       emit(TrucBanState.error(message: e.toString()));
     }
   }
@@ -125,6 +131,10 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     required String lyDo,
     String? tenNguoiDangKy,
   }) async {
+    debugPrint(
+      '[TrucBan/Cubit] dangKyRaNgoai START '
+      'ra=$thoiGianRa vao=$thoiGianVao lyDo=$lyDo',
+    );
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.general));
     try {
       await _repository.dangKyRaNgoai(
@@ -132,6 +142,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         thoiGianVao: thoiGianVao,
         lyDo: lyDo,
       );
+      debugPrint('[TrucBan/Cubit] dangKyRaNgoai API OK → emit Success');
       emit(const TrucBanState.success(message: 'Đăng ký ra ngoài thành công'));
 
       // Gửi thông báo cho trưởng/phó phòng (không block UI)
@@ -141,7 +152,8 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         thoiGianVao: thoiGianVao,
         lyDo: lyDo,
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[TrucBan/Cubit] dangKyRaNgoai FAIL: $e\n$st');
       emit(TrucBanState.error(message: e.toString()));
     }
   }
@@ -179,11 +191,17 @@ class TrucBanCubit extends Cubit<TrucBanState> {
 
   /// Lấy lịch sử ra ngoài cá nhân
   Future<void> layLichSuRaNgoaiCaNhan(DateTime ngay) async {
+    debugPrint('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan START ngay=$ngay');
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.raNgoaiCaNhan));
     try {
       final danhSach = await _repository.layLichSuRaNgoaiCaNhan(ngay);
+      debugPrint(
+        '[TrucBan/Cubit] layLichSuRaNgoaiCaNhan OK → ${danhSach.length} yêu cầu',
+      );
       emit(TrucBanState.danhSachRaNgoaiLoaded(danhSach: danhSach));
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan FAIL → emit Error: $e');
+      debugPrint('$st');
       emit(TrucBanState.error(message: e.toString()));
     }
   }
@@ -255,41 +273,6 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     try {
       await _repository.moCua(loaiPhuongTien);
       emit(const TrucBanState.success(message: 'Mở cửa thành công'));
-    } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
-    }
-  }
-
-  // ======== TRẠNG THÁI KHÓA ========
-
-  /// Lấy trạng thái khóa
-  Future<void> layTrangThaiKhoa() async {
-    emit(const TrucBanState.loading());
-    try {
-      final trangThai = await _repository.layTrangThaiKhoa();
-      emit(TrucBanState.trangThaiKhoaLoaded(trangThai: trangThai));
-    } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
-    }
-  }
-
-  /// Khóa hệ thống
-  Future<void> khoaHeThong() async {
-    emit(const TrucBanState.loading());
-    try {
-      await _repository.khoaHeThong();
-      emit(const TrucBanState.success(message: 'Đã khóa hệ thống'));
-    } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
-    }
-  }
-
-  /// Mở khóa hệ thống
-  Future<void> moKhoaHeThong() async {
-    emit(const TrucBanState.loading());
-    try {
-      await _repository.moKhoaHeThong();
-      emit(const TrucBanState.success(message: 'Đã mở khóa hệ thống'));
     } catch (e) {
       emit(TrucBanState.error(message: e.toString()));
     }

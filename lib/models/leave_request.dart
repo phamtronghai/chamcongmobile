@@ -140,8 +140,9 @@ class LeaveRequest {
       rejectionReason:
           (json['rejectionReason'] ?? json['rejection_reason']) as String?,
       userId: json['userId'] as String?,
-      nameApplicant: json['nameApplicant'] as String?,
-      department: json['department'] as String?,
+      nameApplicant:
+          (json['nameApplicant'] ?? json['applicantName']) as String?,
+      department: (json['department'] ?? json['applicantDepartment']) as String?,
       departmentApprovedName: json['departmentApprovedName'] as String?,
       boardApprovedName: json['boardApprovedName'] as String?,
       workflow: parseWorkflow(

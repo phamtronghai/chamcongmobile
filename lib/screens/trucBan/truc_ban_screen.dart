@@ -42,9 +42,6 @@ class _TrucBanScreenState extends State<TrucBanScreen>
   bool _isProcessing = false;
   DateTime _selectedDate = DateTime.now();
 
-  // Lock State
-  TrangThaiKhoa? _currentLockState;
-
   @override
   void initState() {
     super.initState();
@@ -156,11 +153,6 @@ class _TrucBanScreenState extends State<TrucBanScreen>
         type: CustomSnackbarType.success,
       );
       setState(() => _isProcessing = false);
-
-      // Reload lock state if success (likely a toggle action)
-      if (state.message.contains('khóa hệ thống')) {
-        _cubit.layTrangThaiKhoa();
-      }
     } else if (state is TrucBanStateError) {
       CustomSnackbar.show(
         context: context,
@@ -169,27 +161,17 @@ class _TrucBanScreenState extends State<TrucBanScreen>
       );
       setState(() => _isProcessing = false);
     } else if (state is TrucBanStateLoading) {
-      // Don't show full screen overlay for lock check
       if (state.target != TrucBanLoadTarget.general) {
         setState(() => _isProcessing = true);
       }
     } else if (state is TrucBanStatePhanQuyenLoaded) {
       setState(() => _isProcessing = false);
-      // Fetch lock state if allowed
-      if (state.phanQuyen.canLockSystem) {
-        _cubit.layTrangThaiKhoa();
-      }
-    } else if (state is TrucBanStateTrangThaiKhoaLoaded) {
-      setState(() {
-        _isProcessing = false;
-        _currentLockState = state.trangThai;
-      });
     } else {
       setState(() => _isProcessing = false);
     }
   }
 
-  /// FAB iconCircle (chỉ icon): Trạng thái khóa (nếu có) → Camera → Khách đơn vị → Duyệt. [fabStackBottomFromScreenBottom].
+  /// FAB iconCircle: Camera → Khách đơn vị → Duyệt.
   Widget _buildTrucBanFabStack() {
     return BlocBuilder<TrucBanCubit, TrucBanState>(
       buildWhen: (prev, curr) => curr is TrucBanStatePhanQuyenLoaded,
@@ -221,11 +203,6 @@ class _TrucBanScreenState extends State<TrucBanScreen>
               onPressed: onTap,
             ),
           );
-        }
-
-        if (phanQuyen.canLockSystem) {
-          if (items.isNotEmpty) items.add(const SizedBox(height: 12));
-          items.add(_buildLockStatusFab());
         }
 
         if (phanQuyen.canViewCamera) {
@@ -265,37 +242,6 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     );
   }
 
-  Widget _buildLockStatusFab() {
-    final isLocked = _currentLockState == TrangThaiKhoa.khoa;
-    // Default blue if state unknown, else Green (Open) or Red (Locked)
-    final color = _currentLockState == null
-        ? ColorConstants.primaryColor
-        : (isLocked ? ColorConstants.errorColor : ColorConstants.successColor);
-
-    final icon = isLocked ? Icons.lock : Icons.lock_open;
-    final label = isLocked ? 'Đã khóa' : 'Đang mở';
-
-    return CustomButton(
-      text: 'Trạng thái khóa: $label',
-      tooltip: 'Trạng thái khóa: $label',
-      variant: CustomButtonVariant.iconCircle,
-      icon: icon,
-      backgroundColor: color,
-      textColor: Colors.white,
-      onPressed: _currentLockState == null ? null : _toggleLockSystem,
-    );
-  }
-
-  void _toggleLockSystem() {
-    if (_currentLockState == null) return;
-
-    if (_currentLockState == TrangThaiKhoa.khoa) {
-      _cubit.moKhoaHeThong();
-    } else {
-      _cubit.khoaHeThong();
-    }
-  }
-
   // ======== DIALOGS ========
 
   void _showCameraDialog() {
@@ -317,10 +263,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
           // ... Logic build list view giữ nguyên
           if (state is TrucBanStateDanhSachKhachLoaded) {
             if (state.danhSach.isEmpty) {
-              return const BaseEmptyState(
-                icon: Icons.people_outline,
-                title: 'Không có khách đăng ký',
-              );
+              return const BaseEmptyState();
             }
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -352,10 +295,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
         builder: (context, state) {
           if (state is TrucBanStateDanhSachRaNgoaiLoaded) {
             if (state.danhSach.isEmpty) {
-              return const BaseEmptyState(
-                icon: Icons.check_circle_outline,
-                title: 'Không có yêu cầu cần duyệt',
-              );
+              return const BaseEmptyState();
             }
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

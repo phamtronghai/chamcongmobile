@@ -73,11 +73,29 @@ class _LeaveRequestDetailSheetState extends State<LeaveRequestDetailSheet> {
     return 'Không có thông tin';
   }
 
+  String _formatApproverLine(String name, DateTime? at) {
+    if (at != null) return '$name • ${_fmt(at)}';
+    return name;
+  }
+
+  bool _hasApproverName(String? name) =>
+      name != null && name.trim().isNotEmpty;
+
   /// Kiểm tra xem có thể hiển thị nút action không
   bool _canShowActions() {
     final status = widget.request.status;
     return status == LeaveStatus.pending ||
         status == LeaveStatus.departmentApproved;
+  }
+
+  /// Trưởng phòng duyệt bước 1: hiển thị BGĐ được chỉ định từ API (chưa duyệt).
+  bool _shouldShowPendingBoardApprover(LeaveRequest r) {
+    if (!widget.showActions || r.status != LeaveStatus.pending) {
+      return false;
+    }
+    if (r.workflow != ApprovalWorkflow.bothLevels) return false;
+    final name = r.boardApprovedName?.trim();
+    return name != null && name.isNotEmpty;
   }
 
   @override
@@ -201,24 +219,36 @@ class _LeaveRequestDetailSheetState extends State<LeaveRequestDetailSheet> {
                     const SizedBox(height: 20),
                   ],
 
-                  if (r.departmentApprovedId != null &&
-                      r.departmentApprovedAt != null) ...[
+                  if (_shouldShowPendingBoardApprover(r)) ...[
                     _buildInfoRow(
-                      icon: Icons.business_center_outlined,
-                      title: 'Phê duyệt phòng ban',
-                      content:
-                          '${_getApproverName(r.departmentApprovedId!, 'department_manager')} • ${_fmt(r.departmentApprovedAt!)}',
+                      icon: Icons.verified_user_outlined,
+                      title: 'Người phê duyệt Ban giám đốc',
+                      content: r.boardApprovedName!,
                     ),
                     const SizedBox(height: 20),
                   ],
 
-                  if (r.boardApprovedId != null &&
-                      r.boardApprovedAt != null) ...[
+                  if (_hasApproverName(r.departmentApprovedName)) ...[
+                    _buildInfoRow(
+                      icon: Icons.business_center_outlined,
+                      title: 'Phê duyệt phòng ban',
+                      content: _formatApproverLine(
+                        r.departmentApprovedName!,
+                        r.departmentApprovedAt,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  if (_hasApproverName(r.boardApprovedName) &&
+                      !_shouldShowPendingBoardApprover(r)) ...[
                     _buildInfoRow(
                       icon: Icons.verified_user_outlined,
                       title: 'Phê duyệt Ban giám đốc',
-                      content:
-                          '${_getApproverName(r.boardApprovedId!, 'board_director')} • ${_fmt(r.boardApprovedAt!)}',
+                      content: _formatApproverLine(
+                        r.boardApprovedName!,
+                        r.boardApprovedAt,
+                      ),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -420,15 +450,5 @@ class _LeaveRequestDetailSheetState extends State<LeaveRequestDetailSheet> {
         ),
       ],
     );
-  }
-
-  String _getApproverName(String approverId, String type) {
-    // Sử dụng ApproverGroups từ context hoặc trả về tên từ model
-    if (type == 'department_manager') {
-      return widget.request.departmentApprovedName ?? 'Unknown';
-    } else if (type == 'board_director') {
-      return widget.request.boardApprovedName ?? 'Unknown';
-    }
-    return 'Unknown';
   }
 }

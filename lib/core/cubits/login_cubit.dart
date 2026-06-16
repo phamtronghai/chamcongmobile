@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:attendancebyface/core/cubits/login_state.dart';
 import 'package:attendancebyface/core/services/auth_service.dart';
-import 'package:attendancebyface/core/services/device_security_service.dart';
 import 'package:attendancebyface/core/services/notification_service.dart';
 import 'package:attendancebyface/core/services/organization_service.dart';
 import 'package:attendancebyface/core/app_config.dart';
@@ -58,7 +57,7 @@ class LoginCubit extends Cubit<LoginState> {
     await _loadBiometricAccounts();
     await loadUnits();
     if (!context.mounted) return;
-    await checkDeviceSecurityAndAutoLogin(context);
+    await _checkAutoLogin();
   }
 
   Future<void> loadUnits() async {
@@ -81,20 +80,6 @@ class LoginCubit extends Cubit<LoginState> {
       ));
     } catch (e) {
       debugPrint('Lỗi khi load danh sách tài khoản sinh trắc học: $e');
-    }
-  }
-
-  Future<void> checkDeviceSecurityAndAutoLogin(BuildContext context) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    try {
-      if (!context.mounted) return;
-      final deviceSecurityService = locator<DeviceSecurityService>();
-      final isSecure = await deviceSecurityService.validateDeviceSecurity(context);
-      if (isSecure) {
-        await _checkAutoLogin();
-      }
-    } catch (e) {
-      debugPrint('Lỗi khi kiểm tra bảo mật: $e');
     }
   }
 

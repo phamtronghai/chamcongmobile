@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Widget empty state thống nhất (icon + title + subtitle tùy chọn).
+/// Empty state thống nhất: icon lịch sử 32px + "Chưa có dữ liệu".
 class BaseEmptyState extends StatelessWidget {
+  static const IconData defaultIcon = Icons.history;
+  static const String defaultTitle = 'Chưa có dữ liệu';
+
   final IconData icon;
   final String title;
-  final String? subtitle;
   final TextAlign textAlign;
 
   const BaseEmptyState({
     super.key,
-    required this.icon,
-    required this.title,
-    this.subtitle,
+    this.icon = defaultIcon,
+    this.title = defaultTitle,
     this.textAlign = TextAlign.center,
   });
 
@@ -44,16 +45,6 @@ class BaseEmptyState extends StatelessWidget {
               ),
               textAlign: textAlign,
             ),
-            if (subtitle != null && subtitle!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7),
-                ),
-                textAlign: textAlign,
-              ),
-            ],
           ],
         ),
       ),

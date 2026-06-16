@@ -10,6 +10,7 @@ import 'package:attendancebyface/core/cubits/truc_ban_state.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
 import 'package:attendancebyface/core/widgets/base_empty_state.dart';
+import 'package:attendancebyface/core/widgets/error_widget.dart';
 
 import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/core/widgets/date_picker_field.dart';
@@ -30,16 +31,6 @@ class DanhSachTrucBanTab extends StatefulWidget {
 
 class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     with AutomaticKeepAliveClientMixin {
-  bool _isLockStateError(TrucBanState state) {
-    if (state is! TrucBanStateError) return false;
-    final message = state.message.toLowerCase();
-    return message.contains('trạng thái khóa') ||
-        message.contains('khoa he thong') ||
-        message.contains('khóa hệ thống') ||
-        message.contains('mo khoa') ||
-        message.contains('mở khóa');
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -54,17 +45,14 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 current is TrucBanStateDanhSachTrucBanLoaded ||
                 (current is TrucBanStateLoading &&
                     current.target == TrucBanLoadTarget.dsTrucBan) ||
-                (current is TrucBanStateError && !_isLockStateError(current)),
+                current is TrucBanStateError,
             builder: (context, state) {
               if (state is TrucBanStateLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (state is TrucBanStateDanhSachTrucBanLoaded) {
                 if (state.danhSach.isEmpty) {
-                  return const BaseEmptyState(
-                    icon: Icons.calendar_today_outlined,
-                    title: 'Không có lịch trực ban',
-                  );
+                  return const BaseEmptyState();
                 }
                 return RefreshIndicator(
                   onRefresh: () => context
@@ -83,9 +71,11 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 );
               }
               if (state is TrucBanStateError) {
-                return BaseEmptyState(
-                  icon: Icons.error_outline,
-                  title: state.message,
+                return AppErrorWidget(
+                  message: state.message,
+                  onRetry: () => context
+                      .read<TrucBanCubit>()
+                      .layDanhSachTrucBan(widget.selectedDate),
                 );
               }
               return const SizedBox.shrink();

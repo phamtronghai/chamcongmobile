@@ -5,7 +5,6 @@ PODS:
     - Flutter
   - device_info_plus (0.0.1):
     - Flutter
-  - DTTJailbreakDetection (0.4.0)
   - Firebase/CoreOnly (12.6.0):
     - FirebaseCore (~> 12.6.0)
   - Firebase/Messaging (12.6.0):
@@ -103,9 +102,6 @@ PODS:
     - Flutter
     - FlutterMacOS
   - PromisesObjC (2.4.0)
-  - safe_device (1.0.0):
-    - DTTJailbreakDetection
-    - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -160,7 +156,6 @@ DEPENDENCIES:
   - mobile_scanner (from `.symlinks/plugins/mobile_scanner/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
-  - safe_device (from `.symlinks/plugins/safe_device/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqlite3_flutter_libs (from `.symlinks/plugins/sqlite3_flutter_libs/darwin`)
   - syncfusion_flutter_pdfviewer (from `.symlinks/plugins/syncfusion_flutter_pdfviewer/ios`)
@@ -169,7 +164,6 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
-    - DTTJailbreakDetection
     - Firebase
     - FirebaseCore
     - FirebaseCoreInternal
@@ -219,8 +213,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
-  safe_device:
-    :path: ".symlinks/plugins/safe_device/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sqlite3_flutter_libs:
@@ -236,7 +228,6 @@ SPEC CHECKSUMS:
   app_badge_plus: 6032bcb1e31689948ff63404c5d6f118001a9dee
   camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
-  DTTJailbreakDetection: 5e356c5badc17995f65a83ed9483f787a0057b71
   Firebase: a451a7b61536298fd5cbfe3a746fd40443a50679
   firebase_core: ba00a168e719694f38960502ceb560285603d073
   firebase_messaging: bf0e29321927edc02a563c984dbfa5b063864b15
@@ -262,7 +253,6 @@ SPEC CHECKSUMS:
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  safe_device: 205ad04de30f4512ca889418d4783e1b6fdf8cfe
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sqlite3: a51c07cf16e023d6c48abd5e5791a61a47354921
   sqlite3_flutter_libs: b3e120efe9a82017e5552a620f696589ed4f62ab

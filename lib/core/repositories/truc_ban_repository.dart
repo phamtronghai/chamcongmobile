@@ -115,21 +115,6 @@ class TrucBanRepository {
     return _service.moCua(loaiPhuongTien);
   }
 
-  // ======== TRẠNG THÁI KHÓA ========
-
-  /// Lấy trạng thái khóa hệ thống
-  Future<TrangThaiKhoa> layTrangThaiKhoa() => _service.layTrangThaiKhoa();
-
-  /// Khóa hệ thống
-  Future<bool> khoaHeThong() {
-    return _service.thayDoiTrangThaiKhoa(TrangThaiKhoa.khoa);
-  }
-
-  /// Mở khóa hệ thống
-  Future<bool> moKhoaHeThong() {
-    return _service.thayDoiTrangThaiKhoa(TrangThaiKhoa.khongKhoa);
-  }
-
   // ======== HELPER ========
 
   String _formatDate(DateTime date) {

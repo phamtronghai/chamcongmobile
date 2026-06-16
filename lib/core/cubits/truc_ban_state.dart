@@ -32,11 +32,6 @@ class TrucBanState with _$TrucBanState {
     required List<YeuCauRaNgoai> danhSach,
   }) = TrucBanStateDanhSachRaNgoaiLoaded;
 
-  /// Đã tải xong trạng thái khóa
-  const factory TrucBanState.trangThaiKhoaLoaded({
-    required TrangThaiKhoa trangThai,
-  }) = TrucBanStateTrangThaiKhoaLoaded;
-
   /// Thao tác thành công (đăng ký, duyệt, mở cửa, v.v.)
   const factory TrucBanState.success({required String message}) =
       TrucBanStateSuccess;

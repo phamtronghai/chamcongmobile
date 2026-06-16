@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'dart:async';
 
 import 'package:attendancebyface/core/database/app_database.dart';
@@ -14,6 +16,7 @@ import 'package:go_router/go_router.dart';
 import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:attendancebyface/core/repositories/device_repository.dart';
 
@@ -426,7 +429,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: SizedBox(
                         height: MediaQuery.of(context).size.height * 0.4,
-                        child: _buildEmptyState(),
+                        child: const BaseEmptyState(),
                       ),
                     ),
                   );
@@ -443,51 +446,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                 );
               },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.notifications_none_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Không có thông báo',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'Bạn sẽ nhận được thông báo khi có sự kiện mới',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-              textAlign: TextAlign.center,
             ),
           ),
         ],

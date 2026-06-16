@@ -2,7 +2,6 @@ import 'package:attendancebyface/models/leave_request.dart';
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/repositories/leave_repository.dart';
 import 'package:attendancebyface/models/approver.dart';
 import 'package:attendancebyface/screens/leaveScreens/leave_create_screen.dart';
@@ -76,8 +75,6 @@ class _LeaveScreenRegisterTabState
     final end = DateTime(n.year, n.month + 1, 0);
     return DateTimeRange(start: start, end: end);
   }
-
-  static final DateFormat _rangeFmt = DateFormat('dd/MM/yyyy');
 
   @override
   void initState() {
@@ -271,12 +268,7 @@ class _LeaveScreenRegisterTabState
                                   fabStackBottomFromScreenBottom(context) +
                                   kFabFilledPillHeight,
                             ),
-                            child: BaseEmptyState(
-                              icon: Icons.event_note_outlined,
-                              title: 'Chưa có đơn trong khoảng đã chọn',
-                              subtitle:
-                                  '${_rangeFmt.format(_filterRange.start)} – ${_rangeFmt.format(_filterRange.end)}',
-                            ),
+                            child: const BaseEmptyState(),
                           )
                         : _buildList()),
             ),

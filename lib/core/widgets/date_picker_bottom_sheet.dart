@@ -2,8 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 
-class AppDatePickerDialog extends StatefulWidget {
+/// Khoảng ngày preset (inclusive, date-only).
+class DateRangePresets {
+  DateRangePresets._();
+
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  static DateTimeRange today([DateTime? ref]) {
+    final d = _dateOnly(ref ?? DateTime.now());
+    return DateTimeRange(start: d, end: d);
+  }
+
+  /// [days] ngày gần nhất tính đến hôm nay (vd. 7 → today-6 … today).
+  static DateTimeRange lastDays(int days, [DateTime? ref]) {
+    final end = _dateOnly(ref ?? DateTime.now());
+    final start = end.subtract(Duration(days: days - 1));
+    return DateTimeRange(start: start, end: end);
+  }
+
+  static DateTimeRange get last7Days => lastDays(7);
+
+  static DateTimeRange get last30Days => lastDays(30);
+}
+
+/// Bottom sheet chọn ngày / khoảng ngày (Syncfusion calendar).
+class AppDatePickerBottomSheet extends StatefulWidget {
   final DateTime? initialDate;
   final List<DateTime>? initialDates;
   final DateTimeRange? initialRange;
@@ -12,7 +37,7 @@ class AppDatePickerDialog extends StatefulWidget {
   final DateRangePickerSelectionMode selectionMode;
   final Function(dynamic) onSelectionChanged;
 
-  const AppDatePickerDialog({
+  const AppDatePickerBottomSheet({
     super.key,
     this.initialDate,
     this.initialDates,
@@ -36,7 +61,7 @@ class AppDatePickerDialog extends StatefulWidget {
       context,
       title: title,
       subtitle: subtitle,
-      AppDatePickerDialog(
+      AppDatePickerBottomSheet(
         initialDate: initialDate,
         minDate: minDate,
         maxDate: maxDate,
@@ -59,7 +84,7 @@ class AppDatePickerDialog extends StatefulWidget {
       context,
       title: title,
       subtitle: subtitle,
-      AppDatePickerDialog(
+      AppDatePickerBottomSheet(
         initialDates: initialDates,
         minDate: minDate,
         maxDate: maxDate,
@@ -82,7 +107,7 @@ class AppDatePickerDialog extends StatefulWidget {
       context,
       title: title,
       subtitle: subtitle,
-      AppDatePickerDialog(
+      AppDatePickerBottomSheet(
         initialRange: initialRange,
         minDate: minDate,
         maxDate: maxDate,
@@ -140,13 +165,17 @@ class AppDatePickerDialog extends StatefulWidget {
   }
 
   @override
-  State<AppDatePickerDialog> createState() => _AppDatePickerDialogState();
+  State<AppDatePickerBottomSheet> createState() =>
+      _AppDatePickerBottomSheetState();
 }
 
-class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
+class _AppDatePickerBottomSheetState extends State<AppDatePickerBottomSheet> {
   DateTime? _selectedDate;
   List<DateTime>? _selectedDates;
   PickerDateRange? _selectedRange;
+
+  bool get _isRangeMode =>
+      widget.selectionMode == DateRangePickerSelectionMode.range;
 
   @override
   void initState() {
@@ -155,13 +184,11 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
       _selectedDate = widget.initialDate ?? DateTime.now();
     } else if (widget.selectionMode == DateRangePickerSelectionMode.multiple) {
       _selectedDates = widget.initialDates ?? [];
-    } else if (widget.selectionMode == DateRangePickerSelectionMode.range) {
-      if (widget.initialRange != null) {
-        _selectedRange = PickerDateRange(
-          widget.initialRange!.start,
-          widget.initialRange!.end,
-        );
-      }
+    } else if (_isRangeMode && widget.initialRange != null) {
+      _selectedRange = PickerDateRange(
+        widget.initialRange!.start,
+        widget.initialRange!.end,
+      );
     }
   }
 
@@ -171,7 +198,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
         _selectedDate = args.value as DateTime;
       } else if (widget.selectionMode == DateRangePickerSelectionMode.multiple) {
         _selectedDates = (args.value as List<dynamic>).cast<DateTime>();
-      } else if (widget.selectionMode == DateRangePickerSelectionMode.range) {
+      } else if (_isRangeMode) {
         _selectedRange = args.value as PickerDateRange;
       }
     });
@@ -184,7 +211,7 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
       }
     } else if (widget.selectionMode == DateRangePickerSelectionMode.multiple) {
       widget.onSelectionChanged(_selectedDates ?? []);
-    } else if (widget.selectionMode == DateRangePickerSelectionMode.range) {
+    } else if (_isRangeMode) {
       if (_selectedRange != null && _selectedRange!.startDate != null) {
         final range = DateTimeRange(
           start: _selectedRange!.startDate!,
@@ -196,16 +223,61 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
     Navigator.pop(context);
   }
 
+  void _applyPresetRange(DateTimeRange range) {
+    widget.onSelectionChanged(range);
+    Navigator.pop(context);
+  }
+
+  bool _matchesPreset(DateTimeRange preset) {
+    if (_selectedRange?.startDate == null) return false;
+    final start = DateTime(
+      _selectedRange!.startDate!.year,
+      _selectedRange!.startDate!.month,
+      _selectedRange!.startDate!.day,
+    );
+    final end = DateTime(
+      (_selectedRange!.endDate ?? _selectedRange!.startDate)!.year,
+      (_selectedRange!.endDate ?? _selectedRange!.startDate)!.month,
+      (_selectedRange!.endDate ?? _selectedRange!.startDate)!.day,
+    );
+    return start == preset.start && end == preset.end;
+  }
+
+  Widget _buildRangePresets(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final presets = <({String label, DateTimeRange range})>[
+      (label: 'Hôm nay', range: DateRangePresets.today()),
+      (label: '7 ngày gần nhất', range: DateRangePresets.last7Days),
+      (label: '30 ngày gần nhất', range: DateRangePresets.last30Days),
+    ];
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        for (final preset in presets)
+          SamcomChip(
+            label: preset.label,
+            dense: true,
+            variant: SamcomChipVariant.outlined,
+            color: primary,
+            selected: _matchesPreset(preset.range),
+            onPressed: () => _applyPresetRange(preset.range),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final backgroundColor = theme.cardColor;
-    final textColor =
-        theme.textTheme.bodyLarge?.color ?? Colors.black87;
-    final headerColor =
-        theme.textTheme.titleMedium?.color ?? Colors.black87;
+    final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black87;
+    final headerColor = theme.textTheme.titleMedium?.color ?? Colors.black87;
     final subTextColor =
         theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
     final primary = colorScheme.primary;
@@ -213,6 +285,10 @@ class _AppDatePickerDialogState extends State<AppDatePickerDialog> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (_isRangeMode) ...[
+          _buildRangePresets(context),
+          const SizedBox(height: 16),
+        ],
         SizedBox(
           width: 300,
           height: 350,

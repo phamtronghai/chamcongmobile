@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:attendancebyface/core/widgets/date_picker_dialog.dart';
+import 'package:attendancebyface/core/widgets/date_picker_bottom_sheet.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 
 /// Hiển thị một ngày hoặc khoảng ngày (định dạng `dd/MM/yyyy`), chạm mở bottom sheet picker.
@@ -71,7 +71,7 @@ class DatePickerField extends StatelessWidget {
     if (!enabled) return;
     switch (mode) {
       case DatePickerFieldMode.single:
-        await AppDatePickerDialog.show(
+        await AppDatePickerBottomSheet.show(
           context,
           initialDate: selectedDate ?? DateTime.now(),
           minDate: minDate,
@@ -87,7 +87,7 @@ class DatePickerField extends StatelessWidget {
               start: now,
               end: now.add(const Duration(days: 1)),
             );
-        await AppDatePickerDialog.showRange(
+        await AppDatePickerBottomSheet.showRange(
           context,
           initialRange: initial,
           minDate: minDate,

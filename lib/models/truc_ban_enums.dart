@@ -64,22 +64,3 @@ enum TrucBanLoadTarget {
   dsTrucBan,
   dsKhachToanDonVi,
 }
-
-/// Enum trạng thái khóa hệ thống
-enum TrangThaiKhoa {
-  mo('MO', 'Mở'),
-  khongKhoa('KHONG_KHOA', 'Không khóa'),
-  khoa('KHOA', 'Khóa');
-
-  final String value;
-  final String moTa;
-
-  const TrangThaiKhoa(this.value, this.moTa);
-
-  static TrangThaiKhoa fromValue(String value) {
-    return TrangThaiKhoa.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => TrangThaiKhoa.khongKhoa,
-    );
-  }
-}

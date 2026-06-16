@@ -519,34 +519,21 @@ class _LeaveScreenApprovalTabState
     }
 
     List<LeaveRequest> list;
-    IconData emptyIcon;
-    String emptyMsg;
     switch (_selectedStatus) {
       case LeaveStatus.pending:
         list = _pendingRequests;
-        emptyIcon = Icons.approval_outlined;
-        emptyMsg = 'Không có đơn nào chờ duyệt';
         break;
       case LeaveStatus.departmentApproved:
         list = _pendingRequests;
-        emptyIcon = Icons.business_center_outlined;
-        emptyMsg = 'Không có đơn nào đã duyệt phòng ban';
         break;
       case LeaveStatus.approved:
         list = _approvedRequests;
-        emptyIcon = Icons.check_circle_outline;
-        emptyMsg = 'Không có đơn nào đã duyệt';
         break;
       case LeaveStatus.rejected:
         list = _rejectedRequests;
-        emptyIcon = Icons.cancel_outlined;
-        emptyMsg = 'Không có đơn nào bị từ chối';
         break;
       case LeaveStatus.cancelled:
-        // Status cancelled không hiển thị cho BGĐ
         list = [];
-        emptyIcon = Icons.cancel_outlined;
-        emptyMsg = 'Không có đơn nào bị hủy';
         break;
     }
 
@@ -574,10 +561,7 @@ class _LeaveScreenApprovalTabState
                     padding: const EdgeInsets.all(16),
                     children: [
                       const SizedBox(height: 16),
-                      BaseEmptyState(
-                        icon: emptyIcon,
-                        title: emptyMsg,
-                      ),
+                      const BaseEmptyState(),
                     ],
                   )
                 : ListView.builder(

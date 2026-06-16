@@ -5,7 +5,6 @@ import 'package:attendancebyface/core/services/attendance_service.dart';
 import 'package:attendancebyface/core/services/face_service.dart';
 import 'package:attendancebyface/core/services/report_service.dart';
 import 'package:attendancebyface/core/services/truc_ban_service.dart';
-import 'package:attendancebyface/core/services/device_security_service.dart';
 import 'package:attendancebyface/core/services/notification_service.dart';
 
 final GetIt locator = GetIt.instance;
@@ -22,8 +21,7 @@ void setupLocator() {
   locator.registerLazySingleton<FaceService>(() => FaceService());
   locator.registerLazySingleton<ReportService>(() => ReportService());
   locator.registerLazySingleton<TrucBanService>(() => TrucBanService());
-  locator.registerLazySingleton<DeviceSecurityService>(() => DeviceSecurityService());
-  
+
   // NotificationService lấy instance có sẵn
   locator.registerLazySingleton<NotificationService>(() => NotificationService.instance);
 }

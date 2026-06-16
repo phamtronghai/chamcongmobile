@@ -55,7 +55,7 @@ extension TrucBanStatePatterns on TrucBanState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( TrucBanStateInitial value)?  initial,TResult Function( TrucBanStateLoading value)?  loading,TResult Function( TrucBanStatePhanQuyenLoaded value)?  phanQuyenLoaded,TResult Function( TrucBanStateDanhSachTrucBanLoaded value)?  danhSachTrucBanLoaded,TResult Function( TrucBanStateDanhSachKhachLoaded value)?  danhSachKhachLoaded,TResult Function( TrucBanStateDanhSachRaNgoaiLoaded value)?  danhSachRaNgoaiLoaded,TResult Function( TrucBanStateTrangThaiKhoaLoaded value)?  trangThaiKhoaLoaded,TResult Function( TrucBanStateSuccess value)?  success,TResult Function( TrucBanStateError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( TrucBanStateInitial value)?  initial,TResult Function( TrucBanStateLoading value)?  loading,TResult Function( TrucBanStatePhanQuyenLoaded value)?  phanQuyenLoaded,TResult Function( TrucBanStateDanhSachTrucBanLoaded value)?  danhSachTrucBanLoaded,TResult Function( TrucBanStateDanhSachKhachLoaded value)?  danhSachKhachLoaded,TResult Function( TrucBanStateDanhSachRaNgoaiLoaded value)?  danhSachRaNgoaiLoaded,TResult Function( TrucBanStateSuccess value)?  success,TResult Function( TrucBanStateError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case TrucBanStateInitial() when initial != null:
@@ -64,8 +64,7 @@ return loading(_that);case TrucBanStatePhanQuyenLoaded() when phanQuyenLoaded !=
 return phanQuyenLoaded(_that);case TrucBanStateDanhSachTrucBanLoaded() when danhSachTrucBanLoaded != null:
 return danhSachTrucBanLoaded(_that);case TrucBanStateDanhSachKhachLoaded() when danhSachKhachLoaded != null:
 return danhSachKhachLoaded(_that);case TrucBanStateDanhSachRaNgoaiLoaded() when danhSachRaNgoaiLoaded != null:
-return danhSachRaNgoaiLoaded(_that);case TrucBanStateTrangThaiKhoaLoaded() when trangThaiKhoaLoaded != null:
-return trangThaiKhoaLoaded(_that);case TrucBanStateSuccess() when success != null:
+return danhSachRaNgoaiLoaded(_that);case TrucBanStateSuccess() when success != null:
 return success(_that);case TrucBanStateError() when error != null:
 return error(_that);case _:
   return orElse();
@@ -85,7 +84,7 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( TrucBanStateInitial value)  initial,required TResult Function( TrucBanStateLoading value)  loading,required TResult Function( TrucBanStatePhanQuyenLoaded value)  phanQuyenLoaded,required TResult Function( TrucBanStateDanhSachTrucBanLoaded value)  danhSachTrucBanLoaded,required TResult Function( TrucBanStateDanhSachKhachLoaded value)  danhSachKhachLoaded,required TResult Function( TrucBanStateDanhSachRaNgoaiLoaded value)  danhSachRaNgoaiLoaded,required TResult Function( TrucBanStateTrangThaiKhoaLoaded value)  trangThaiKhoaLoaded,required TResult Function( TrucBanStateSuccess value)  success,required TResult Function( TrucBanStateError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( TrucBanStateInitial value)  initial,required TResult Function( TrucBanStateLoading value)  loading,required TResult Function( TrucBanStatePhanQuyenLoaded value)  phanQuyenLoaded,required TResult Function( TrucBanStateDanhSachTrucBanLoaded value)  danhSachTrucBanLoaded,required TResult Function( TrucBanStateDanhSachKhachLoaded value)  danhSachKhachLoaded,required TResult Function( TrucBanStateDanhSachRaNgoaiLoaded value)  danhSachRaNgoaiLoaded,required TResult Function( TrucBanStateSuccess value)  success,required TResult Function( TrucBanStateError value)  error,}){
 final _that = this;
 switch (_that) {
 case TrucBanStateInitial():
@@ -94,8 +93,7 @@ return loading(_that);case TrucBanStatePhanQuyenLoaded():
 return phanQuyenLoaded(_that);case TrucBanStateDanhSachTrucBanLoaded():
 return danhSachTrucBanLoaded(_that);case TrucBanStateDanhSachKhachLoaded():
 return danhSachKhachLoaded(_that);case TrucBanStateDanhSachRaNgoaiLoaded():
-return danhSachRaNgoaiLoaded(_that);case TrucBanStateTrangThaiKhoaLoaded():
-return trangThaiKhoaLoaded(_that);case TrucBanStateSuccess():
+return danhSachRaNgoaiLoaded(_that);case TrucBanStateSuccess():
 return success(_that);case TrucBanStateError():
 return error(_that);case _:
   throw StateError('Unexpected subclass');
@@ -114,7 +112,7 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( TrucBanStateInitial value)?  initial,TResult? Function( TrucBanStateLoading value)?  loading,TResult? Function( TrucBanStatePhanQuyenLoaded value)?  phanQuyenLoaded,TResult? Function( TrucBanStateDanhSachTrucBanLoaded value)?  danhSachTrucBanLoaded,TResult? Function( TrucBanStateDanhSachKhachLoaded value)?  danhSachKhachLoaded,TResult? Function( TrucBanStateDanhSachRaNgoaiLoaded value)?  danhSachRaNgoaiLoaded,TResult? Function( TrucBanStateTrangThaiKhoaLoaded value)?  trangThaiKhoaLoaded,TResult? Function( TrucBanStateSuccess value)?  success,TResult? Function( TrucBanStateError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( TrucBanStateInitial value)?  initial,TResult? Function( TrucBanStateLoading value)?  loading,TResult? Function( TrucBanStatePhanQuyenLoaded value)?  phanQuyenLoaded,TResult? Function( TrucBanStateDanhSachTrucBanLoaded value)?  danhSachTrucBanLoaded,TResult? Function( TrucBanStateDanhSachKhachLoaded value)?  danhSachKhachLoaded,TResult? Function( TrucBanStateDanhSachRaNgoaiLoaded value)?  danhSachRaNgoaiLoaded,TResult? Function( TrucBanStateSuccess value)?  success,TResult? Function( TrucBanStateError value)?  error,}){
 final _that = this;
 switch (_that) {
 case TrucBanStateInitial() when initial != null:
@@ -123,8 +121,7 @@ return loading(_that);case TrucBanStatePhanQuyenLoaded() when phanQuyenLoaded !=
 return phanQuyenLoaded(_that);case TrucBanStateDanhSachTrucBanLoaded() when danhSachTrucBanLoaded != null:
 return danhSachTrucBanLoaded(_that);case TrucBanStateDanhSachKhachLoaded() when danhSachKhachLoaded != null:
 return danhSachKhachLoaded(_that);case TrucBanStateDanhSachRaNgoaiLoaded() when danhSachRaNgoaiLoaded != null:
-return danhSachRaNgoaiLoaded(_that);case TrucBanStateTrangThaiKhoaLoaded() when trangThaiKhoaLoaded != null:
-return trangThaiKhoaLoaded(_that);case TrucBanStateSuccess() when success != null:
+return danhSachRaNgoaiLoaded(_that);case TrucBanStateSuccess() when success != null:
 return success(_that);case TrucBanStateError() when error != null:
 return error(_that);case _:
   return null;
@@ -143,7 +140,7 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( TrucBanLoadTarget? target)?  loading,TResult Function( PhanQuyen phanQuyen)?  phanQuyenLoaded,TResult Function( List<TrucBan> danhSach,  TrucChiHuy? trucChiHuy)?  danhSachTrucBanLoaded,TResult Function( List<Khach> danhSach)?  danhSachKhachLoaded,TResult Function( List<YeuCauRaNgoai> danhSach)?  danhSachRaNgoaiLoaded,TResult Function( TrangThaiKhoa trangThai)?  trangThaiKhoaLoaded,TResult Function( String message)?  success,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( TrucBanLoadTarget? target)?  loading,TResult Function( PhanQuyen phanQuyen)?  phanQuyenLoaded,TResult Function( List<TrucBan> danhSach,  TrucChiHuy? trucChiHuy)?  danhSachTrucBanLoaded,TResult Function( List<Khach> danhSach)?  danhSachKhachLoaded,TResult Function( List<YeuCauRaNgoai> danhSach)?  danhSachRaNgoaiLoaded,TResult Function( String message)?  success,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case TrucBanStateInitial() when initial != null:
 return initial();case TrucBanStateLoading() when loading != null:
@@ -151,8 +148,7 @@ return loading(_that.target);case TrucBanStatePhanQuyenLoaded() when phanQuyenLo
 return phanQuyenLoaded(_that.phanQuyen);case TrucBanStateDanhSachTrucBanLoaded() when danhSachTrucBanLoaded != null:
 return danhSachTrucBanLoaded(_that.danhSach,_that.trucChiHuy);case TrucBanStateDanhSachKhachLoaded() when danhSachKhachLoaded != null:
 return danhSachKhachLoaded(_that.danhSach);case TrucBanStateDanhSachRaNgoaiLoaded() when danhSachRaNgoaiLoaded != null:
-return danhSachRaNgoaiLoaded(_that.danhSach);case TrucBanStateTrangThaiKhoaLoaded() when trangThaiKhoaLoaded != null:
-return trangThaiKhoaLoaded(_that.trangThai);case TrucBanStateSuccess() when success != null:
+return danhSachRaNgoaiLoaded(_that.danhSach);case TrucBanStateSuccess() when success != null:
 return success(_that.message);case TrucBanStateError() when error != null:
 return error(_that.message);case _:
   return orElse();
@@ -172,7 +168,7 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( TrucBanLoadTarget? target)  loading,required TResult Function( PhanQuyen phanQuyen)  phanQuyenLoaded,required TResult Function( List<TrucBan> danhSach,  TrucChiHuy? trucChiHuy)  danhSachTrucBanLoaded,required TResult Function( List<Khach> danhSach)  danhSachKhachLoaded,required TResult Function( List<YeuCauRaNgoai> danhSach)  danhSachRaNgoaiLoaded,required TResult Function( TrangThaiKhoa trangThai)  trangThaiKhoaLoaded,required TResult Function( String message)  success,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( TrucBanLoadTarget? target)  loading,required TResult Function( PhanQuyen phanQuyen)  phanQuyenLoaded,required TResult Function( List<TrucBan> danhSach,  TrucChiHuy? trucChiHuy)  danhSachTrucBanLoaded,required TResult Function( List<Khach> danhSach)  danhSachKhachLoaded,required TResult Function( List<YeuCauRaNgoai> danhSach)  danhSachRaNgoaiLoaded,required TResult Function( String message)  success,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case TrucBanStateInitial():
 return initial();case TrucBanStateLoading():
@@ -180,8 +176,7 @@ return loading(_that.target);case TrucBanStatePhanQuyenLoaded():
 return phanQuyenLoaded(_that.phanQuyen);case TrucBanStateDanhSachTrucBanLoaded():
 return danhSachTrucBanLoaded(_that.danhSach,_that.trucChiHuy);case TrucBanStateDanhSachKhachLoaded():
 return danhSachKhachLoaded(_that.danhSach);case TrucBanStateDanhSachRaNgoaiLoaded():
-return danhSachRaNgoaiLoaded(_that.danhSach);case TrucBanStateTrangThaiKhoaLoaded():
-return trangThaiKhoaLoaded(_that.trangThai);case TrucBanStateSuccess():
+return danhSachRaNgoaiLoaded(_that.danhSach);case TrucBanStateSuccess():
 return success(_that.message);case TrucBanStateError():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
@@ -200,7 +195,7 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( TrucBanLoadTarget? target)?  loading,TResult? Function( PhanQuyen phanQuyen)?  phanQuyenLoaded,TResult? Function( List<TrucBan> danhSach,  TrucChiHuy? trucChiHuy)?  danhSachTrucBanLoaded,TResult? Function( List<Khach> danhSach)?  danhSachKhachLoaded,TResult? Function( List<YeuCauRaNgoai> danhSach)?  danhSachRaNgoaiLoaded,TResult? Function( TrangThaiKhoa trangThai)?  trangThaiKhoaLoaded,TResult? Function( String message)?  success,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( TrucBanLoadTarget? target)?  loading,TResult? Function( PhanQuyen phanQuyen)?  phanQuyenLoaded,TResult? Function( List<TrucBan> danhSach,  TrucChiHuy? trucChiHuy)?  danhSachTrucBanLoaded,TResult? Function( List<Khach> danhSach)?  danhSachKhachLoaded,TResult? Function( List<YeuCauRaNgoai> danhSach)?  danhSachRaNgoaiLoaded,TResult? Function( String message)?  success,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case TrucBanStateInitial() when initial != null:
 return initial();case TrucBanStateLoading() when loading != null:
@@ -208,8 +203,7 @@ return loading(_that.target);case TrucBanStatePhanQuyenLoaded() when phanQuyenLo
 return phanQuyenLoaded(_that.phanQuyen);case TrucBanStateDanhSachTrucBanLoaded() when danhSachTrucBanLoaded != null:
 return danhSachTrucBanLoaded(_that.danhSach,_that.trucChiHuy);case TrucBanStateDanhSachKhachLoaded() when danhSachKhachLoaded != null:
 return danhSachKhachLoaded(_that.danhSach);case TrucBanStateDanhSachRaNgoaiLoaded() when danhSachRaNgoaiLoaded != null:
-return danhSachRaNgoaiLoaded(_that.danhSach);case TrucBanStateTrangThaiKhoaLoaded() when trangThaiKhoaLoaded != null:
-return trangThaiKhoaLoaded(_that.trangThai);case TrucBanStateSuccess() when success != null:
+return danhSachRaNgoaiLoaded(_that.danhSach);case TrucBanStateSuccess() when success != null:
 return success(_that.message);case TrucBanStateError() when error != null:
 return error(_that.message);case _:
   return null;
@@ -595,72 +589,6 @@ class _$TrucBanStateDanhSachRaNgoaiLoadedCopyWithImpl<$Res>
   return _then(TrucBanStateDanhSachRaNgoaiLoaded(
 danhSach: null == danhSach ? _self._danhSach : danhSach // ignore: cast_nullable_to_non_nullable
 as List<YeuCauRaNgoai>,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class TrucBanStateTrangThaiKhoaLoaded implements TrucBanState {
-  const TrucBanStateTrangThaiKhoaLoaded({required this.trangThai});
-  
-
- final  TrangThaiKhoa trangThai;
-
-/// Create a copy of TrucBanState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$TrucBanStateTrangThaiKhoaLoadedCopyWith<TrucBanStateTrangThaiKhoaLoaded> get copyWith => _$TrucBanStateTrangThaiKhoaLoadedCopyWithImpl<TrucBanStateTrangThaiKhoaLoaded>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrucBanStateTrangThaiKhoaLoaded&&(identical(other.trangThai, trangThai) || other.trangThai == trangThai));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,trangThai);
-
-@override
-String toString() {
-  return 'TrucBanState.trangThaiKhoaLoaded(trangThai: $trangThai)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $TrucBanStateTrangThaiKhoaLoadedCopyWith<$Res> implements $TrucBanStateCopyWith<$Res> {
-  factory $TrucBanStateTrangThaiKhoaLoadedCopyWith(TrucBanStateTrangThaiKhoaLoaded value, $Res Function(TrucBanStateTrangThaiKhoaLoaded) _then) = _$TrucBanStateTrangThaiKhoaLoadedCopyWithImpl;
-@useResult
-$Res call({
- TrangThaiKhoa trangThai
-});
-
-
-
-
-}
-/// @nodoc
-class _$TrucBanStateTrangThaiKhoaLoadedCopyWithImpl<$Res>
-    implements $TrucBanStateTrangThaiKhoaLoadedCopyWith<$Res> {
-  _$TrucBanStateTrangThaiKhoaLoadedCopyWithImpl(this._self, this._then);
-
-  final TrucBanStateTrangThaiKhoaLoaded _self;
-  final $Res Function(TrucBanStateTrangThaiKhoaLoaded) _then;
-
-/// Create a copy of TrucBanState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? trangThai = null,}) {
-  return _then(TrucBanStateTrangThaiKhoaLoaded(
-trangThai: null == trangThai ? _self.trangThai : trangThai // ignore: cast_nullable_to_non_nullable
-as TrangThaiKhoa,
   ));
 }
 
