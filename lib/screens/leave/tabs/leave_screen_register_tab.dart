@@ -10,10 +10,10 @@ import 'package:attendancebyface/core/app_router.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/error_widget.dart';
-import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/screens/home/custom_navbar.dart';
 import 'package:attendancebyface/screens/leave/widgets/leave_request_tile.dart';
@@ -174,33 +174,21 @@ class _LeaveScreenRegisterTabState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Toggle 1 ngày / khoảng ngày
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SamcomChip(
-                label: '1 ngày',
-                variant: SamcomChipVariant.filled,
-                selected: _isSingleDay,
-                color: Theme.of(context).colorScheme.primary,
-                onPressed: () async {
-                  if (_isSingleDay) return;
-                  setState(() => _isSingleDay = true);
-                  await _loadData();
-                },
-              ),
-              const SizedBox(width: 8),
-              SamcomChip(
-                label: 'Khoảng ngày',
-                variant: SamcomChipVariant.filled,
-                selected: !_isSingleDay,
-                color: Theme.of(context).colorScheme.primary,
-                onPressed: () async {
-                  if (!_isSingleDay) return;
-                  setState(() => _isSingleDay = false);
-                  await _loadData();
-                },
-              ),
-            ],
+          Center(
+            child: CustomSegmentedButton<bool>(
+              options: const [
+                CustomSegmentOption(value: true, label: '1 ngày'),
+                CustomSegmentOption(value: false, label: 'Khoảng ngày'),
+              ],
+              selected: {_isSingleDay},
+              onSelectionChanged: (selected) async {
+                if (selected.isEmpty) return;
+                final nextMode = selected.first;
+                if (nextMode == _isSingleDay) return;
+                setState(() => _isSingleDay = nextMode);
+                await _loadData();
+              },
+            ),
           ),
           const SizedBox(height: 10),
           // Picker tương ứng

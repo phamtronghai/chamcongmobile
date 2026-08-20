@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
@@ -12,15 +13,15 @@ import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 
 // ================== DIALOG FORMS ==================
 
-class DangKyRaNgoaiDialogForm extends StatefulWidget {
-  const DangKyRaNgoaiDialogForm({super.key});
+class DangKyRaNgoaiSheetForm extends StatefulWidget {
+  const DangKyRaNgoaiSheetForm({super.key});
 
   @override
-  State<DangKyRaNgoaiDialogForm> createState() =>
-      _DangKyRaNgoaiDialogFormState();
+  State<DangKyRaNgoaiSheetForm> createState() =>
+      _DangKyRaNgoaiSheetFormState();
 }
 
-class _DangKyRaNgoaiDialogFormState extends State<DangKyRaNgoaiDialogForm> {
+class _DangKyRaNgoaiSheetFormState extends State<DangKyRaNgoaiSheetForm> {
   final _formKey = GlobalKey<FormState>();
   final _lyDoController = TextEditingController();
   TimeOfDay _thoiGianRa = TimeOfDay.now();
@@ -167,14 +168,14 @@ class _DangKyRaNgoaiDialogFormState extends State<DangKyRaNgoaiDialogForm> {
   }
 }
 
-class DangKyKhachDialogForm extends StatefulWidget {
-  const DangKyKhachDialogForm({super.key});
+class DangKyKhachSheetForm extends StatefulWidget {
+  const DangKyKhachSheetForm({super.key});
 
   @override
-  State<DangKyKhachDialogForm> createState() => _DangKyKhachDialogFormState();
+  State<DangKyKhachSheetForm> createState() => _DangKyKhachSheetFormState();
 }
 
-class _DangKyKhachDialogFormState extends State<DangKyKhachDialogForm> {
+class _DangKyKhachSheetFormState extends State<DangKyKhachSheetForm> {
   final _formKey = GlobalKey<FormState>();
   final _hoTenController = TextEditingController();
   final _cccdController = TextEditingController();
@@ -241,23 +242,25 @@ class _DangKyKhachDialogFormState extends State<DangKyKhachDialogForm> {
             ),
           ),
           const SizedBox(height: 8),
-          SegmentedButton<LoaiPhuongTien>(
-            segments: const [
-              ButtonSegment(
+          CustomSegmentedButton<LoaiPhuongTien>(
+            options: const [
+              CustomSegmentOption(
                 value: LoaiPhuongTien.oto,
-                label: Text('Ô tô'),
-                icon: Icon(Icons.directions_car, size: 18),
+                label: 'Ô tô',
+                icon: Icons.directions_car,
               ),
-              ButtonSegment(
+              CustomSegmentOption(
                 value: LoaiPhuongTien.khac,
-                label: Text('Khác'),
-                icon: Icon(Icons.two_wheeler, size: 18),
+                label: 'Khác',
+                icon: Icons.two_wheeler,
               ),
             ],
             selected: {_loaiPhuongTien},
-            onSelectionChanged: (selected) =>
-                setState(() => _loaiPhuongTien = selected.first),
-            showSelectedIcon: false,
+            onSelectionChanged: (selected) {
+              if (selected.isNotEmpty) {
+                setState(() => _loaiPhuongTien = selected.first);
+              }
+            },
           ),
           const SizedBox(height: 24),
           CustomButton(

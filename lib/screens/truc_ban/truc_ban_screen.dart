@@ -6,7 +6,6 @@ import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/app_router.dart';
-
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
@@ -16,11 +15,11 @@ import 'package:attendancebyface/screens/truc_ban/tabs/dang_ky_tab.dart';
 import 'package:attendancebyface/screens/truc_ban/tabs/khach_don_vi_tab.dart';
 import 'package:attendancebyface/screens/truc_ban/tabs/duyet_ra_ngoai_tab.dart';
 import 'package:attendancebyface/core/widgets/samcom_tab_bar.dart';
+import 'package:attendancebyface/screens/attendance/widgets/daily_info_section.dart';
 
 enum _TrucBanTabKind { trucBan, dangKy, khachDonVi, duyet }
 
 /// Màn hình chính của chức năng Trực ban
-/// Sử dụng CustomAppBar và design system của app
 class TrucBanScreen extends StatefulWidget {
   final bool isActive;
 
@@ -84,17 +83,24 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     _loadDataForTab(_visibleTabKinds()[_tabController.index]);
   }
 
-  void _loadDataForTab(_TrucBanTabKind kind) {
+  void _onDateChanged(DateTime date) {
+    setState(() => _selectedDate = date);
+    _loadDataForTab(_visibleTabKinds()[_tabController.index], date: date);
+  }
+
+  void _loadDataForTab(_TrucBanTabKind kind, {DateTime? date}) {
+    final d = date ?? _selectedDate;
     switch (kind) {
       case _TrucBanTabKind.trucBan:
-        _cubit.layDanhSachTrucBan(_selectedDate);
+        _cubit.layDanhSachTrucBan(d);
       case _TrucBanTabKind.dangKy:
-        break;
+        _cubit.layLichSuRaNgoaiCaNhan(d);
+        _cubit.layLichSuKhachCaNhan(d);
       case _TrucBanTabKind.khachDonVi:
-        _cubit.layDsKhachToanDonVi(DateTime.now());
+        _cubit.layDsKhachToanDonVi(d);
       case _TrucBanTabKind.duyet:
         _cubit.layDsYeuCauRaNgoai(
-          ngay: DateTime.now(),
+          ngay: d,
           trangThai: TrangThaiRaNgoai.choDuyet,
         );
     }
@@ -105,7 +111,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
       return switch (kind) {
         _TrucBanTabKind.trucBan => const Tab(text: 'Trực ban'),
         _TrucBanTabKind.dangKy => const Tab(text: 'Đăng ký'),
-        _TrucBanTabKind.khachDonVi => const Tab(text: 'Khách đơn vị'),
+        _TrucBanTabKind.khachDonVi => const Tab(text: 'DS Khách'),
         _TrucBanTabKind.duyet => const Tab(text: 'Duyệt'),
       };
     }).toList();
@@ -115,14 +121,9 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     return _visibleTabKinds().map((kind) {
       return switch (kind) {
         _TrucBanTabKind.trucBan => DanhSachTrucBanTab(
-            selectedDate: _selectedDate,
-            onDateChanged: (date) {
-              setState(() => _selectedDate = date);
-              _cubit.layDanhSachTrucBan(date);
-            },
-            onShowCamera: _showCamera,
-          ),
-        _TrucBanTabKind.dangKy => const DangKyTab(),
+          selectedDate: _selectedDate,
+        ),
+        _TrucBanTabKind.dangKy => DangKyTab(selectedDate: _selectedDate),
         _TrucBanTabKind.khachDonVi => const KhachDonViTab(),
         _TrucBanTabKind.duyet => const DuyetRaNgoaiTab(),
       };
@@ -156,6 +157,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
           return Scaffold(
             appBar: CustomAppBar(
               title: 'Trực ban',
+              showAvatar: true,
               onNotificationTap: () {
                 final user = context.read<UserCubit>().currentUser;
                 if (user != null) {
@@ -180,6 +182,13 @@ class _TrucBanScreenState extends State<TrucBanScreen>
                           tabs: _buildTabs(),
                         ),
                       ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                      child: CenteredDaySlotNavigator(
+                        selectedDate: _selectedDate,
+                        onDateSelected: _onDateChanged,
+                      ),
+                    ),
                     Expanded(
                       child: TabBarView(
                         controller: _tabController,
@@ -222,9 +231,5 @@ class _TrucBanScreenState extends State<TrucBanScreen>
     } else {
       setState(() => _isProcessing = false);
     }
-  }
-
-  void _showCamera() {
-    AppRouter.goToCameraRtsp(context);
   }
 }

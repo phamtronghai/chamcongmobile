@@ -7,7 +7,7 @@ import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:attendancebyface/core/widgets/samcom_tab_bar.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 
 /// Màn hình xem camera RTSP giám sát
 /// Hỗ trợ chuyển đổi giữa nhiều camera, 1 player duy nhất để tiết kiệm tài nguyên
@@ -18,11 +18,9 @@ class CameraRTSPScreen extends StatefulWidget {
   State<CameraRTSPScreen> createState() => _CameraRTSPScreenState();
 }
 
-class _CameraRTSPScreenState extends State<CameraRTSPScreen>
-    with TickerProviderStateMixin {
+class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   late final Player _player;
   late final VideoController _videoController;
-  late TabController _tabController;
   bool _isPlayerInitialized = false;
   bool _isCameraLoading = true;
   String? _cameraError;
@@ -34,20 +32,11 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
   @override
   void initState() {
     super.initState();
-    // Cho phép xoay ngang ở màn hình camera
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    _tabController = TabController(
-      length: AppConfig.camerasRTSP.length,
-      vsync: this,
-    );
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) return;
-      _switchCamera(_tabController.index);
-    });
     _initializeCamera();
   }
 
@@ -120,7 +109,6 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
     }
   }
 
-  /// Mở stream camera theo index hiện tại
   Future<void> _openCameraStream() async {
     if (!_isPlayerInitialized || _isDisposed) return;
     try {
@@ -136,7 +124,6 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
     }
   }
 
-  /// Dừng player an toàn trước khi chuyển/dispose
   Future<void> _stopPlayer() async {
     if (!_isPlayerInitialized) return;
     try {
@@ -146,7 +133,6 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
     }
   }
 
-  /// Chuyển đổi camera
   Future<void> _switchCamera(int index) async {
     if (index == _selectedCameraIndex || _isDisposed) return;
     setState(() {
@@ -154,7 +140,6 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
       _isCameraLoading = true;
       _cameraError = null;
     });
-    // Dừng stream hiện tại trước khi mở stream mới
     await _stopPlayer();
     if (!_isDisposed) {
       await _openCameraStream();
@@ -177,20 +162,17 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
   void dispose() {
     _isDisposed = true;
 
-    // Reset orientation khi thoát
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
 
-    // Cancel subscriptions trước để không còn callback nào gọi lại
     for (final sub in _cameraSubscriptions) {
       sub.cancel();
     }
     _cameraSubscriptions.clear();
 
-    _tabController.dispose();
     if (_isPlayerInitialized) {
       try {
         _player.dispose();
@@ -201,6 +183,35 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
     super.dispose();
   }
 
+  ButtonStyle _overlaySegmentStyle() {
+    return ButtonStyle(
+      textStyle: WidgetStatePropertyAll(TextConstants.appTextBold),
+      foregroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return ColorConstants.backgroundDark;
+        }
+        return ColorConstants.backgroundLight.withValues(alpha: 0.85);
+      }),
+      backgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return ColorConstants.backgroundLight;
+        }
+        return ColorConstants.backgroundDark.withValues(alpha: 0.54);
+      }),
+      side: WidgetStateProperty.resolveWith((states) {
+        final color = states.contains(WidgetState.selected)
+            ? ColorConstants.backgroundLight
+            : ColorConstants.backgroundLight.withValues(alpha: 0.35);
+        return BorderSide(color: color, width: 1.2);
+      }),
+      shape: WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,14 +219,11 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Video player
           Center(
             child: _isPlayerInitialized
                 ? Video(controller: _videoController)
                 : const CircularProgressIndicator(),
           ),
-
-          // Loading / Error overlay
           if (_isCameraLoading || _cameraError != null)
             Container(
               color: ColorConstants.backgroundDark.withValues(alpha: 0.87),
@@ -263,43 +271,31 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen>
                       ),
               ),
             ),
-
-          // Camera selector chips
           Positioned(
             top: 8,
-            left: 0,
-            right: 0,
-            child: SafeArea(child: _buildCameraSelector()),
+            left: 16,
+            right: 16,
+            child: SafeArea(
+              child: CustomSegmentedButton<int>(
+                style: _overlaySegmentStyle(),
+                options: [
+                  for (var i = 0; i < AppConfig.camerasRTSP.length; i++)
+                    CustomSegmentOption(
+                      value: i,
+                      label: AppConfig.camerasRTSP[i].label,
+                      icon: Icons.videocam,
+                    ),
+                ],
+                selected: {_selectedCameraIndex},
+                onSelectionChanged: (selected) {
+                  if (selected.isEmpty) return;
+                  _switchCamera(selected.first);
+                },
+              ),
+            ),
           ),
-
         ],
       ),
-    );
-  }
-
-  /// Widget chọn camera dùng ButtonsTabBar
-  Widget _buildCameraSelector() {
-    return SamcomTabBar(
-      controller: _tabController,
-      center: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      unselectedBackgroundColor: ColorConstants.backgroundDark.withValues(
-        alpha: 0.54,
-      ),
-      labelStyle: TextConstants.appTextBold.copyWith(
-        color: ColorConstants.backgroundLight,
-      ),
-      unselectedLabelStyle: TextConstants.appTextRegular.copyWith(
-        color: ColorConstants.backgroundLight.withValues(alpha: 0.7),
-      ),
-      tabs: AppConfig.camerasRTSP
-          .map(
-            (c) => Tab(
-              icon: const Icon(Icons.videocam, size: 16),
-              text: c.label,
-            ),
-          )
-          .toList(),
     );
   }
 }

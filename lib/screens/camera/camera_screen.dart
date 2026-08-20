@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_header.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 
 /// Màn hình camera đơn giản để chụp ảnh khuôn mặt
@@ -108,7 +108,7 @@ class _CameraScreenState extends State<CameraScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              DialogHeader(
+              SamcomHeader(
                 icon: Icons.error_rounded,
                 title: 'Lỗi',
                 subtitle: message,
@@ -163,29 +163,35 @@ class _CameraScreenState extends State<CameraScreen> {
 
           // Nút chụp ảnh ở giữa dưới màn hình
           Positioned(
-            bottom: 40,
             left: 0,
             right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: _isCapturing ? null : _capturePhoto,
-                child: Container(
-                  width: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _isCapturing
-                        ? colorScheme.onSurface.withValues(alpha: 0.38)
-                        : ColorConstants.backgroundLight,
-                    border: Border.all(color: colorScheme.primary, width: 4),
+            bottom: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _isCapturing ? null : _capturePhoto,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _isCapturing
+                            ? colorScheme.onSurface.withValues(alpha: 0.38)
+                            : ColorConstants.backgroundLight,
+                        border: Border.all(color: colorScheme.primary, width: 4),
+                      ),
+                      child: _isCapturing
+                          ? Center(
+                              child: CircularProgressIndicator(
+                                color: colorScheme.primary,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
-                  child: _isCapturing
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: ColorConstants.backgroundLight,
-                            strokeWidth: 3,
-                          ),
-                        )
-                      : null,
                 ),
               ),
             ),

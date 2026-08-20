@@ -66,7 +66,7 @@ class LichSuRaNgoaiList extends StatelessWidget {
             ),
           );
         }
-        return const SizedBox.shrink();
+        return const BaseEmptyState();
       },
     );
   }
@@ -83,6 +83,14 @@ class LichSuKhachList extends StatelessWidget {
           (current is TrucBanStateLoading &&
               current.target == TrucBanLoadTarget.dangKyKhach),
       builder: (context, state) {
+        if (state is TrucBanStateLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
         if (state is TrucBanStateDanhSachKhachLoaded) {
           if (state.danhSach.isEmpty) {
             return const BaseEmptyState();
@@ -110,7 +118,9 @@ class LichSuKhachList extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: ColorConstants.successColor,
-                          borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+                          borderRadius: BorderRadius.circular(
+                            ColorConstants.defaultBorderRadius,
+                          ),
                         ),
                         child: Text(
                           khach.soCanCuoc,
@@ -127,15 +137,7 @@ class LichSuKhachList extends StatelessWidget {
             }).toList(),
           );
         }
-        if (state is TrucBanStateLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-        return const SizedBox.shrink();
+        return const BaseEmptyState();
       },
     );
   }

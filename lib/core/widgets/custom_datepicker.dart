@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
 
 // ─────────────────────────────────────────────
@@ -387,33 +388,29 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
   // ── toggle chế độ ─────────────────────────────────────────────────────
 
   Widget _buildModeToggle(Color primary, Color surface) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
-      children: [
-        _ModeChip(
-          label: 'Một ngày',
-          active: widget.mode == CustomDatePickerMode.single,
-          primary: primary,
-          surface: surface,
-          onTap: () => _switchMode(CustomDatePickerMode.single),
-        ),
-        _ModeChip(
-          label: 'Nhiều ngày',
-          active: widget.mode == CustomDatePickerMode.multi,
-          primary: primary,
-          surface: surface,
-          onTap: () => _switchMode(CustomDatePickerMode.multi),
-        ),
-        _ModeChip(
-          label: 'Khoảng',
-          active: widget.mode == CustomDatePickerMode.range,
-          primary: primary,
-          surface: surface,
-          onTap: () => _switchMode(CustomDatePickerMode.range),
-        ),
-      ],
+    return Center(
+      child: CustomSegmentedButton<CustomDatePickerMode>(
+        options: const [
+          CustomSegmentOption(
+            value: CustomDatePickerMode.single,
+            label: 'Một ngày',
+          ),
+          CustomSegmentOption(
+            value: CustomDatePickerMode.multi,
+            label: 'Nhiều ngày',
+          ),
+          CustomSegmentOption(
+            value: CustomDatePickerMode.range,
+            label: 'Khoảng',
+          ),
+        ],
+        selected: {widget.mode},
+        onSelectionChanged: (selected) {
+          if (selected.isNotEmpty) {
+            _switchMode(selected.first);
+          }
+        },
+      ),
     );
   }
 }
@@ -477,46 +474,6 @@ class _MonthYearChip extends StatelessWidget {
 // ─────────────────────────────────────────────
 // Chip chế độ (multi / range)
 // ─────────────────────────────────────────────
-
-class _ModeChip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final Color primary;
-  final Color surface;
-  final VoidCallback onTap;
-
-  const _ModeChip({
-    required this.label,
-    required this.active,
-    required this.primary,
-    required this.surface,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: active ? primary : primary.withValues(alpha: 0.1),
-      borderRadius:
-          BorderRadius.circular(ColorConstants.defaultBorderRadius),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius:
-            BorderRadius.circular(ColorConstants.defaultBorderRadius),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            label,
-            style: TextConstants.appTextSemiBold.copyWith(
-              color: active ? surface : primary,
-              fontSize: TextConstants.fontSizeApp - 1,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────
 // Ô ngày trong lưới

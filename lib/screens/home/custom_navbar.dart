@@ -2,7 +2,6 @@ import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/screens/attendance/attendance_screen.dart';
-import 'package:attendancebyface/screens/personal_info/personal_info_screen.dart';
 import 'package:attendancebyface/screens/leave/leave_screen.dart';
 import 'package:attendancebyface/screens/truc_ban/truc_ban_screen.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
@@ -30,7 +29,7 @@ class CustomNavBar extends StatefulWidget {
 
 class _CustomNavBarState extends State<CustomNavBar> {
   static const int _defaultPageIndex = 1;
-  static const int _screenCount = 4;
+  static const int _screenCount = 3;
 
   late final PageController _pageController;
   late int _currentIndex;
@@ -64,8 +63,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
         _screens[1] ??= const AttendanceScreen();
       case 2:
         _screens[2] = TrucBanScreen(isActive: _currentIndex == 2);
-      case 3:
-        _screens[3] ??= const PersonalInfoScreen();
     }
   }
 
@@ -112,10 +109,11 @@ class _CustomNavBarState extends State<CustomNavBar> {
             child: Scaffold(body: Center(child: CircularProgressIndicator())),
           ),
           loaded: (_) {
-            // Khoảng trống duy nhất inject vào bottom padding cho các màn hình con.
-            // = navbar (65) + safe-area nổi (bottom − 20, min 0) + gap FAB (32).
             final double navBarBottomPad =
-                (MediaQuery.viewPaddingOf(context).bottom - 20).clamp(0.0, double.infinity);
+                (MediaQuery.viewPaddingOf(context).bottom - 20).clamp(
+                  0.0,
+                  double.infinity,
+                );
             final double navTotalHeight = 65 + navBarBottomPad + 32;
 
             return Scaffold(
@@ -161,10 +159,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
                           icon: Icons.security_outlined,
                           label: 'Trực ban',
                         ),
-                        LiquidGlassNavItem(
-                          icon: Icons.person_outline,
-                          label: 'Cá nhân',
-                        ),
                       ],
                       backgroundColor: colorScheme.surface,
                       itemColor: colorScheme.onSurfaceVariant,
@@ -174,6 +168,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
                       blurStrength: 12,
                       borderRadius: ColorConstants.defaultBorderRadius,
                       iconSize: 20,
+                      // fontSize: TextConstants.fontSizeApp,
                       fontSize: 12,
                       elevation: 14,
                       bottomPadding: 0,

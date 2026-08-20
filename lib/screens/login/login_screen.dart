@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
-import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_header.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
@@ -113,7 +113,7 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                DialogHeader(
+                SamcomHeader(
                   icon: Icons.lock_reset_outlined,
                   title: 'Thông báo',
                   subtitle: 'Liên hệ với admin để khôi phục mật khẩu.',

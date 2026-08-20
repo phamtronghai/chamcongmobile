@@ -103,15 +103,13 @@ class BaseInfoCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color:
                                   highlightBackgroundColor ??
-                                  ColorConstants.warningColor.withAlpha(50),
+                                  primary.withAlpha(50),
                               borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
                             ),
                             child: Text(
                               highlightText!,
                               style: TextConstants.appTextRegular.copyWith(
-                                    color:
-                                        highlightTextColor ??
-                                        ColorConstants.warningColor,
+                                    color: highlightTextColor ?? primary,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),

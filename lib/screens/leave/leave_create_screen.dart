@@ -3,6 +3,7 @@ import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/models/approver.dart';
 import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
@@ -11,7 +12,6 @@ import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/base_screen.dart';
-import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:attendancebyface/core/widgets/centered_day_slot_navigator.dart';
 
 class LeaveCreateScreen extends BaseScreen {
@@ -84,28 +84,24 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SamcomChip(
-                    label: '1 ngày',
-                    variant: SamcomChipVariant.filled,
-                    selected: !_isMultiDay,
-                    color: Theme.of(context).colorScheme.primary,
-                    onPressed: () => setState(() => _isMultiDay = false),
-                  ),
-                  const SizedBox(width: 8),
-                  SamcomChip(
-                    label: 'Nhiều ngày',
-                    variant: SamcomChipVariant.filled,
-                    selected: _isMultiDay,
-                    color: Theme.of(context).colorScheme.primary,
-                    onPressed: () => setState(() {
-                      _isMultiDay = true;
-                      _leaveType = LeaveType.fullDay; // ép cả ngày cho nhiều ngày
-                    }),
-                  ),
-                ],
+              Center(
+                child: CustomSegmentedButton<bool>(
+                  options: const [
+                    CustomSegmentOption(value: false, label: '1 ngày'),
+                    CustomSegmentOption(value: true, label: 'Nhiều ngày'),
+                  ],
+                  selected: {_isMultiDay},
+                  onSelectionChanged: (selected) {
+                    if (selected.isEmpty) return;
+                    final nextMode = selected.first;
+                    setState(() {
+                      _isMultiDay = nextMode;
+                      if (_isMultiDay) {
+                        _leaveType = LeaveType.fullDay;
+                      }
+                    });
+                  },
+                ),
               ),
               const SizedBox(height: 8),
               if (!_isMultiDay) ...[
@@ -178,33 +174,20 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
   }
 
   Widget _buildSingleDayType() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SamcomChip(
-          label: 'Sáng',
-          variant: SamcomChipVariant.filled,
-          selected: _leaveType == LeaveType.morning,
-          color: Theme.of(context).colorScheme.primary,
-          onPressed: () => setState(() => _leaveType = LeaveType.morning),
-        ),
-        const SizedBox(width: 8),
-        SamcomChip(
-          label: 'Chiều',
-          variant: SamcomChipVariant.filled,
-          selected: _leaveType == LeaveType.afternoon,
-          color: Theme.of(context).colorScheme.primary,
-          onPressed: () => setState(() => _leaveType = LeaveType.afternoon),
-        ),
-        const SizedBox(width: 8),
-        SamcomChip(
-          label: 'Cả ngày',
-          variant: SamcomChipVariant.filled,
-          selected: _leaveType == LeaveType.fullDay,
-          color: Theme.of(context).colorScheme.primary,
-          onPressed: () => setState(() => _leaveType = LeaveType.fullDay),
-        ),
-      ],
+    return Center(
+      child: CustomSegmentedButton<LeaveType>(
+        options: const [
+          CustomSegmentOption(value: LeaveType.morning, label: 'Sáng'),
+          CustomSegmentOption(value: LeaveType.afternoon, label: 'Chiều'),
+          CustomSegmentOption(value: LeaveType.fullDay, label: 'Cả ngày'),
+        ],
+        selected: {_leaveType},
+        onSelectionChanged: (selected) {
+          if (selected.isNotEmpty) {
+            setState(() => _leaveType = selected.first);
+          }
+        },
+      ),
     );
   }
 

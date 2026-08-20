@@ -13,7 +13,6 @@ import 'package:attendancebyface/core/service_locator.dart';
 import 'package:attendancebyface/core/services/report_service.dart';
 import 'package:attendancebyface/core/widgets/base_screen.dart';
 import 'package:attendancebyface/screens/attendance/widgets/daily_info_section.dart';
-import 'package:attendancebyface/screens/attendance/widgets/worklog_form_sheet.dart';
 import 'package:attendancebyface/screens/attendance/widgets/attendance_action_buttons.dart';
 import 'package:attendancebyface/screens/home/custom_navbar.dart';
 import 'package:attendancebyface/core/cubits/attendance_cubit.dart';
@@ -79,8 +78,8 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
   }
 
   void _openWorklogForm(BuildContext context) {
-    WorklogFormSheet.show(
-      context: context,
+    AppRouter.goToWorklogCreate(
+      context,
       userId: widget.user.id,
       selectedDate: context.read<AttendanceCubit>().state.selectedDate,
       onSuccess: () =>
@@ -172,6 +171,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
           resizeToAvoidBottomInset: false,
           appBar: CustomAppBar(
             title: 'Chấm công',
+            showAvatar: true,
             onNotificationTap: () {
               AppRouter.goToNotification(context, widget.user);
             },

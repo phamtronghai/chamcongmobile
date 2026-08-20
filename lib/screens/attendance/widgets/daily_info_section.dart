@@ -1,14 +1,13 @@
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/core/widgets/gradient_ring.dart';
 import 'package:attendancebyface/core/widgets/centered_day_slot_navigator.dart';
 
 export 'package:attendancebyface/core/widgets/centered_day_slot_navigator.dart';
 export 'package:attendancebyface/screens/attendance/widgets/attendance_history_section.dart';
 export 'package:attendancebyface/screens/attendance/widgets/daily_worklogs_section.dart';
 
-/// Header chung: avatar + tên + vị trí, chọn ngày.
+/// Header: chào user + vị trí (center), chọn ngày.
 class DailyInfoSection extends StatelessWidget {
   final UserModel user;
   final DateTime selectedDate;
@@ -48,7 +47,6 @@ class DailyInfoSection extends StatelessWidget {
   }
 }
 
-/// Row trái: avatar (GradientAvatarRing); phải: tên (title) + vị trí (subtitle).
 class _UserLocationHeader extends StatelessWidget {
   final UserModel user;
   final String? locationLabel;
@@ -60,94 +58,69 @@ class _UserLocationHeader extends StatelessWidget {
     this.onMapTap,
   });
 
-  static const double _avatarSize = 56;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final hasLocation =
         locationLabel != null && locationLabel!.trim().isNotEmpty;
     final locationText = hasLocation
         ? locationLabel!.trim()
         : 'Đang lấy vị trí…';
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          GradientAvatarRing(
-            size: _avatarSize,
-            outerPadding: 2.5,
-            innerPadding: 1.5,
-            child: CircleAvatar(
-              radius: (_avatarSize / 2) - 4,
-              backgroundColor: colorScheme.surface,
-              backgroundImage: user.image.isNotEmpty
-                  ? NetworkImage(user.image)
-                  : null,
-              child: user.image.isEmpty
-                  ? Icon(
-                      Icons.account_circle,
-                      size: 28,
-                      color: colorScheme.primary,
-                    )
-                  : null,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'Xin chào, ${user.name}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextConstants.appTextBold.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: TextConstants.fontSizeApp,
+            color: colorScheme.onSurface,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: hasLocation ? onMapTap : null,
+          borderRadius: BorderRadius.circular(
+            ColorConstants.defaultBorderRadius,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  user.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextConstants.appTextBold.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: TextConstants.fontSizeApp,
-                    color: colorScheme.onSurface,
-                  ),
+                Icon(
+                  Icons.place_outlined,
+                  size: 16,
+                  color: hasLocation
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withValues(alpha: 0.45),
                 ),
-                const SizedBox(height: 2),
-                InkWell(
-                  onTap: hasLocation ? onMapTap : null,
-                  borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.place_outlined,
-                        size: 16,
-                        color: hasLocation
-                            ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.45),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          locationText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextConstants.appTextRegular.copyWith(
-                            fontSize: TextConstants.fontSizeApp,
-                            fontWeight: FontWeight.w500,
-                            color: hasLocation
-                                ? colorScheme.primary
-                                : colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    locationText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextConstants.appTextRegular.copyWith(
+                      fontSize: TextConstants.fontSizeApp,
+                      fontWeight: FontWeight.w500,
+                      color: hasLocation
+                          ? colorScheme.primary
+                          : colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

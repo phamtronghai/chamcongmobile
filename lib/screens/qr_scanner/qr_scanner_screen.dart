@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:attendancebyface/screens/qr_scanner/widgets/citizen_id_form_dialog.dart';
+import 'package:attendancebyface/screens/qr_scanner/widgets/citizen_id_form_sheet.dart';
 import 'package:attendancebyface/models/citizen_id_data.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_header.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 
 class QRScannerScreen extends StatefulWidget {
@@ -57,7 +57,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              DialogHeader(
+              SamcomHeader(
                 icon: Icons.error_rounded,
                 title: 'Lỗi',
                 subtitle: message,
@@ -108,15 +108,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         message: 'Quét QR thành công!',
         type: CustomSnackbarType.success,
       );
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => CitizenIDFormDialog(
-          citizenData: citizenData,
-          isUpdate: widget.isUpdate,
-          onClose: () => Navigator.of(context).maybePop(),
-          onConfirm: () => Navigator.of(context).maybePop(),
-        ),
+      CitizenIDFormSheet.show(
+        context,
+        citizenData: citizenData,
+        isUpdate: widget.isUpdate,
+        onClose: () => Navigator.of(context).maybePop(),
+        onConfirm: () => Navigator.of(context).maybePop(),
       ).then((_) {
         if (mounted) Navigator.of(context).maybePop();
       });

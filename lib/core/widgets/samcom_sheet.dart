@@ -1,8 +1,8 @@
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_header.dart';
 import 'package:flutter/material.dart';
 
-/// Bottom sheet chuẩn SAMCOM: handle, [DialogHeader], pad bàn phím.
+/// Bottom sheet chuẩn SAMCOM: handle, [SamcomHeader], pad bàn phím.
 class SamcomSheet extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -45,6 +45,14 @@ class SamcomSheet extends StatelessWidget {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final maxHeight = MediaQuery.sizeOf(context).height * maxHeightFactor;
 
+    final body = expandChild
+        ? Expanded(child: child)
+        : Flexible(
+            child: SingleChildScrollView(
+              child: child,
+            ),
+          );
+
     final column = Column(
       mainAxisSize: expandChild ? MainAxisSize.max : MainAxisSize.min,
       children: [
@@ -57,14 +65,14 @@ class SamcomSheet extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        DialogHeader(
+        SamcomHeader(
           icon: icon,
           title: title,
           subtitle: subtitle,
           subtitleWidget: subtitleWidget,
           primaryColor: primaryColor,
         ),
-        if (expandChild) Expanded(child: child) else child,
+        body,
       ],
     );
 

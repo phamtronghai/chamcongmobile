@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_cubit.dart';
 import 'package:attendancebyface/core/cubits/truc_ban_state.dart';
-import 'package:attendancebyface/screens/truc_ban/widgets/truc_ban_dialogs.dart';
+import 'package:attendancebyface/screens/truc_ban/widgets/truc_ban_sheets.dart';
 import 'package:attendancebyface/screens/truc_ban/widgets/lich_su_lists.dart';
-import 'package:attendancebyface/screens/truc_ban/widgets/dang_ky_dialog_forms.dart';
-import 'package:attendancebyface/screens/attendance/widgets/daily_info_section.dart';
+import 'package:attendancebyface/screens/truc_ban/widgets/dang_ky_sheet_forms.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 
+enum _DangKyKind { raNgoai, khach }
+
 class DangKyTab extends StatefulWidget {
-  const DangKyTab({super.key});
+  final DateTime selectedDate;
+
+  const DangKyTab({super.key, required this.selectedDate});
 
   @override
   State<DangKyTab> createState() => _DangKyTabState();
@@ -18,14 +22,25 @@ class DangKyTab extends StatefulWidget {
 
 class _DangKyTabState extends State<DangKyTab>
     with AutomaticKeepAliveClientMixin {
-  DateTime _selectedDate = DateTime.now();
+  _DangKyKind _kind = _DangKyKind.raNgoai;
 
   @override
   void initState() {
     super.initState();
-    // Load history for both sections
-    context.read<TrucBanCubit>().layLichSuRaNgoaiCaNhan(_selectedDate);
-    context.read<TrucBanCubit>().layLichSuKhachCaNhan(_selectedDate);
+    _reloadHistory();
+  }
+
+  @override
+  void didUpdateWidget(covariant DangKyTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate != widget.selectedDate) {
+      _reloadHistory();
+    }
+  }
+
+  void _reloadHistory() {
+    context.read<TrucBanCubit>().layLichSuRaNgoaiCaNhan(widget.selectedDate);
+    context.read<TrucBanCubit>().layLichSuKhachCaNhan(widget.selectedDate);
   }
 
   @override
@@ -34,51 +49,56 @@ class _DangKyTabState extends State<DangKyTab>
     return BlocListener<TrucBanCubit, TrucBanState>(
       listener: (context, state) {
         if (state is TrucBanStateSuccess) {
-          // Auto-reload lịch sử sau khi đăng ký thành công
-          // (Thông báo SnackBar đã được xử lý bởi truc_ban_screen.dart)
-          context.read<TrucBanCubit>().layLichSuRaNgoaiCaNhan(_selectedDate);
-          context.read<TrucBanCubit>().layLichSuKhachCaNhan(_selectedDate);
+          _reloadHistory();
         }
       },
       child: RefreshIndicator(
-        onRefresh: () async {
-          context.read<TrucBanCubit>().layLichSuRaNgoaiCaNhan(_selectedDate);
-          context.read<TrucBanCubit>().layLichSuKhachCaNhan(_selectedDate);
-        },
+        onRefresh: () async => _reloadHistory(),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CenteredDaySlotNavigator(
-                selectedDate: _selectedDate,
-                onDateSelected: (date) {
-                  setState(() => _selectedDate = date);
-                  context.read<TrucBanCubit>().layLichSuRaNgoaiCaNhan(date);
-                  context.read<TrucBanCubit>().layLichSuKhachCaNhan(date);
-                },
+              Center(
+                child: CustomSegmentedButton<_DangKyKind>(
+                  options: const [
+                    CustomSegmentOption(
+                      value: _DangKyKind.raNgoai,
+                      label: 'Ra ngoài',
+                      icon: Icons.directions_walk,
+                    ),
+                    CustomSegmentOption(
+                      value: _DangKyKind.khach,
+                      label: 'Đăng ký khách',
+                      icon: Icons.people_outline,
+                    ),
+                  ],
+                  selected: {_kind},
+                  onSelectionChanged: (selected) {
+                    if (selected.isEmpty) return;
+                    setState(() => _kind = selected.first);
+                  },
+                ),
               ),
-              const SizedBox(height: 12),
-              // --- SECTION 1: RA NGOÀI CÁ NHÂN ---
-              _buildSectionHeader(
-                title: 'Ra ngoài cá nhân',
-                icon: Icons.directions_walk,
-                onAdd: () => _showDangKyRaNgoaiDialog(context),
-              ),
-              const SizedBox(height: 12),
-              const LichSuRaNgoaiList(),
-
-              const SizedBox(height: 24),
-              // --- SECTION 2: ĐĂNG KÝ KHÁCH ---
-              _buildSectionHeader(
-                title: 'Đăng ký khách',
-                icon: Icons.people_outline,
-                onAdd: () => _showDangKyKhachDialog(context),
-              ),
-              const SizedBox(height: 12),
-              const LichSuKhachList(),
-              const SizedBox(height: 100),
+              const SizedBox(height: 16),
+              if (_kind == _DangKyKind.raNgoai) ...[
+                _buildSectionHeader(
+                  title: 'Ra ngoài',
+                  icon: Icons.directions_walk,
+                  onAdd: () => _showDangKyRaNgoaiSheet(context),
+                ),
+                const SizedBox(height: 12),
+                const LichSuRaNgoaiList(),
+              ] else ...[
+                _buildSectionHeader(
+                  title: 'Đăng ký khách',
+                  icon: Icons.people_outline,
+                  onAdd: () => _showDangKyKhachSheet(context),
+                ),
+                const SizedBox(height: 12),
+                const LichSuKhachList(),
+              ],
             ],
           ),
         ),
@@ -98,12 +118,10 @@ class _DangKyTabState extends State<DangKyTab>
         Text(
           title,
           style: TextConstants.appTextBold.copyWith(
-            fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const Spacer(),
-        // Add Button
         CustomButton(
           text: '',
           icon: Icons.add,
@@ -115,26 +133,26 @@ class _DangKyTabState extends State<DangKyTab>
     );
   }
 
-  void _showDangKyRaNgoaiDialog(BuildContext context) {
+  void _showDangKyRaNgoaiSheet(BuildContext context) {
     final cubit = context.read<TrucBanCubit>();
-    TrucBanDialogs.showCustomDialog<TrucBanCubit>(
+    TrucBanSheets.showSheet<TrucBanCubit>(
       context: context,
       title: 'Đăng ký ra ngoài',
       subtitle: 'Nhập thông tin ra ngoài',
       icon: Icons.directions_walk,
-      content: const DangKyRaNgoaiDialogForm(),
+      content: const DangKyRaNgoaiSheetForm(),
       blocValue: cubit,
     );
   }
 
-  void _showDangKyKhachDialog(BuildContext context) {
+  void _showDangKyKhachSheet(BuildContext context) {
     final cubit = context.read<TrucBanCubit>();
-    TrucBanDialogs.showCustomDialog<TrucBanCubit>(
+    TrucBanSheets.showSheet<TrucBanCubit>(
       context: context,
       title: 'Đăng ký khách',
       subtitle: 'Nhập thông tin khách đến',
       icon: Icons.person_add,
-      content: const DangKyKhachDialogForm(),
+      content: const DangKyKhachSheetForm(),
       blocValue: cubit,
     );
   }

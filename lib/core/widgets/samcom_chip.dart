@@ -16,6 +16,7 @@ class SamcomChip extends StatelessWidget {
   final bool dense;
   final EdgeInsetsGeometry? padding;
   final double? fontSize;
+  final bool fitContentWidth;
 
   const SamcomChip({
     super.key,
@@ -28,6 +29,7 @@ class SamcomChip extends StatelessWidget {
     this.dense = false,
     this.padding,
     this.fontSize,
+    this.fitContentWidth = true,
   });
 
   @override
@@ -56,11 +58,9 @@ class SamcomChip extends StatelessWidget {
       borderColor = baseColor;
     }
 
-    final EdgeInsetsGeometry effectivePadding = padding ??
-        EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: dense ? 4 : 6,
-        );
+    final EdgeInsetsGeometry effectivePadding =
+        padding ??
+        EdgeInsets.symmetric(horizontal: 12, vertical: dense ? 4 : 6);
 
     final TextStyle chipTextStyle = TextConstants.appTextBold.copyWith(
       color: textColor,
@@ -77,18 +77,16 @@ class SamcomChip extends StatelessWidget {
           if (label.isNotEmpty) const SizedBox(width: 6),
         ],
         if (label.isNotEmpty)
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: chipTextStyle,
-            ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: chipTextStyle,
           ),
       ],
     );
 
-    return Material(
+    final chip = Material(
       color: backgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
@@ -102,12 +100,15 @@ class SamcomChip extends StatelessWidget {
           ? Padding(padding: effectivePadding, child: labelRow)
           : InkWell(
               onTap: onPressed,
-              borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-              child: Padding(
-                padding: effectivePadding,
-                child: labelRow,
+              borderRadius: BorderRadius.circular(
+                ColorConstants.defaultBorderRadius,
               ),
+              child: Padding(padding: effectivePadding, child: labelRow),
             ),
     );
+    if (fitContentWidth) {
+      return IntrinsicWidth(child: chip);
+    }
+    return chip;
   }
 }

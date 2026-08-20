@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_datepicker.dart';
-import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_header.dart';
 
 /// Bottom sheet chọn ngày / khoảng ngày / nhiều ngày dùng [CustomDatePicker].
 ///
@@ -168,7 +168,7 @@ class _DatePickerSheetState extends State<_DatePickerSheet> {
               ),
             ),
           ),
-          DialogHeader(
+          SamcomHeader(
             icon: Icons.calendar_today,
             title: widget.title,
             subtitle: widget.subtitle,

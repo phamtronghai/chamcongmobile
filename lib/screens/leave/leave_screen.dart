@@ -67,6 +67,7 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Nghỉ phép',
+        showAvatar: true,
         onNotificationTap: () {
           AppRouter.goToNotification(context, widget.user);
         },

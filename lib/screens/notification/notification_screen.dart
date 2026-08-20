@@ -271,18 +271,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
             return SamcomSheet(
               title: current.title,
               subtitleWidget: _buildSheetSubtitle(current, fmt),
-              expandChild: true,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                      child: Text(
-                        current.message,
-                        style: TextConstants.appTextRegular.copyWith(
-                          height: 1.5,
-                          color: colorScheme.onSurface,
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                    child: Text(
+                      current.message,
+                      style: TextConstants.appTextRegular.copyWith(
+                        height: 1.5,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),

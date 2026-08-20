@@ -1,0 +1,20 @@
+name: fw_tab_bar
+description: A customizable sliding pill tab bar with TabController support.
+version: 0.1.0
+homepage: https://github.com/FlutterWala/fw_TabBar
+repository: https://github.com/FlutterWala/fw_TabBar
+
+environment:
+  sdk: '>=3.4.1 <4.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:

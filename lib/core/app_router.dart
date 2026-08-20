@@ -17,7 +17,9 @@ import 'package:attendancebyface/core/cubits/attendance_cubit.dart';
 import 'package:attendancebyface/screens/attendance/attendance_map_screen.dart';
 import 'package:attendancebyface/screens/attendance/manual_attendance_screen.dart';
 import 'package:attendancebyface/screens/attendance/pdf_viewer_screen.dart';
+import 'package:attendancebyface/screens/attendance/worklog_create_screen.dart';
 import 'package:attendancebyface/screens/truc_ban/camera_rtsp_screen.dart';
+import 'package:attendancebyface/screens/personal_info/personal_info_screen.dart';
 
 /// App Router sử dụng go_router để quản lý navigation
 class AppRouter {
@@ -100,6 +102,12 @@ class AppRouter {
       ),
 
       GoRoute(
+        path: '/personal-info',
+        name: 'personal-info',
+        builder: (context, state) => const PersonalInfoScreen(),
+      ),
+
+      GoRoute(
         path: '/qr-scanner',
         name: 'qr-scanner',
         builder: (context, state) => const QRScannerScreen(),
@@ -149,6 +157,22 @@ class AppRouter {
         name: 'camera-rtsp',
         builder: (context, state) => const CameraRTSPScreen(),
       ),
+
+      GoRoute(
+        path: '/worklog-create',
+        name: 'worklog-create',
+        builder: (context, state) {
+          final extra = state.extra as WorklogCreateExtra?;
+          if (extra == null) {
+            return extraMissing('Không tìm thấy thông tin nhập công việc');
+          }
+          return WorklogCreateScreen(
+            userId: extra.userId,
+            selectedDate: extra.selectedDate,
+            onSuccess: extra.onSuccess,
+          );
+        },
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: AppErrorWidget(
@@ -191,6 +215,11 @@ class AppRouter {
     context.push('/notification', extra: user);
   }
 
+  /// Navigate to personal info (push để còn nút quay lại mặc định).
+  static void goToPersonalInfo(BuildContext context) {
+    context.push('/personal-info');
+  }
+
   /// Navigate to QR scanner
   static void goToQRScanner(BuildContext context) {
     context.push('/qr-scanner');
@@ -228,6 +257,22 @@ class AppRouter {
 
   static void goToCameraRtsp(BuildContext context) {
     context.push('/camera-rtsp');
+  }
+
+  static void goToWorklogCreate(
+    BuildContext context, {
+    required String userId,
+    required DateTime selectedDate,
+    Future<void> Function()? onSuccess,
+  }) {
+    context.push(
+      '/worklog-create',
+      extra: WorklogCreateExtra(
+        userId: userId,
+        selectedDate: selectedDate,
+        onSuccess: onSuccess,
+      ),
+    );
   }
 
   /// Navigate back
@@ -272,4 +317,16 @@ class PdfViewerExtra {
   final String title;
 
   const PdfViewerExtra({required this.filePath, required this.title});
+}
+
+class WorklogCreateExtra {
+  final String userId;
+  final DateTime selectedDate;
+  final Future<void> Function()? onSuccess;
+
+  const WorklogCreateExtra({
+    required this.userId,
+    required this.selectedDate,
+    this.onSuccess,
+  });
 }

@@ -1,8 +1,8 @@
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:buttons_tabbar/buttons_tabbar.dart';
 import 'package:flutter/material.dart';
+import 'package:fw_tab_bar/fw_tab_bar.dart';
 
-/// [ButtonsTabBar] dùng chung: radius, margin, style từ theme.
+/// Tab bar chuẩn SAMCOM: sliding pill qua [FwTabBar], style từ theme.
 class SamcomTabBar extends StatelessWidget {
   final TabController? controller;
   final List<Widget> tabs;
@@ -35,16 +35,17 @@ class SamcomTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final bar = ButtonsTabBar(
+    return FwTabBar(
       controller: controller,
-      radius: ColorConstants.defaultBorderRadius,
-      backgroundColor: colorScheme.primary,
+      tabs: tabs,
       center: center,
-      contentCenter: true,
-      physics: physics ?? const NeverScrollableScrollPhysics(),
-      width: tabWidth,
-      buttonMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      physics: physics,
+      width: width,
+      tabWidth: tabWidth,
+      radius: ColorConstants.defaultBorderRadius,
       contentPadding: contentPadding,
+      buttonMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      backgroundColor: colorScheme.primary,
       unselectedBackgroundColor:
           unselectedBackgroundColor ??
           colorScheme.onSurface.withValues(alpha: 0.12),
@@ -54,10 +55,6 @@ class SamcomTabBar extends StatelessWidget {
       unselectedLabelStyle:
           unselectedLabelStyle ??
           TextConstants.appTextBold.copyWith(color: colorScheme.onSurface),
-      tabs: tabs,
     );
-
-    if (width == null) return bar;
-    return SizedBox(width: width, child: bar);
   }
 }

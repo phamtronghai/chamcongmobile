@@ -17,13 +17,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:attendancebyface/core/network/api_client.dart';
-import 'package:attendancebyface/screens/personal_info/widgets/profile_update_dialog.dart';
-import 'package:attendancebyface/screens/personal_info/widgets/change_password_dialog.dart';
-import 'package:attendancebyface/screens/personal_info/widgets/custom_password_dialog.dart';
+import 'package:attendancebyface/screens/personal_info/widgets/profile_update_sheet.dart';
+import 'package:attendancebyface/screens/personal_info/widgets/change_password_sheet.dart';
+import 'package:attendancebyface/screens/personal_info/widgets/custom_password_sheet.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:attendancebyface/core/app_router.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/samcom_tab_bar.dart';
+import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -125,7 +126,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
     if (_isFaceRegistered) {
       CustomSnackbar.show(
         context: context,
-        message: 'Khuôn mặt đã được đăng ký. Nhấn giữ để xóa đăng ký.',
+        message: 'Khuôn mặt đã được đăng ký!',
         type: CustomSnackbarType.info,
       );
       return;
@@ -135,14 +136,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
 
   Future<void> _handleDeleteFaceByLongPress() async {
     if (!_isFaceRegistered) return;
-    final result = await showDialog<String>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => const CustomPasswordDialog(
-        title: 'Xóa khuôn mặt',
-        label: 'Nhập mật khẩu',
-        hint: 'Nhập mật khẩu để xác nhận',
-      ),
+    final result = await CustomPasswordSheet.show(
+      context,
+      title: 'Xóa khuôn mặt',
+      label: 'Nhập mật khẩu',
+      hint: 'Nhập mật khẩu để xác nhận',
     );
     if (!mounted || result == null || result.isEmpty) return;
     if (result != AppConfig.adminPassword) {
@@ -181,12 +179,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
     }
   }
 
-  void _showChangePasswordDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) =>
-          ChangePasswordDialog(onConfirm: _changePassword, onSuccess: _logout),
+  void _showChangePasswordSheet() {
+    ChangePasswordSheet.show(
+      context,
+      onConfirm: _changePassword,
+      onSuccess: _logout,
     );
   }
 
@@ -307,13 +304,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
     return '$normalizedBase$normalizedPath';
   }
 
-  void _showUpdateProfileDialog() async {
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) => ProfileUpdateDialog(
-        initialName: _user.name,
-        initialPhone: _user.phone,
-      ),
+  void _showUpdateProfileSheet() async {
+    final result = await ProfileUpdateSheet.show(
+      context,
+      initialName: _user.name,
+      initialPhone: _user.phone,
     );
     if (result != null) {
       await _updateUserProfile(result['name']!, result['phone']!);
@@ -454,7 +449,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
                 controller: _tabController,
                 children: [
                   _buildBasicInfoTab(colorScheme),
-                  _buildCitizenTab(colorScheme),
+                  _buildCitizenTab(),
                 ],
               ),
             ),
@@ -498,7 +493,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
           child: CustomButton(
             icon: Icons.lock_reset,
             variant: CustomButtonVariant.iconButton,
-            onPressed: _showChangePasswordDialog,
+            onPressed: _showChangePasswordSheet,
           ),
         ),
         _buildIconAction(
@@ -569,14 +564,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
           CustomButton(
             text: 'Cập nhật thông tin',
             icon: Icons.edit,
-            onPressed: _showUpdateProfileDialog,
+            onPressed: _showUpdateProfileSheet,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCitizenTab(ColorScheme cs) {
+  Widget _buildCitizenTab() {
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -637,24 +632,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
               onPressed: () => AppRouter.goToQRScanner(context),
             ),
           ] else ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: cs.primary, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Chưa có thông tin căn cước công dân',
-                      style: TextConstants.appTextRegular.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.65),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: BaseEmptyState(),
             ),
-            const SizedBox(height: 8),
             CustomButton(
               text: 'Thêm Căn cước (QR)',
               icon: Icons.qr_code_scanner,

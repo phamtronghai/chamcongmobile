@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_header.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 
 class AttendanceResultDialog extends StatelessWidget {
@@ -40,7 +40,7 @@ class AttendanceResultDialog extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DialogHeader(
+          SamcomHeader(
             icon: icon,
             title: title,
             subtitle: subtitle,

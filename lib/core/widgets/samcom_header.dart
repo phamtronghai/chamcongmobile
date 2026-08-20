@@ -2,8 +2,7 @@ import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:flutter/material.dart';
 
-class DialogHeader extends StatelessWidget {
-  /// Giữ tương thích API cũ; UI mặc định dùng logo app.
+class SamcomHeader extends StatelessWidget {
   final IconData? icon;
   final Widget? leading;
   final String title;
@@ -15,7 +14,7 @@ class DialogHeader extends StatelessWidget {
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
 
-  const DialogHeader({
+  const SamcomHeader({
     super.key,
     this.icon,
     this.leading,
