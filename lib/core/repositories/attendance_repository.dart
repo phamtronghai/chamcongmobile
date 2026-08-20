@@ -1,7 +1,7 @@
 import 'package:attendancebyface/models/attendance_model.dart';
+import 'package:attendancebyface/core/utils/debug_log.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/utils/response_parser.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 /// Repository để xử lý tất cả API calls liên quan đến attendance
@@ -32,7 +32,7 @@ class AttendanceRepository {
       );
 
       // Convert raw data thành AttendanceModel list
-      debugPrint('Đã nhận ${responseData.length} bản ghi chấm công');
+      debugLog('Đã nhận ${responseData.length} bản ghi chấm công');
       final List<AttendanceModel> attendances = [];
 
       for (var item in responseData) {
@@ -43,7 +43,7 @@ class AttendanceRepository {
             );
           }
         } catch (e) {
-          debugPrint('Lỗi khi chuyển đổi bản ghi: $e');
+          debugLog('Lỗi khi chuyển đổi bản ghi: $e');
         }
       }
 
@@ -75,7 +75,7 @@ class AttendanceRepository {
         };
       }
     } catch (e) {
-      debugPrint('Error adding manual attendance: $e');
+      debugLog('Error adding manual attendance: $e');
       return {
         'success': false,
         'message': 'Lỗi khi chấm công: ${e.toString()}',

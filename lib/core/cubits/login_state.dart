@@ -10,14 +10,18 @@ class LoginState {
   final String? errorMessage;
   final bool showSuccessMessage;
 
-  // Form State
   final List<OrganizationUnit> units;
   final OrganizationUnit? selectedUnit;
   final List<BiometricAccount> biometricAccounts;
   final BiometricAccount? selectedBiometricAccount;
   final bool biometricEnabled;
-  final bool showAlternativeLogin;
   final bool rememberAccount;
+
+  /// Điền form sau khi khôi phục phiên / chọn tài khoản SpeedDial
+  final String prefillUsername;
+  final String prefillPassword;
+  final String prefillBaseUrl;
+  final String prefillUnitSlug;
 
   const LoginState({
     this.status = LoginStatus.initial,
@@ -29,8 +33,11 @@ class LoginState {
     this.biometricAccounts = const [],
     this.selectedBiometricAccount,
     this.biometricEnabled = false,
-    this.showAlternativeLogin = false,
     this.rememberAccount = false,
+    this.prefillUsername = '',
+    this.prefillPassword = '',
+    this.prefillBaseUrl = '',
+    this.prefillUnitSlug = '',
   });
 
   LoginState copyWith({
@@ -43,23 +50,33 @@ class LoginState {
     List<BiometricAccount>? biometricAccounts,
     BiometricAccount? selectedBiometricAccount,
     bool? biometricEnabled,
-    bool? showAlternativeLogin,
     bool? rememberAccount,
+    String? prefillUsername,
+    String? prefillPassword,
+    String? prefillBaseUrl,
+    String? prefillUnitSlug,
+    bool clearPrefill = false,
   }) {
     return LoginState(
       status: status ?? this.status,
       user: user ?? this.user,
-      errorMessage: errorMessage, // null is allowed to clear error
+      errorMessage: errorMessage,
       showSuccessMessage: showSuccessMessage ?? this.showSuccessMessage,
       units: units ?? this.units,
       selectedUnit: selectedUnit ?? this.selectedUnit,
       biometricAccounts: biometricAccounts ?? this.biometricAccounts,
-      selectedBiometricAccount: selectedBiometricAccount ?? this.selectedBiometricAccount,
+      selectedBiometricAccount:
+          selectedBiometricAccount ?? this.selectedBiometricAccount,
       biometricEnabled: biometricEnabled ?? this.biometricEnabled,
-      showAlternativeLogin: showAlternativeLogin ?? this.showAlternativeLogin,
       rememberAccount: rememberAccount ?? this.rememberAccount,
+      prefillUsername:
+          clearPrefill ? '' : (prefillUsername ?? this.prefillUsername),
+      prefillPassword:
+          clearPrefill ? '' : (prefillPassword ?? this.prefillPassword),
+      prefillBaseUrl:
+          clearPrefill ? '' : (prefillBaseUrl ?? this.prefillBaseUrl),
+      prefillUnitSlug:
+          clearPrefill ? '' : (prefillUnitSlug ?? this.prefillUnitSlug),
     );
   }
-
-
 }

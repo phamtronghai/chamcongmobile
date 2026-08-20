@@ -53,10 +53,5 @@ class DeviceIdHelper {
     final random = (timestamp * 1000 + (timestamp % 1000)).toString();
     return 'fallback_$random';
   }
-
-  /// Xóa device ID (dùng khi logout hoặc reset app)
-  static Future<void> clearDeviceId() async {
-    await SecureStorage.remove(_deviceIdKey);
-  }
 }
 

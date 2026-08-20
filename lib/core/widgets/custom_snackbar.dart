@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/gen/assets.gen.dart';
-// import 'package:attendancebyface/core/constants/color_constants.dart';
-// Removed TextConstants; use textTheme instead
+import 'package:attendancebyface/core/app_config.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 enum CustomSnackbarType { success, error, info, warning }
 
@@ -54,11 +53,11 @@ class CustomSnackbar {
                 ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
                   border: Border.all(color: _getColorForType(type), width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: ColorConstants.backgroundDark.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -67,15 +66,17 @@ class CustomSnackbar {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Assets.icon.logoAppChamCongBoTron.image(
+                    Image.asset(
+                      AppConfig.logoOrg,
                       width: 40,
                       height: 40,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(width: 12),
                     Flexible(
                       child: Text(
                         message,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: TextConstants.appTextRegular.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
@@ -102,15 +103,13 @@ class CustomSnackbar {
   static Color _getColorForType(CustomSnackbarType type) {
     switch (type) {
       case CustomSnackbarType.success:
-        return const Color(
-          0xFF4CAF50,
-        ); // Optionally map to theme.secondary if needed
+        return ColorConstants.successColor; // Optionally map to theme.secondary if needed
       case CustomSnackbarType.error:
-        return Colors.red;
+        return ColorConstants.errorColor;
       case CustomSnackbarType.warning:
-        return const Color(0xFFFF9800);
+        return ColorConstants.warningColor;
       case CustomSnackbarType.info:
-        return Colors.blue;
+        return ColorConstants.infoColor;
     }
   }
 }

@@ -1,52 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
-/// Empty state thống nhất: icon lịch sử 32px + "Chưa có dữ liệu".
+/// Empty state thống nhất: icon + text trên 1 hàng ngang.
 class BaseEmptyState extends StatelessWidget {
   static const IconData defaultIcon = Icons.history;
   static const String defaultTitle = 'Chưa có dữ liệu';
 
   final IconData icon;
   final String title;
-  final TextAlign textAlign;
 
   const BaseEmptyState({
     super.key,
     this.icon = defaultIcon,
     this.title = defaultTitle,
-    this.textAlign = TextAlign.center,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final color = Theme.of(context).colorScheme.primary;
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 32, color: cs.primary),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: cs.onSurface,
-              ),
-              textAlign: textAlign,
-            ),
-          ],
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 32, color: color),
+          const SizedBox(width: 8),
+          Text(title, style: TextConstants.appTextBold.copyWith(color: color)),
+        ],
       ),
     );
   }

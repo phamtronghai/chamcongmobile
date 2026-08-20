@@ -177,7 +177,7 @@ class NotificationService {
     );
 
     await _localNotificationsPlugin.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         if (response.notificationResponseType ==
             NotificationResponseType.selectedNotification) {
@@ -282,7 +282,7 @@ class NotificationService {
         AppRouter.router.go('/');
         return;
       }
-      AppRouter.router.go('/notification', extra: user);
+      AppRouter.router.push('/notification', extra: user);
     });
   }
 
@@ -316,10 +316,10 @@ class NotificationService {
     );
 
     await _localNotificationsPlugin.show(
-      id,
-      title,
-      body,
-      platformDetails,
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: platformDetails,
       payload: payload,
     );
   }

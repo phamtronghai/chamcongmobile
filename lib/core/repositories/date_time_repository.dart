@@ -1,6 +1,5 @@
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/utils/response_parser.dart';
-import 'package:attendancebyface/core/utils/datetime_helper.dart';
 
 /// Mô hình dữ liệu thời gian từ API
 class ServerDateTime {
@@ -52,25 +51,5 @@ class DateTimeRepository {
     } catch (e) {
       return null;
     }
-  }
-
-  /// Định dạng thời gian thành chuỗi theo kiểu "HH:MM:SS"
-  static String formatTime(DateTime dateTime) {
-    return DateTimeHelper.formatTime(dateTime);
-  }
-
-  /// Định dạng ngày thành chuỗi theo kiểu "DD/MM/YYYY"
-  static String formatDate(DateTime dateTime) {
-    return DateTimeHelper.formatDate(dateTime);
-  }
-
-  /// Định dạng datetime đầy đủ theo kiểu "HH:MM:SS DD/MM/YYYY"
-  static String formatDateTime(DateTime dateTime) {
-    return DateTimeHelper.formatDateTime(dateTime);
-  }
-
-  /// Định dạng datetime theo kiểu Vietnam server
-  static String formatVietnamDateTime(DateTime dateTime) {
-    return DateTimeHelper.formatVietnamDateTime(dateTime);
   }
 }

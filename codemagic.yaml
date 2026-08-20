@@ -15,12 +15,11 @@ workflows:
       app_store_connect: ChamCong
     max_build_duration: 60
     environment:
-      # Import group biến Codemagic (ADMIN_PWD, MAPTILER_KEY, …) vào job build
+      # Import group biến Codemagic (ADMIN_PWD, …) vào job build
       groups:
         - ChamCong
       flutter: stable
       xcode: latest
-      cocoapods: default
       ios_signing:
         provisioning_profiles:
           - chamcong_appstore_profile
@@ -32,11 +31,6 @@ workflows:
       - name: Install FlutterFire CLI (required by iOS build phase)
         script: |
           dart pub global activate flutterfire_cli
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ios
-          pod install
-          cd ..
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
       - name: Create export options (App Store)
@@ -69,8 +63,7 @@ workflows:
           export PATH="$PATH:$HOME/.pub-cache/bin"
           flutter build ipa --release --export-options-plist=/tmp/export_options.plist \
             --obfuscate --split-debug-info=build/symbols \
-            --dart-define=ADMIN_PWD=$ADMIN_PWD \
-            --dart-define=MAPTILER_KEY=$MAPTILER_KEY
+            --dart-define=ADMIN_PWD=$ADMIN_PWD
     artifacts:
       - build/ios/ipa/*.ipa
       - build/symbols/**

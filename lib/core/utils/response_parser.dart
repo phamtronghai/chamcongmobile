@@ -32,30 +32,6 @@ class ResponseParser {
     };
   }
 
-  /// Parse boolean response (for check registered, delete face, etc.)
-  static bool parseBooleanResponse(Response response) {
-    if (response.statusCode == 200) {
-      if (response.data is Map) {
-        final data = response.data as Map;
-        return data['registered'] == true ||
-            data['success'] == true ||
-            data['deleted'] == true;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  /// Parse list response (for attendance history)
-  static List<Map<String, dynamic>> parseListResponse(Response response) {
-    if (response.statusCode == 200 && response.data is List) {
-      return (response.data as List)
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    return [];
-  }
-
   /// Parse liveness response
   static Map<String, dynamic> parseLivenessResponse(Response response) {
     try {
@@ -114,21 +90,6 @@ class ResponseParser {
     } catch (e) {
       return null;
     }
-  }
-
-  /// Generic success response parser
-  static bool parseSuccessResponse(Response response) {
-    final statusCode = response.statusCode;
-    if (statusCode != null && statusCode >= 200 && statusCode < 300) {
-      if (response.data is Map) {
-        final data = response.data as Map;
-        return data['success'] == true ||
-            data['status'] == 'ok' ||
-            data['result'] == 'success';
-      }
-      return true;
-    }
-    return false;
   }
 
   /// Parse check registered response với error handling phức tạp

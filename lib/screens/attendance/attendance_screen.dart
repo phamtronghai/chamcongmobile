@@ -5,22 +5,19 @@ import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/screens/attendance/widgets/attendance_result_dialog.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/samcom_tab_bar.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/app_router.dart';
+import 'package:attendancebyface/core/service_locator.dart';
 import 'package:attendancebyface/core/services/report_service.dart';
-import 'package:attendancebyface/screens/attendance/pdf_viewer_screen.dart';
 import 'package:attendancebyface/core/widgets/base_screen.dart';
 import 'package:attendancebyface/screens/attendance/widgets/daily_info_section.dart';
-import 'package:attendancebyface/screens/attendance/widgets/worklog_bottom_sheet.dart';
-import 'package:attendancebyface/screens/attendance/widgets/attendance_location_map.dart';
-import 'package:attendancebyface/screens/attendance/widgets/manual_attendance_dialog.dart';
+import 'package:attendancebyface/screens/attendance/widgets/worklog_form_sheet.dart';
 import 'package:attendancebyface/screens/attendance/widgets/attendance_action_buttons.dart';
-import 'package:attendancebyface/widgets/nav_bar_layout.dart';
-import 'package:intl/date_symbol_data_local.dart';
+import 'package:attendancebyface/screens/home/custom_navbar.dart';
 import 'package:attendancebyface/core/cubits/attendance_cubit.dart';
 import 'package:attendancebyface/core/cubits/attendance_state.dart';
-import 'package:attendancebyface/core/repositories/worklog_repository.dart';
-import 'package:attendancebyface/core/repositories/location_repository.dart';
 
 class AttendanceScreen extends BaseScreen {
   const AttendanceScreen({super.key});
@@ -54,15 +51,23 @@ class _AttendanceScreenContent extends StatefulWidget {
   _AttendanceScreenState createState() => _AttendanceScreenState();
 }
 
-class _AttendanceScreenState extends State<_AttendanceScreenContent> {
-  final ReportService _reportService = ReportService();
+class _AttendanceScreenState extends State<_AttendanceScreenContent>
+    with SingleTickerProviderStateMixin {
+  final ReportService _reportService = locator<ReportService>();
   bool _canViewQuanSoReport = false;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('vi_VN', null);
+    _tabController = TabController(length: 2, vsync: this);
     _loadQuanSoPermission();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadQuanSoPermission() async {
@@ -73,55 +78,20 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
     setState(() => _canViewQuanSoReport = canView);
   }
 
-  Future<void> _showAttendanceLocation(BuildContext context, dynamic attendance) async {
-    String message;
-    try {
-      if (attendance.lat != null && attendance.long != null) {
-        final locationRepository = LocationRepository();
-        await locationRepository.init();
-        final address = await locationRepository.getAddressFromLatLng(
-          attendance.lat!,
-          attendance.long!,
-        );
-        message = address ?? 'Không lấy được địa chỉ chấm công';
-      } else {
-        message = attendance.location.isNotEmpty
-            ? attendance.location
-            : 'Không có thông tin vị trí chấm công';
-      }
-    } catch (_) {
-      message = 'Lỗi khi lấy thông tin vị trí chấm công';
-    }
-
-    if (context.mounted) {
-      CustomSnackbar.show(
-        context: context,
-        message: message,
-        type: CustomSnackbarType.info,
-      );
-    }
-  }
-
-  void _openWorklogBottomSheet(BuildContext context) {
-    showModalBottomSheet<void>(
+  void _openWorklogForm(BuildContext context) {
+    WorklogFormSheet.show(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (BuildContext sheetContext) {
-        return WorklogBottomSheet(
-          user: widget.user,
-          worklogRepository: WorklogRepository(),
-          onSuccess: () async {
-            await context.read<AttendanceCubit>().loadDailyWorklogs(widget.user);
-          },
-        );
-      },
+      userId: widget.user.id,
+      selectedDate: context.read<AttendanceCubit>().state.selectedDate,
+      onSuccess: () =>
+          context.read<AttendanceCubit>().loadDailyWorklogs(widget.user),
     );
   }
 
-  void _showAttendanceResultDialog(BuildContext context, AttendanceState state) {
+  void _showAttendanceResultDialog(
+    BuildContext context,
+    AttendanceState state,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -143,21 +113,17 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
     );
   }
 
-  Future<void> _showManualAttendanceDialog(BuildContext context) async {
+  void _openAttendanceMap(BuildContext context, AttendanceState state) {
+    final lat = state.currentLat;
+    final lng = state.currentLng;
+    if (lat == null || lng == null) return;
+    AppRouter.goToAttendanceMap(context, lat: lat, lng: lng);
+  }
+
+  void _openManualAttendance(BuildContext context) {
     final cubit = context.read<AttendanceCubit>();
     if (cubit.state.isProcessing) return;
-
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => ManualAttendanceDialog(userId: widget.user.id),
-    );
-
-    if (result == null || result['times'] == null) return;
-
-    final List<String> times = result['times'] as List<String>;
-    if (times.isNotEmpty && context.mounted) {
-      await cubit.submitManualAttendance(times, widget.user);
-    }
+    AppRouter.goToManualAttendance(context, user: widget.user, cubit: cubit);
   }
 
   Future<void> _viewQuanSoReport(BuildContext context) async {
@@ -167,14 +133,10 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
 
     final filePath = await cubit.downloadQuanSoReport();
     if (filePath != null && context.mounted) {
-      Navigator.push(
+      AppRouter.goToPdfViewer(
         context,
-        MaterialPageRoute(
-          builder: (context) => PdfViewerScreen(
-            filePath: filePath,
-            title: 'Báo cáo quân số - $dateStr',
-          ),
-        ),
+        filePath: filePath,
+        title: 'Báo cáo quân số - $dateStr',
       );
     } else if (context.mounted) {
       CustomSnackbar.show(
@@ -190,15 +152,26 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
     return BlocConsumer<AttendanceCubit, AttendanceState>(
       listenWhen: (previous, current) =>
           previous.status != current.status &&
-          (current.status == AttendanceStatus.success || current.status == AttendanceStatus.failure),
+          (current.status == AttendanceStatus.success ||
+              current.status == AttendanceStatus.failure),
       listener: (context, state) {
         _showAttendanceResultDialog(context, state);
       },
+      buildWhen: (previous, current) =>
+          previous.isProcessing != current.isProcessing ||
+          previous.isLoadingReport != current.isLoadingReport ||
+          previous.isCheckingFace != current.isCheckingFace ||
+          previous.hasRegisteredFace != current.hasRegisteredFace ||
+          previous.selectedDate != current.selectedDate ||
+          previous.attendanceRecords != current.attendanceRecords ||
+          previous.isLoadingRecords != current.isLoadingRecords ||
+          previous.dailyWorklogs != current.dailyWorklogs ||
+          previous.isLoadingWorklogs != current.isLoadingWorklogs,
       builder: (context, state) {
         return Scaffold(
+          resizeToAvoidBottomInset: false,
           appBar: CustomAppBar(
             title: 'Chấm công',
-            automaticallyImplyLeading: false,
             onNotificationTap: () {
               AppRouter.goToNotification(context, widget.user);
             },
@@ -207,57 +180,181 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent> {
             isLoading: state.isProcessing || state.isLoadingReport,
             child: SafeArea(
               bottom: false,
-              child: Stack(
-                clipBehavior: Clip.none,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  BlocBuilder<AttendanceCubit, AttendanceState>(
+                    buildWhen: (previous, current) =>
+                        previous.currentLocation != current.currentLocation ||
+                        previous.currentLat != current.currentLat ||
+                        previous.currentLng != current.currentLng ||
+                        previous.selectedDate != current.selectedDate,
+                    builder: (context, gpsState) {
+                      return DailyInfoSection(
+                        user: widget.user,
+                        selectedDate: gpsState.selectedDate,
+                        onDateSelected: (date) => context
+                            .read<AttendanceCubit>()
+                            .changeSelectedDate(date, widget.user),
+                        locationLabel: gpsState.currentLocation,
+                        onMapTap:
+                            (gpsState.currentLat != null &&
+                                gpsState.currentLng != null)
+                            ? () => _openAttendanceMap(context, gpsState)
+                            : null,
+                      );
+                    },
+                  ),
                   Padding(
-                    padding: EdgeInsets.only(
-                      bottom: fabStackBottomFromScreenBottom(context) +
-                          kFabFilledPillHeight,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Center(
+                      child: SamcomTabBar(
+                        controller: _tabController,
+                        width: 312,
+                        tabWidth: 148,
+                        tabs: const [
+                          Tab(text: 'Chấm công'),
+                          Tab(text: 'Công việc'),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                  ),
+                  Expanded(
+                    child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        DailyInfoSection(
-                          user: widget.user,
-                          isLoadingRecords: state.isLoadingRecords,
-                          attendanceRecords: state.attendanceRecords,
-                          selectedDate: state.selectedDate,
-                          onRefresh: () async => context.read<AttendanceCubit>().loadAttendanceRecords(widget.user),
-                          onDateSelected: (date) => context.read<AttendanceCubit>().changeSelectedDate(date, widget.user),
-                          onShowLocation: (att) => _showAttendanceLocation(context, att),
-                          isLoadingWorklogs: state.isLoadingWorklogs,
-                          worklogs: state.dailyWorklogs,
-                          onAddWorklog: () => _openWorklogBottomSheet(context),
-                          showQuanSoReportChip: _canViewQuanSoReport,
-                          isLoadingQuanSoReport: state.isLoadingReport,
-                          onQuanSoReport: () => _viewQuanSoReport(context),
+                        TabBarView(
+                          controller: _tabController,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.paddingOf(context).bottom +
+                                    kFabFilledPillHeight +
+                                    (_canViewQuanSoReport
+                                        ? kFabFilledPillHeight + 12
+                                        : 0),
+                              ),
+                              child: AttendanceHistorySection(
+                                isLoadingRecords: state.isLoadingRecords,
+                                attendanceRecords: state.attendanceRecords,
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.paddingOf(context).bottom +
+                                    kFabFilledPillHeight,
+                              ),
+                              child: DailyWorklogsSection(
+                                isLoadingWorklogs: state.isLoadingWorklogs,
+                                worklogs: state.dailyWorklogs,
+                                userId: widget.user.id,
+                                selectedDate: state.selectedDate,
+                                onWorklogAdded: () => context
+                                    .read<AttendanceCubit>()
+                                    .loadDailyWorklogs(widget.user),
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: AttendanceLocationMap(
-                            lat: state.currentLat,
-                            lng: state.currentLng,
-                            locationLabel: state.currentLocation,
-                          ),
+                        ListenableBuilder(
+                          listenable: _tabController,
+                          builder: (context, _) {
+                            final tabIndex = _tabController.index;
+                            if (tabIndex == 0) {
+                              if (state.isCheckingFace) {
+                                return const SizedBox.shrink();
+                              }
+                              return Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: kNavBarHorizontalPadding,
+                                    bottom: MediaQuery.paddingOf(
+                                      context,
+                                    ).bottom,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      if (_canViewQuanSoReport) ...[
+                                        IntrinsicWidth(
+                                          child: CustomButton(
+                                            text: 'QUÂN SỐ',
+                                            tooltip: 'Báo cáo quân số',
+                                            icon: Icons.groups_outlined,
+                                            variant:
+                                                CustomButtonVariant.ctaButton,
+                                            isLoading: state.isLoadingReport,
+                                            onPressed: state.isLoadingReport
+                                                ? null
+                                                : () => _viewQuanSoReport(
+                                                    context,
+                                                  ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      AttendanceActionButtons(
+                                        hasRegisteredFace:
+                                            state.hasRegisteredFace,
+                                        isProcessing: state.isProcessing,
+                                        onTakeAttendance: () => context
+                                            .read<AttendanceCubit>()
+                                            .takePicture(context, widget.user),
+                                        onNavigateToRegisterFace: () =>
+                                            AppRouter.goToRegisterFace(
+                                              context,
+                                              widget.user,
+                                            ),
+                                        onManualAttendance:
+                                            (state.hasRegisteredFace &&
+                                                widget.user.departmentSlug ==
+                                                    'to-ncpt-khoa-hoc-cong-nghe')
+                                            ? () =>
+                                                  _openManualAttendance(context)
+                                            : null,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (tabIndex == 1 &&
+                                widget.user.departmentSlug ==
+                                    'to-ncpt-khoa-hoc-cong-nghe') {
+                              return Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: kNavBarHorizontalPadding,
+                                    bottom: MediaQuery.paddingOf(
+                                      context,
+                                    ).bottom,
+                                  ),
+                                  child: IntrinsicWidth(
+                                    child: CustomButton(
+                                      text: 'NHẬP CÔNG VIỆC',
+                                      tooltip: 'Nhập công việc',
+                                      icon: Icons.add,
+                                      variant: CustomButtonVariant.ctaButton,
+                                      onPressed: () =>
+                                          _openWorklogForm(context),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return const SizedBox.shrink();
+                          },
                         ),
                       ],
                     ),
                   ),
-                  if (!state.isCheckingFace)
-                    Positioned(
-                      right: kNavBarHorizontalPadding,
-                      bottom: fabStackBottomFromScreenBottom(context),
-                      child: AttendanceActionButtons(
-                        hasRegisteredFace: state.hasRegisteredFace,
-                        isProcessing: state.isProcessing,
-                        onTakeAttendance: () => context.read<AttendanceCubit>().takePicture(context, widget.user),
-                        onNavigateToRegisterFace: () => AppRouter.goToRegisterFace(context, widget.user),
-                        onManualAttendance: (state.hasRegisteredFace &&
-                                widget.user.departmentSlug == 'to-ncpt-khoa-hoc-cong-nghe')
-                            ? () => _showManualAttendanceDialog(context)
-                            : null,
-                      ),
-                    ),
                 ],
               ),
             ),

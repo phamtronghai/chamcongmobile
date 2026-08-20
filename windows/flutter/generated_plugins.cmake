@@ -10,13 +10,13 @@ list(APPEND FLUTTER_PLUGIN_LIST
   local_auth_windows
   media_kit_libs_windows_video
   media_kit_video
-  sqlite3_flutter_libs
   syncfusion_pdfviewer_windows
   url_launcher_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   flutter_local_notifications_windows
+  jni
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

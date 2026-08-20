@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:attendancebyface/core/utils/debug_log.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:attendancebyface/core/services/auth_service.dart';
@@ -29,7 +29,7 @@ class UserCubit extends Cubit<UserState> {
     emit(const UserState.loading());
 
     try {
-      debugPrint('🔧 UserCubit: Bắt đầu load user data...');
+      debugLog('🔧 UserCubit: Bắt đầu load user data...');
 
       // 1. Lấy thông tin user cơ bản từ session
       final user = await _authService.getCurrentUser();
@@ -38,7 +38,7 @@ class UserCubit extends Cubit<UserState> {
         return;
       }
 
-      debugPrint('🔧 UserCubit: Đã lấy thông tin user cơ bản: ${user.name}');
+      debugLog('🔧 UserCubit: Đã lấy thông tin user cơ bản: ${user.name}');
 
       // 2. Kiểm tra đăng ký khuôn mặt và căn cước song song
       final results = await Future.wait([
@@ -52,7 +52,7 @@ class UserCubit extends Cubit<UserState> {
       final Map<String, dynamic>? citizenInfo =
           results[2] as Map<String, dynamic>?;
 
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Face registered: $isFaceRegistered, Citizen registered: $isCitizenRegistered',
       );
 
@@ -82,12 +82,12 @@ class UserCubit extends Cubit<UserState> {
       );
 
       emit(UserState.loaded(user: updatedUser));
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Đã load thành công user data với đầy đủ thông tin',
       );
       _debugLogUser(updatedUser);
     } catch (e) {
-      debugPrint('🔧 UserCubit: Lỗi khi load user data: $e');
+      debugLog('🔧 UserCubit: Lỗi khi load user data: $e');
       emit(UserState.error(message: 'Lỗi khi tải dữ liệu: ${e.toString()}'));
     }
   }
@@ -97,7 +97,7 @@ class UserCubit extends Cubit<UserState> {
     emit(const UserState.loading());
 
     try {
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Bắt đầu load user data từ UserModel có sẵn: ${user.name}',
       );
 
@@ -113,7 +113,7 @@ class UserCubit extends Cubit<UserState> {
       final Map<String, dynamic>? citizenInfo =
           results[2] as Map<String, dynamic>?;
 
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Face registered: $isFaceRegistered, Citizen registered: $isCitizenRegistered',
       );
 
@@ -143,12 +143,12 @@ class UserCubit extends Cubit<UserState> {
       );
 
       emit(UserState.loaded(user: updatedUser));
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Đã load thành công user data từ UserModel có sẵn',
       );
       _debugLogUser(updatedUser);
     } catch (e) {
-      debugPrint('🔧 UserCubit: Lỗi khi load user data từ UserModel: $e');
+      debugLog('🔧 UserCubit: Lỗi khi load user data từ UserModel: $e');
       emit(UserState.error(message: 'Lỗi khi tải dữ liệu: ${e.toString()}'));
     }
   }
@@ -156,14 +156,14 @@ class UserCubit extends Cubit<UserState> {
   /// Cập nhật thông tin user (khi có thay đổi)
   Future<void> updateUser(UserModel user) async {
     if (state is UserLoaded) {
-      debugPrint('🔧 UserCubit: Cập nhật thông tin user: ${user.name}');
+      debugLog('🔧 UserCubit: Cập nhật thông tin user: ${user.name}');
       emit(UserState.loaded(user: user));
     }
   }
 
   /// Refresh user data (load lại từ API)
   Future<void> refresh() async {
-    debugPrint('🔧 UserCubit: Refresh user data...');
+    debugLog('🔧 UserCubit: Refresh user data...');
     await loadUserData();
   }
 
@@ -175,7 +175,7 @@ class UserCubit extends Cubit<UserState> {
         isFaceRegistered: isRegistered,
       );
       emit(UserState.loaded(user: updatedUser));
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Đã cập nhật trạng thái đăng ký khuôn mặt: $isRegistered',
       );
     }
@@ -189,7 +189,7 @@ class UserCubit extends Cubit<UserState> {
         isCitizenRegistered: isRegistered,
       );
       emit(UserState.loaded(user: updatedUser));
-      debugPrint(
+      debugLog(
         '🔧 UserCubit: Đã cập nhật trạng thái đăng ký căn cước: $isRegistered',
       );
     }
@@ -197,7 +197,7 @@ class UserCubit extends Cubit<UserState> {
 
   /// Clear user data (khi logout)
   void clearUserData() {
-    debugPrint('🔧 UserCubit: Xóa dữ liệu user');
+    debugLog('🔧 UserCubit: Xóa dữ liệu user');
     emit(const UserState.initial());
   }
 
@@ -232,9 +232,9 @@ class UserCubit extends Cubit<UserState> {
 void _debugLogUser(UserModel u) {
   try {
     final map = u.toJson();
-    debugPrint('🔧 User snapshot: ${jsonEncode(map)}');
+    debugLog('🔧 User snapshot: ${jsonEncode(map)}');
   } catch (_) {
-    debugPrint(
+    debugLog(
       '🔧 User snapshot: id=${u.id}, name=${u.name}, email=${u.email}, role=${u.role}, department=${u.department}, position=${u.position}, image=${u.image}, isFaceRegistered=${u.isFaceRegistered}, isCitizenRegistered=${u.isCitizenRegistered}, citizenNumber=${u.citizenNumber}, oldIdNumber=${u.oldIdNumber}',
     );
   }

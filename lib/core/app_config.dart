@@ -1,5 +1,14 @@
 /// Cấu hình chung cho ứng dụng
 class AppConfig {
+  /// Biểu tượng ứng dụng SAMCOM (launcher, màn hình đăng nhập).
+  static const String logoApp = 'assets/icon/logoApp.jpg';
+
+  /// Logo đơn vị — snackbar, dialog, loading, footer.
+  static const String logoOrg = 'assets/images/logoToNCPTKHCN.png';
+
+  /// Kích thước logo mặc định (px).
+  static const double sizeLogoApp = 60;
+
   /// Mật khẩu admin
   static const String adminPassword = String.fromEnvironment(
     'ADMIN_PWD',
@@ -38,15 +47,14 @@ class AppConfig {
   /// Số ngày được phép chọn trước/sau ngày hiện tại cho nhập công việc
   static const int worklogDateRangeDays = 7;
 
-  /// Cấu hình cho API
-  static const Map<String, String> defaultHeaders = {
+  /// Base URL discovery danh sách đơn vị (GET /api/don_vi?app_slug=cham-cong)
+  static const String discoveryUnitsBaseUrl = 'https://baseurl.samcom.com.vn';
+
+  /// Headers mặc định cho ApiClient
+  static const Map<String, String> apiDefaultHeaders = {
     'Accept': '*/*',
     'Content-Type': 'application/json',
-    'Origin': 'https://auth.samcom.com.vn',
   };
-
-  /// Key lưu base URL được chọn (SharedPreferences)
-  static const String selectedBaseUrlKey = 'selected_api_base_url';
 
   /// Endpoint cho API auth
   static const String authEndpoint = '/api/auth';
@@ -54,22 +62,9 @@ class AppConfig {
   /// Endpoint cho API face
   static const String faceEndpoint = '/face';
 
-  /// Full URL cho discovery danh sách đơn vị (cố định)
-  static const String discoveryUnitsUrl =
-      'https://baseurl.samcom.com.vn/api/don_vi';
-
   /// URL cho MapLibre style SAMCOM
   static const String mapLibreStyleUrl =
       'https://basemap.samcom.com.vn/static/samcomstyle.json';
-  // MapTiler
-  static const String apiKeyMapTiler = String.fromEnvironment(
-    'MAPTILER_KEY',
-    defaultValue: '',
-  );
-  static const String mapTilerOSM =
-      'https://api.maptiler.com/maps/streets-v2/style.json?key=$apiKeyMapTiler';
-  static const String mapTilerSatellite =
-      'https://api.maptiler.com/maps/satellite/style.json?key=$apiKeyMapTiler';
 
   /// Cập nhật base URL hiện tại
   static void setBaseUrl(String newUrl) {

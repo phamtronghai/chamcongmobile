@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import 'package:attendancebyface/core/repositories/face_repository.dart';
-import 'package:attendancebyface/screens/camera_screen.dart';
+import 'package:attendancebyface/screens/camera/camera_screen.dart';
 import 'base_service.dart';
 
 /// Service để xử lý tất cả business logic liên quan đến face recognition

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 /// Widget tái sử dụng cho error state
 class AppErrorWidget extends StatelessWidget {
@@ -9,6 +10,7 @@ class AppErrorWidget extends StatelessWidget {
   final VoidCallback? onRetry;
   final IconData? icon;
   final String? title;
+  final String actionText;
 
   const AppErrorWidget({
     super.key,
@@ -16,21 +18,23 @@ class AppErrorWidget extends StatelessWidget {
     this.onRetry,
     this.icon,
     this.title,
+    this.actionText = 'Thử lại',
   });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon ?? Icons.error_outline, size: 64, color: Colors.red),
+          Icon(icon ?? Icons.error_outline, size: 64, color: ColorConstants.errorColor),
           const SizedBox(height: 16),
           Text(
-            title ?? 'Lỗi khi tải dữ liệu',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            (title ?? 'Lỗi khi tải dữ liệu').toUpperCase(),
+            style: TextConstants.appTextBold.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.red,
+              color: ColorConstants.errorColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -39,17 +43,16 @@ class AppErrorWidget extends StatelessWidget {
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.7),
+              style: TextConstants.appTextRegular.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),
           const SizedBox(height: 16),
           CustomButton(
-            text: 'Thử lại',
-            width: 140,
+            text: actionText,
+            icon: Icons.refresh,
+            width: 180,
             onPressed: onRetry ?? () => context.read<UserCubit>().refresh(),
           ),
         ],

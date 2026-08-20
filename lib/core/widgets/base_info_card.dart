@@ -6,6 +6,8 @@ class BaseInfoCard extends StatelessWidget {
   final String title;
   /// Hiển thị cùng hàng với [title] (bên phải, trước badge highlight).
   final Widget? titleTrailing;
+  /// Dòng trên [title] (ví dụ: thời gian + chip trạng thái).
+  final Widget? headerWidget;
   final Widget badge;
   final String? highlightText;
   final Color? highlightBackgroundColor;
@@ -13,6 +15,7 @@ class BaseInfoCard extends StatelessWidget {
   final Widget? subInfoWidget;
   final String? detailText;
   final int? detailMaxLines;
+  final int? titleMaxLines;
   final VoidCallback? onTap;
   final bool isActive;
   final EdgeInsetsGeometry? margin;
@@ -21,6 +24,7 @@ class BaseInfoCard extends StatelessWidget {
     super.key,
     required this.title,
     this.titleTrailing,
+    this.headerWidget,
     required this.badge,
     this.highlightText,
     this.highlightBackgroundColor,
@@ -28,6 +32,7 @@ class BaseInfoCard extends StatelessWidget {
     this.subInfoWidget,
     this.detailText,
     this.detailMaxLines,
+    this.titleMaxLines,
     this.onTap,
     this.isActive = false,
     this.margin,
@@ -35,15 +40,16 @@ class BaseInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Card(
       elevation: isActive ? 4 : 2,
-      shadowColor: isActive ? ColorConstants.primaryColor.withAlpha(80) : null,
-      color: isActive ? ColorConstants.primaryColor.withAlpha(15) : null,
+      shadowColor: isActive ? primary.withAlpha(80) : null,
+      color: isActive ? primary.withAlpha(15) : null,
       margin: margin ?? const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(36),
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
         side: isActive
-            ? BorderSide(color: ColorConstants.primaryColor, width: 1.5)
+            ? BorderSide(color: primary, width: 1.5)
             : BorderSide.none,
       ),
       clipBehavior: Clip.hardEdge,
@@ -57,8 +63,8 @@ class BaseInfoCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: ColorConstants.primaryColor.withAlpha(isActive ? 80 : 25),
-                  borderRadius: BorderRadius.circular(36),
+                  color: primary.withAlpha(isActive ? 80 : 25),
+                  borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
                 ),
                 child: Center(child: badge),
               ),
@@ -68,16 +74,20 @@ class BaseInfoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (headerWidget != null) ...[
+                      headerWidget!,
+                      const SizedBox(height: 4),
+                    ],
                     Row(
                       children: [
                         Expanded(
                           child: Text(
                             title,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            style: TextConstants.appTextRegular.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
                             overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
+                            maxLines: titleMaxLines ?? 2,
                           ),
                         ),
                         if (titleTrailing != null) ...[
@@ -93,15 +103,15 @@ class BaseInfoCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color:
                                   highlightBackgroundColor ??
-                                  Colors.amber.withAlpha(50),
-                              borderRadius: BorderRadius.circular(12),
+                                  ColorConstants.warningColor.withAlpha(50),
+                              borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
                             ),
                             child: Text(
                               highlightText!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: TextConstants.appTextRegular.copyWith(
                                     color:
                                         highlightTextColor ??
-                                        Colors.amber.shade900,
+                                        ColorConstants.warningColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -120,8 +130,11 @@ class BaseInfoCard extends StatelessWidget {
                             child: Text(
                               detailText!,
                               style: TextStyle(
-                                fontSize: TextConstants.caption,
-                                color: Colors.grey.shade500,
+                                fontSize: TextConstants.fontSizeApp,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.55),
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: detailMaxLines ?? 1,

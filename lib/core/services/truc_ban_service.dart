@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:attendancebyface/core/utils/debug_log.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
@@ -25,11 +25,11 @@ class TrucBanService {
       final roleStr = data['role'] as String? ?? 'BINH_THUONG';
       final nhomQuyen = NhomQuyen.fromValue(roleStr);
 
-      debugPrint('🔐 Role user: ${nhomQuyen.moTa} ($roleStr)');
+      debugLog('🔐 Role user: ${nhomQuyen.moTa} ($roleStr)');
 
       return PhanQuyen(nhomQuyen: nhomQuyen, moTaQuyen: nhomQuyen.moTa);
     } catch (e) {
-      debugPrint('❌ Lỗi lấy role: $e');
+      debugLog('❌ Lỗi lấy role: $e');
       // Fallback về quyền bình thường nếu API lỗi
       return PhanQuyen(
         nhomQuyen: NhomQuyen.binhThuong,
@@ -56,11 +56,11 @@ class TrucBanService {
           .map((item) => TrucBan.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      debugPrint('📋 Danh sách trực ban ($ngay): ${danhSach.length} người');
+      debugLog('📋 Danh sách trực ban ($ngay): ${danhSach.length} người');
 
       return danhSach;
     } catch (e) {
-      debugPrint('❌ Lỗi lấy danh sách trực ban: $e');
+      debugLog('❌ Lỗi lấy danh sách trực ban: $e');
       rethrow;
     }
   }
@@ -78,18 +78,18 @@ class TrucBanService {
 
       final data = response.data;
       if (data is! List || data.isEmpty) {
-        debugPrint('⚠️ API không có người trực chỉ huy');
+        debugLog('⚠️ API không có người trực chỉ huy');
         return null; // Không có chỉ huy trực cũng hợp lệ
       }
 
       final first = data.first;
       if (first is! Map<String, dynamic>) {
-        debugPrint('⚠️ API trực chỉ huy trả dữ liệu không hợp lệ');
+        debugLog('⚠️ API trực chỉ huy trả dữ liệu không hợp lệ');
         return null;
       }
       return TrucChiHuy.fromJson(first);
     } catch (e) {
-      debugPrint('❌ Lỗi lấy trực chỉ huy (bỏ qua): $e');
+      debugLog('❌ Lỗi lấy trực chỉ huy (bỏ qua): $e');
       return null; // Không throw để tránh lỗi cả màn hình danh sách
     }
   }
@@ -110,10 +110,10 @@ class TrucBanService {
         throw Exception('API trả về lỗi khi đăng ký khách');
       }
 
-      debugPrint('✅ Đăng ký khách thành công: ${responseData['data']}');
+      debugLog('✅ Đăng ký khách thành công: ${responseData['data']}');
       return true;
     } catch (e) {
-      debugPrint('❌ Lỗi đăng ký khách: $e');
+      debugLog('❌ Lỗi đăng ký khách: $e');
       rethrow;
     }
   }
@@ -139,10 +139,10 @@ class TrucBanService {
           .map((item) => Khach.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      debugPrint('📋 Lịch sử khách cá nhân ($ngay): ${danhSach.length} khách');
+      debugLog('📋 Lịch sử khách cá nhân ($ngay): ${danhSach.length} khách');
       return danhSach;
     } catch (e) {
-      debugPrint('❌ Lỗi lấy lịch sử khách: $e');
+      debugLog('❌ Lỗi lấy lịch sử khách: $e');
       rethrow;
     }
   }
@@ -167,10 +167,10 @@ class TrucBanService {
         throw Exception('API trả về lỗi khi đăng ký ra ngoài');
       }
 
-      debugPrint('✅ Đăng ký ra ngoài thành công: ${responseData['data']}');
+      debugLog('✅ Đăng ký ra ngoài thành công: ${responseData['data']}');
       return true;
     } catch (e) {
-      debugPrint('❌ Lỗi đăng ký ra ngoài: $e');
+      debugLog('❌ Lỗi đăng ký ra ngoài: $e');
       rethrow;
     }
   }
@@ -196,10 +196,10 @@ class TrucBanService {
           .map((item) => YeuCauRaNgoai.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      debugPrint('📋 Lịch sử ra ngoài ($ngay): ${danhSach.length} yêu cầu');
+      debugLog('📋 Lịch sử ra ngoài ($ngay): ${danhSach.length} yêu cầu');
       return danhSach;
     } catch (e) {
-      debugPrint('❌ Lỗi lấy lịch sử ra ngoài: $e');
+      debugLog('❌ Lỗi lấy lịch sử ra ngoài: $e');
       rethrow;
     }
   }
@@ -222,16 +222,16 @@ class TrucBanService {
             responseData['message'] as String? ??
             responseData['error'] as String? ??
             'Lỗi không xác định khi mở cửa';
-        debugPrint('❌ Mở cửa thất bại: $responseData');
+        debugLog('❌ Mở cửa thất bại: $responseData');
         throw Exception(errorMsg);
       }
 
       final data = responseData['data'] as Map<String, dynamic>?;
       final message = data?['message'] as String? ?? 'Mở cửa thành công';
-      debugPrint('🚪 Mở cửa: $message');
+      debugLog('🚪 Mở cửa: $message');
       return true;
     } catch (e) {
-      debugPrint('❌ Lỗi mở cửa: $e');
+      debugLog('❌ Lỗi mở cửa: $e');
       rethrow;
     }
   }
@@ -260,11 +260,11 @@ class TrucBanService {
           .map((item) => Khach.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      debugPrint('👥 Khách toàn đơn vị ($ngay): ${danhSach.length} khách');
+      debugLog('👥 Khách toàn đơn vị ($ngay): ${danhSach.length} khách');
 
       return danhSach;
     } catch (e) {
-      debugPrint('❌ Lỗi lấy danh sách khách toàn đơn vị: $e');
+      debugLog('❌ Lỗi lấy danh sách khách toàn đơn vị: $e');
       rethrow;
     }
   }
@@ -300,17 +300,17 @@ class TrucBanService {
           .map((item) => YeuCauRaNgoai.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      debugPrint(
+      debugLog(
         '📋 DS yêu cầu ra ngoài ($ngay, $trangThai): ${danhSach.length}',
       );
       for (final yc in danhSach) {
-        debugPrint(
+        debugLog(
           '  → [${yc.id}] ${yc.nhanVien?.hoTen ?? "?"} (userId: ${yc.nhanVien?.id ?? "N/A"}) | ${yc.trangThai.moTa} | Ra: ${yc.thoiGianRa} | Vào: ${yc.thoiGianVao} | Lý do: ${yc.lyDo}',
         );
       }
       return danhSach;
     } catch (e) {
-      debugPrint('❌ Lỗi lấy DS yêu cầu ra ngoài: $e');
+      debugLog('❌ Lỗi lấy DS yêu cầu ra ngoài: $e');
       rethrow;
     }
   }
@@ -334,12 +334,12 @@ class TrucBanService {
         throw Exception('API trả về lỗi khi duyệt yêu cầu ra ngoài');
       }
 
-      debugPrint(
+      debugLog(
         '✅ ${hanhDong == 'DUYET' ? 'Duyệt' : 'Từ chối'} yêu cầu $id thành công',
       );
       return true;
     } catch (e) {
-      debugPrint('❌ Lỗi duyệt yêu cầu ra ngoài: $e');
+      debugLog('❌ Lỗi duyệt yêu cầu ra ngoài: $e');
       rethrow;
     }
   }
@@ -360,9 +360,9 @@ class TrucBanService {
         '/send-notification',
         data: {'userId': userId, 'title': title, 'message': message},
       );
-      debugPrint('📨 Thông báo đã gửi đến: $userId');
+      debugLog('📨 Thông báo đã gửi đến: $userId');
     } catch (e) {
-      debugPrint('❌ Lỗi gửi thông báo (bỏ qua): $e');
+      debugLog('❌ Lỗi gửi thông báo (bỏ qua): $e');
       // Không throw để không ảnh hưởng flow chính
     }
   }

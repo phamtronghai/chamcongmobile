@@ -1,23 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 enum NotificationType { success, warning, error, info }
 
 extension NotificationTypeUi on NotificationType {
-  IconData get iconData {
-    return switch (this) {
-      NotificationType.success => Icons.check_circle_outline,
-      NotificationType.warning => Icons.warning_outlined,
-      NotificationType.error => Icons.error_outline,
-      NotificationType.info => Icons.info_outline,
-    };
-  }
-
   Color foregroundColor(ColorScheme colorScheme) {
     return switch (this) {
-      NotificationType.success => colorScheme.secondary,
-      NotificationType.warning => colorScheme.tertiary,
-      NotificationType.error => colorScheme.error,
-      NotificationType.info => colorScheme.primary,
+      NotificationType.success => ColorConstants.successColor,
+      NotificationType.warning => ColorConstants.warningColor,
+      NotificationType.error => ColorConstants.errorColor,
+      NotificationType.info => ColorConstants.infoColor,
     };
   }
 

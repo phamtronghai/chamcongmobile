@@ -90,6 +90,10 @@ class AppDatabase extends _$AppDatabase {
     return (delete(storedNotifications)..where((t) => t.id.equals(id))).go();
   }
 
+  Future<void> deleteAllNotifications() {
+    return delete(storedNotifications).go();
+  }
+
   /// Hai bản ghi cố định (1 chưa đọc, 1 đã đọc) để test giao diện. Ghi đè nếu đã tồn tại.
   static const String uiDemoUnreadId = '__ui_demo_unread__';
   static const String uiDemoReadId = '__ui_demo_read__';

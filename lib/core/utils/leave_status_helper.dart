@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/models/leave_request.dart';
+import 'package:attendancebyface/core/app_theme.dart';
+import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 
 /// Helper class để quản lý màu sắc và label của trạng thái đơn nghỉ phép
 class LeaveStatusHelper {
   /// Lấy màu sắc tương ứng với trạng thái
-  static Color getStatusColor(LeaveStatus status) {
+  static Color getStatusColor(LeaveStatus status, ColorScheme colorScheme) {
     switch (status) {
       case LeaveStatus.pending:
-        return Colors.orange;
+        return ColorConstants.warningColor;
       case LeaveStatus.departmentApproved:
-        return const Color(0xFF6B8E23); // primaryColor
+        return ColorConstants.infoColor;
       case LeaveStatus.approved:
-        return const Color(0xFF4CAF50); // successColor
+        return ColorConstants.successColor;
       case LeaveStatus.rejected:
-        return const Color(0xFFF44336); // errorColor
+        return ColorConstants.errorColor;
       case LeaveStatus.cancelled:
-        return Colors.grey;
+        return colorScheme.onSurface.withValues(alpha: 0.45);
     }
   }
 
@@ -49,5 +51,19 @@ class LeaveStatusHelper {
       case LeaveStatus.cancelled:
         return Icons.do_not_disturb_on_rounded;
     }
+  }
+
+  /// Chip trạng thái outlined — dùng chung tile / detail sheet.
+  static Widget buildStatusChip(BuildContext context, LeaveStatus status) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = getStatusColor(status, colorScheme);
+    return SamcomChip(
+      label: getStatusLabel(status),
+      variant: SamcomChipVariant.outlined,
+      color: color,
+      dense: true,
+      fontSize: 14,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    );
   }
 }

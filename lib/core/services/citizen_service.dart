@@ -1,5 +1,5 @@
 import 'package:attendancebyface/core/repositories/citizen_repository.dart';
-import 'package:attendancebyface/widgets/citizen_id_form_dialog.dart';
+import 'package:attendancebyface/models/citizen_id_data.dart';
 import 'base_service.dart';
 
 /// Service để xử lý business logic liên quan đến căn cước công dân

@@ -33,7 +33,7 @@ class LoggingInterceptor extends Interceptor {
       }
 
       if (options.headers.containsKey('Authorization')) {
-        debugPrint('🔐 Authorization: ${options.headers['Authorization']}');
+        debugPrint('🔐 Authorization: Bearer ***');
       }
     }
     super.onRequest(options, handler);

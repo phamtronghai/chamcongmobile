@@ -8,11 +8,10 @@ import 'package:attendancebyface/core/network/api_exception.dart';
 import 'package:attendancebyface/core/services/notification_service.dart';
 
 class AuthService {
-  final String baseUrl;
   final AuthRepository _authRepository = AuthRepository();
   final FaceRepository _faceRepository = FaceRepository();
 
-  AuthService({required this.baseUrl}) {
+  AuthService() {
     _authRepository.init();
     _faceRepository.init();
   }

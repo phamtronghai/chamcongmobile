@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 class ProfileUpdateDialog extends StatefulWidget {
   final String initialName;
@@ -42,14 +42,13 @@ class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
     final primaryColor = theme.colorScheme.primary;
 
     return Dialog(
-      backgroundColor: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
           boxShadow: [
             BoxShadow(
-              color: ColorConstants.shadowColor,
+              color: ColorConstants.backgroundDark.withValues(alpha: 0.25),
               blurRadius: 20,
               offset: const Offset(0, 10),
               spreadRadius: 0,
@@ -90,26 +89,22 @@ class _ProfileUpdateDialogState extends State<ProfileUpdateDialog> {
                       Expanded(
                         child: CustomButton(
                           text: 'Cập nhật',
+                          icon: Icons.check,
                           onPressed: () {
                             Navigator.pop(context, {
                               'name': _nameController.text.trim(),
                               'phone': _phoneController.text.trim(),
                             });
                           },
-                          backgroundColor: primaryColor,
-                          textColor: Colors.white,
                         ),
                       ),
                       const SizedBox(width: 12),
                       CustomButton(
                         text: 'Hủy',
-                        variant: CustomButtonVariant.iconCircle,
+                        variant: CustomButtonVariant.iconButton,
                         icon: Icons.close,
-                        backgroundColor: primaryColor,
-                        textColor: primaryColor,
                         tooltip: 'Hủy',
                         width: 48,
-                        height: 48,
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],

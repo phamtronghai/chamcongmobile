@@ -1,8 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'package:attendancebyface/core/utils/debug_log.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/repositories/truc_ban_repository.dart';
 import 'package:attendancebyface/core/services/truc_ban_service.dart';
 import 'package:attendancebyface/core/services/approver_service.dart';
+import 'package:attendancebyface/core/service_locator.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
 import 'truc_ban_state.dart';
@@ -94,17 +95,17 @@ class TrucBanCubit extends Cubit<TrucBanState> {
 
   /// Lấy lịch sử khách cá nhân
   Future<void> layLichSuKhachCaNhan(DateTime ngay) async {
-    debugPrint('[TrucBan/Cubit] layLichSuKhachCaNhan START ngay=$ngay');
+    debugLog('[TrucBan/Cubit] layLichSuKhachCaNhan START ngay=$ngay');
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.dangKyKhach));
     try {
       final danhSach = await _repository.layLichSuKhachCaNhan(ngay);
-      debugPrint(
+      debugLog(
         '[TrucBan/Cubit] layLichSuKhachCaNhan OK → ${danhSach.length} khách',
       );
       emit(TrucBanState.danhSachKhachLoaded(danhSach: danhSach));
     } catch (e, st) {
-      debugPrint('[TrucBan/Cubit] layLichSuKhachCaNhan FAIL → emit Error: $e');
-      debugPrint('$st');
+      debugLog('[TrucBan/Cubit] layLichSuKhachCaNhan FAIL → emit Error: $e');
+      debugLog('$st');
       emit(TrucBanState.error(message: e.toString()));
     }
   }
@@ -131,7 +132,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     required String lyDo,
     String? tenNguoiDangKy,
   }) async {
-    debugPrint(
+    debugLog(
       '[TrucBan/Cubit] dangKyRaNgoai START '
       'ra=$thoiGianRa vao=$thoiGianVao lyDo=$lyDo',
     );
@@ -142,7 +143,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         thoiGianVao: thoiGianVao,
         lyDo: lyDo,
       );
-      debugPrint('[TrucBan/Cubit] dangKyRaNgoai API OK → emit Success');
+      debugLog('[TrucBan/Cubit] dangKyRaNgoai API OK → emit Success');
       emit(const TrucBanState.success(message: 'Đăng ký ra ngoài thành công'));
 
       // Gửi thông báo cho trưởng/phó phòng (không block UI)
@@ -153,7 +154,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         lyDo: lyDo,
       );
     } catch (e, st) {
-      debugPrint('[TrucBan/Cubit] dangKyRaNgoai FAIL: $e\n$st');
+      debugLog('[TrucBan/Cubit] dangKyRaNgoai FAIL: $e\n$st');
       emit(TrucBanState.error(message: e.toString()));
     }
   }
@@ -166,9 +167,9 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     required String lyDo,
   }) async {
     try {
-      final approverService = ApproverService();
+      final approverService = locator<ApproverService>();
       final managers = await approverService.getDepartmentManagers();
-      final service = TrucBanService();
+      final service = locator<TrucBanService>();
 
       final gioRa =
           '${thoiGianRa.hour.toString().padLeft(2, '0')}:${thoiGianRa.minute.toString().padLeft(2, '0')}';
@@ -185,23 +186,23 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         );
       }
     } catch (e) {
-      debugPrint('❌ Lỗi gửi thông báo đăng ký ra ngoài: $e');
+      debugLog('❌ Lỗi gửi thông báo đăng ký ra ngoài: $e');
     }
   }
 
   /// Lấy lịch sử ra ngoài cá nhân
   Future<void> layLichSuRaNgoaiCaNhan(DateTime ngay) async {
-    debugPrint('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan START ngay=$ngay');
+    debugLog('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan START ngay=$ngay');
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.raNgoaiCaNhan));
     try {
       final danhSach = await _repository.layLichSuRaNgoaiCaNhan(ngay);
-      debugPrint(
+      debugLog(
         '[TrucBan/Cubit] layLichSuRaNgoaiCaNhan OK → ${danhSach.length} yêu cầu',
       );
       emit(TrucBanState.danhSachRaNgoaiLoaded(danhSach: danhSach));
     } catch (e, st) {
-      debugPrint('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan FAIL → emit Error: $e');
-      debugPrint('$st');
+      debugLog('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan FAIL → emit Error: $e');
+      debugLog('$st');
       emit(TrucBanState.error(message: e.toString()));
     }
   }
@@ -233,7 +234,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       // Gửi thông báo cho NV
       final userId = yeuCau?.nhanVien?.id;
       if (userId != null && userId.isNotEmpty) {
-        TrucBanService().guiThongBao(
+        locator<TrucBanService>().guiThongBao(
           userId: userId,
           title: 'Yêu cầu ra ngoài',
           message: 'Yêu cầu ra ngoài của bạn đã được duyệt.',
@@ -254,7 +255,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       // Gửi thông báo cho NV
       final userId = yeuCau?.nhanVien?.id;
       if (userId != null && userId.isNotEmpty) {
-        TrucBanService().guiThongBao(
+        locator<TrucBanService>().guiThongBao(
           userId: userId,
           title: 'Yêu cầu ra ngoài',
           message: 'Yêu cầu ra ngoài của bạn đã bị từ chối.',

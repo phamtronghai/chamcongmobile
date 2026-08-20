@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 class AttendanceResultDialog extends StatelessWidget {
   final bool isSuccess;
@@ -21,11 +21,8 @@ class AttendanceResultDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final Color primaryColor = isSuccess
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.error;
-    final Color closeIconColor = isSuccess
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onError;
+        ? theme.colorScheme.primary
+        : ColorConstants.errorColor;
     final String title = isSuccess ? 'Thành công' : 'Thất bại';
     final IconData icon = isSuccess
         ? Icons.check_circle_rounded
@@ -35,86 +32,65 @@ class AttendanceResultDialog extends StatelessWidget {
         : (errorMessage ?? 'Vui lòng thử lại sau');
 
     return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: ColorConstants.shadowColor,
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header với gradient background
-            DialogHeader(
-              icon: icon,
-              title: title,
-              subtitle: subtitle,
-              primaryColor: primaryColor,
-            ),
-
-            // Content section
-            Container(
-              padding: const EdgeInsets.all(24),
-              child: isSuccess
-                  ? // Nếu thành công: chỉ hiển thị nút Đóng
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CustomButton(
-                          text: 'Đóng',
-                          variant: CustomButtonVariant.iconCircle,
-                          icon: Icons.close,
-                          backgroundColor: primaryColor,
-                          textColor: closeIconColor,
-                          tooltip: 'Đóng',
+      backgroundColor: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DialogHeader(
+            icon: icon,
+            title: title,
+            subtitle: subtitle,
+            primaryColor: primaryColor,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: isSuccess
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomButton(
+                        text: 'Đóng',
+                        variant: CustomButtonVariant.iconButton,
+                        icon: Icons.close,
+                        tooltip: 'Đóng',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          onClose?.call();
+                        },
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: 'Thử lại',
+                          icon: Icons.refresh,
                           onPressed: () {
                             Navigator.of(context).pop();
-                            onClose?.call();
+                            onSecondaryAction?.call();
                           },
                         ),
-                      ],
-                    )
-                  : // Nếu thất bại: hiển thị nút Thử lại và Đóng
-                    Row(
-                children: [
-                  Expanded(
-                    child: CustomButton(
-                            text: 'Thử lại',
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        onSecondaryAction?.call();
-                      },
-                      backgroundColor: primaryColor,
-                      textColor: Colors.white,
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+                      CustomButton(
+                        text: 'Đóng',
+                        variant: CustomButtonVariant.iconButton,
+                        icon: Icons.close,
+                        tooltip: 'Đóng',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          onClose?.call();
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  CustomButton(
-                    text: 'Đóng',
-                    variant: CustomButtonVariant.iconCircle,
-                    icon: Icons.close,
-                    backgroundColor: primaryColor,
-                    textColor: closeIconColor,
-                    tooltip: 'Đóng',
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      onClose?.call();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

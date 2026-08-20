@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:attendancebyface/gen/assets.gen.dart';
 
 class CustomFooter extends StatelessWidget {
   const CustomFooter({super.key});
@@ -12,48 +12,28 @@ class CustomFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        Assets.images.logoToNCPTKHCN.image(height: 60),
+        Image.asset(
+          AppConfig.logoOrg,
+          height: AppConfig.sizeLogoApp,
+          fit: BoxFit.contain,
+        ),
         const SizedBox(height: 16),
         Text.rich(
           TextSpan(
             children: [
               TextSpan(text: '© ${DateTime.now().year}. Bản quyền thuộc về '),
-
               TextSpan(
                 text: 'SAMCOM',
-                style: TextStyle(
-                  fontWeight: TextConstants.bold,
-                  color: ColorConstants.primaryColor,
+                style: TextConstants.appTextBold.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: TextConstants.appTextRegular.copyWith(
               color: Theme.of(
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: TextConstants.small,
-            ),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text.rich(
-          TextSpan(
-            children: [
-              const TextSpan(text: 'Phát triển bởi '),
-              TextSpan(
-                text: 'Tổ nghiên cứu Phát triển Khoa học Công nghệ.',
-                style: TextStyle(
-                  fontWeight: TextConstants.bold,
-                  color: ColorConstants.primaryColor,
-                ),
-              ),
-            ],
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: TextConstants.small,
+              fontSize: TextConstants.fontSizeApp,
             ),
           ),
           textAlign: TextAlign.center,

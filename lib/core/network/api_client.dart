@@ -34,7 +34,7 @@ class ApiClient {
         baseUrl: _currentBaseUrl,
         connectTimeout: Duration(seconds: AppConfig.requestTimeout),
         receiveTimeout: Duration(seconds: AppConfig.requestTimeout),
-        headers: AppConfig.defaultHeaders,
+        headers: AppConfig.apiDefaultHeaders,
       ),
     );
 

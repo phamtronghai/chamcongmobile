@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/widgets/date_picker_bottom_sheet.dart';
-import 'package:attendancebyface/core/widgets/samcom_chip.dart';
+import 'package:attendancebyface/core/widgets/custom_button.dart';
 
-/// Hiển thị một ngày hoặc khoảng ngày (định dạng `dd/MM/yyyy`), chạm mở bottom sheet picker.
+/// Hiển thị một ngày hoặc khoảng ngày, chạm mở bottom sheet picker.
+///
+/// Format range thông minh:
+/// - cùng tháng+năm → `01–05/08/2026`
+/// - cùng năm, khác tháng → `01/07–01/08/2026`
+/// - khác năm → `01/07/2025–01/08/2026`
 enum DatePickerFieldMode { single, range }
 
 class DatePickerField extends StatelessWidget {
@@ -22,11 +27,10 @@ class DatePickerField extends StatelessWidget {
     this.enabled = true,
     this.hintSingle,
     this.hintRange,
-    /// Chip nhỏ hơn — dùng trong hàng header cạnh chip khác.
     this.compact = false,
+    this.fitContent = true,
   })  : assert(
-          mode != DatePickerFieldMode.single ||
-              (onDateChanged != null),
+          mode != DatePickerFieldMode.single || (onDateChanged != null),
           'onDateChanged is required for single mode',
         ),
         assert(
@@ -47,23 +51,39 @@ class DatePickerField extends StatelessWidget {
   final bool enabled;
   final String? hintSingle;
   final String? hintRange;
+
+  /// Compact: nút nhỏ hơn — dùng trong header cạnh chip khác.
   final bool compact;
 
-  static final DateFormat _fmt = DateFormat('dd/MM/yyyy');
+  /// Nút chọn ngày co theo nội dung thay vì full width.
+  final bool fitContent;
 
-  String _displayText(BuildContext context) {
+  static final _dd = DateFormat('dd');
+  static final _ddMM = DateFormat('dd/MM');
+  static final _ddMMYYYY = DateFormat('dd/MM/yyyy');
+
+  /// Format range gọn theo quy tắc:
+  /// - cùng tháng & năm → `01–05/08/2026`
+  /// - cùng năm → `01/07–01/08/2026`
+  /// - khác năm → `01/07/2025–01/08/2026`
+  static String formatRange(DateTime start, DateTime end) {
+    if (start.year == end.year && start.month == end.month) {
+      return '${_dd.format(start)}–${_ddMMYYYY.format(end)}';
+    }
+    if (start.year == end.year) {
+      return '${_ddMM.format(start)}–${_ddMMYYYY.format(end)}';
+    }
+    return '${_ddMMYYYY.format(start)}–${_ddMMYYYY.format(end)}';
+  }
+
+  String _displayText() {
     switch (mode) {
       case DatePickerFieldMode.single:
-        if (selectedDate == null) {
-          return hintSingle ?? 'Chọn ngày';
-        }
-        return _fmt.format(selectedDate!);
+        if (selectedDate == null) return hintSingle ?? 'Chọn ngày';
+        return _ddMMYYYY.format(selectedDate!);
       case DatePickerFieldMode.range:
-        if (selectedRange == null) {
-          return hintRange ?? 'Chọn khoảng ngày';
-        }
-        final r = selectedRange!;
-        return '${_fmt.format(r.start)} – ${_fmt.format(r.end)}';
+        if (selectedRange == null) return hintRange ?? 'Chọn khoảng ngày';
+        return formatRange(selectedRange!.start, selectedRange!.end);
     }
   }
 
@@ -83,10 +103,7 @@ class DatePickerField extends StatelessWidget {
       case DatePickerFieldMode.range:
         final now = DateTime.now();
         final initial = selectedRange ??
-            DateTimeRange(
-              start: now,
-              end: now.add(const Duration(days: 1)),
-            );
+            DateTimeRange(start: now, end: now.add(const Duration(days: 1)));
         await AppDatePickerBottomSheet.showRange(
           context,
           initialRange: initial,
@@ -101,52 +118,42 @@ class DatePickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final text = _displayText(context);
+    final text = _displayText();
+    final icon = mode == DatePickerFieldMode.single
+        ? Icons.calendar_today_outlined
+        : Icons.date_range_outlined;
     final isPlaceholder = (mode == DatePickerFieldMode.single &&
             selectedDate == null) ||
         (mode == DatePickerFieldMode.range && selectedRange == null);
 
-    final SamcomChip chip = SamcomChip(
-      label: text,
-      leading: Icon(
-        mode == DatePickerFieldMode.single
-            ? Icons.calendar_today_outlined
-            : Icons.date_range_outlined,
-        size: compact ? 16 : 18,
-        color: enabled
-            ? colorScheme.primary
-            : colorScheme.onSurface.withValues(alpha: 0.38),
-      ),
+    Widget btn = CustomButton(
+      text: text,
+      icon: icon,
+      variant: CustomButtonVariant.normalButton,
       onPressed: enabled ? () => _openPicker(context) : null,
-      variant: SamcomChipVariant.outlined,
-      color: theme.dividerColor,
-      dense: compact,
-      padding: compact
-          ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-          : null,
     );
 
-    final Widget chipWidget =
-        isPlaceholder ? Opacity(opacity: 0.55, child: chip) : chip;
+    if (isPlaceholder) btn = Opacity(opacity: 0.55, child: btn);
 
-    final Widget field = Center(child: chipWidget);
+    if (fitContent) {
+      btn = Align(alignment: Alignment.center, child: btn);
+    }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment:
+          fitContent ? CrossAxisAlignment.center : CrossAxisAlignment.stretch,
       children: [
         if (label != null) ...[
           Text(
             label!,
             textAlign: TextAlign.center,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.8),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 6),
         ],
-        field,
+        btn,
       ],
     );
   }

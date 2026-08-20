@@ -9,11 +9,19 @@ import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:dio/dio.dart';
 import 'package:attendancebyface/core/utils/response_parser.dart';
 import 'package:attendancebyface/core/utils/device_id_helper.dart';
+import 'package:attendancebyface/core/service_locator.dart';
 import 'base_service.dart';
 
 class AttendanceService extends BaseService {
-  final FaceService _faceService = FaceService();
-  final LocationRepository _locationRepository = LocationRepository();
+  final FaceService _faceService;
+  final LocationRepository _locationRepository;
+
+  AttendanceService({
+    FaceService? faceService,
+    LocationRepository? locationRepository,
+  }) : _faceService = faceService ?? locator<FaceService>(),
+       _locationRepository =
+           locationRepository ?? locator<LocationRepository>();
 
   // Không sử dụng cache GPS để đảm bảo bảo mật chấm công
 

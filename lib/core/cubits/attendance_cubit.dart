@@ -13,14 +13,30 @@ import 'package:attendancebyface/models/worklog_model.dart';
 import 'package:attendancebyface/core/service_locator.dart';
 
 class AttendanceCubit extends Cubit<AttendanceState> {
-  final AttendanceService _attendanceService = locator<AttendanceService>();
-  final DateTimeRepository _dateTimeRepository = DateTimeRepository();
-  final ReportService _reportService = locator<ReportService>();
-  final LocationRepository _locationRepository = LocationRepository();
-  final AttendanceRepository _attendanceRepository = AttendanceRepository();
-  final WorklogRepository _worklogRepository = WorklogRepository();
+  final AttendanceService _attendanceService;
+  final DateTimeRepository _dateTimeRepository;
+  final ReportService _reportService;
+  final LocationRepository _locationRepository;
+  final AttendanceRepository _attendanceRepository;
+  final WorklogRepository _worklogRepository;
 
-  AttendanceCubit() : super(AttendanceState());
+  AttendanceCubit({
+    AttendanceService? attendanceService,
+    DateTimeRepository? dateTimeRepository,
+    ReportService? reportService,
+    LocationRepository? locationRepository,
+    AttendanceRepository? attendanceRepository,
+    WorklogRepository? worklogRepository,
+  }) : _attendanceService = attendanceService ?? locator<AttendanceService>(),
+       _dateTimeRepository =
+           dateTimeRepository ?? locator<DateTimeRepository>(),
+       _reportService = reportService ?? locator<ReportService>(),
+       _locationRepository =
+           locationRepository ?? locator<LocationRepository>(),
+       _attendanceRepository =
+           attendanceRepository ?? locator<AttendanceRepository>(),
+       _worklogRepository = worklogRepository ?? locator<WorklogRepository>(),
+       super(AttendanceState(selectedDate: DateTime.now()));
 
   Future<void> init(BuildContext context, UserModel user, bool isFaceRegistered) async {
     emit(state.copyWith(
@@ -42,11 +58,6 @@ class AttendanceCubit extends Cubit<AttendanceState> {
         emit(state.copyWith(serverTime: server));
       }
     } catch (_) {}
-  }
-
-  Future<void> refreshServerTime() async {
-    final server = await _dateTimeRepository.getServerTime();
-    emit(state.copyWith(serverTime: server ?? DateTime.now()));
   }
 
   Future<void> getCurrentLocation(BuildContext context) async {

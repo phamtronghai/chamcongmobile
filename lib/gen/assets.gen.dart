@@ -28,15 +28,15 @@ class $AssetsIconGen {
   AssetGenImage get logoAppChamCong =>
       const AssetGenImage('assets/icon/Logo-AppChamCong.png');
 
-  /// File path: assets/icon/logoCu.png
-  AssetGenImage get logoCu => const AssetGenImage('assets/icon/logoCu.png');
+  /// File path: assets/icon/logoApp.jpg
+  AssetGenImage get logoApp => const AssetGenImage('assets/icon/logoApp.jpg');
 
   /// List of all assets
   List<dynamic> get values => [
     faceID,
     logoAppChamCongBoTron,
     logoAppChamCong,
-    logoCu,
+    logoApp,
   ];
 }
 
@@ -59,9 +59,7 @@ class $AssetsImagesGen {
   List<AssetGenImage> get values => [logoSamCom, logoToNCPTKHCN, vienLogoTo];
 }
 
-class Assets {
-  const Assets._();
-
+abstract final class Assets {
   static const $AssetsIconGen icon = $AssetsIconGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
 }

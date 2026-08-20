@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/app_config.dart';
+import 'package:attendancebyface/core/storage/storage_keys.dart';
 
 class OrganizationUnit {
   final String name; // don_vi
@@ -33,39 +34,33 @@ class OrganizationService {
     return normalized;
   }
 
-  /// Chuẩn hóa URL để so sánh (chọn đơn vị = chọn base URL).
   static String normalizeBaseUrl(String url) => _normalizeBaseUrl(url);
 
-  /// Áp dụng base URL giống [selectUnit] nhưng không cần [OrganizationUnit]
-  /// (khi discovery không có đơn vị trùng URL mong muốn).
   static Future<void> applyBaseUrl(String url) async {
     final prefs = await SharedPreferences.getInstance();
     final normalized = _normalizeBaseUrl(url);
 
     AppConfig.setBaseUrl(normalized);
-
-    await prefs.setString(AppConfig.selectedBaseUrlKey, normalized);
+    await prefs.setString(StorageKeys.lastLoginBaseUrl, normalized);
 
     final client = ApiClient();
     await client.setBaseUrl(normalized);
   }
 
-  /// Lấy danh sách đơn vị từ discovery API
   static Future<List<OrganizationUnit>> fetchUnits({
     required String appSlug,
   }) async {
     try {
-      // Tạo một request tạm thời tới discovery URL (không ảnh hưởng client hiện tại)
       final tempDio = Dio(
         BaseOptions(
           connectTimeout: Duration(seconds: AppConfig.requestTimeout),
           receiveTimeout: Duration(seconds: AppConfig.requestTimeout),
-          headers: AppConfig.defaultHeaders,
+          headers: AppConfig.apiDefaultHeaders,
         ),
       );
 
       final res = await tempDio.get(
-        AppConfig.discoveryUnitsUrl,
+        '${AppConfig.discoveryUnitsBaseUrl}/api/don_vi',
         queryParameters: {'app_slug': appSlug},
       );
 
@@ -73,7 +68,7 @@ class OrganizationService {
       return data.map((e) {
         final unit = OrganizationUnit.fromJson(e as Map<String, dynamic>);
         return OrganizationUnit(
-          name: unit.name,
+          name: unit.name.trim(),
           slug: unit.slug,
           url: _normalizeBaseUrl(unit.url),
         );
@@ -83,24 +78,43 @@ class OrganizationService {
     }
   }
 
-  /// Lưu base url được chọn và cập nhật ApiClient
   static Future<void> selectUnit(OrganizationUnit unit) async {
     await applyBaseUrl(unit.url);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(StorageKeys.lastLoginUnitSlug, unit.slug);
+    await prefs.setString(StorageKeys.lastLoginUnitName, unit.name);
   }
 
-  /// Đọc base url đã chọn và áp dụng cho ApiClient (gọi sớm khi app khởi động)
   static Future<void> applySavedBaseUrlIfAny() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(AppConfig.selectedBaseUrlKey);
+    final saved = prefs.getString(StorageKeys.lastLoginBaseUrl);
     if (saved != null && saved.isNotEmpty) {
       final normalized = _normalizeBaseUrl(saved);
-
-      // Cập nhật AppConfig trước
       AppConfig.setBaseUrl(normalized);
-
-      // Cập nhật ApiClient
       final client = ApiClient();
       await client.setBaseUrl(normalized);
     }
+  }
+
+  static OrganizationUnit? findUnitByBaseUrl(
+    List<OrganizationUnit> units,
+    String baseUrl,
+  ) {
+    final target = normalizeBaseUrl(baseUrl);
+    for (final unit in units) {
+      if (normalizeBaseUrl(unit.url) == target) return unit;
+    }
+    return null;
+  }
+
+  static OrganizationUnit? findUnitBySlug(
+    List<OrganizationUnit> units,
+    String slug,
+  ) {
+    if (slug.isEmpty) return null;
+    for (final unit in units) {
+      if (unit.slug == slug) return unit;
+    }
+    return null;
   }
 }

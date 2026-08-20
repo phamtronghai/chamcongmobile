@@ -35,31 +35,6 @@ class FormDataHelper {
     });
   }
 
-  /// Tạo FormData cho face registration
-  static Future<FormData> createFaceRegistrationFormData({
-    required List<File> images,
-  }) async {
-    final formData = FormData();
-
-    // Thêm các file ảnh với cùng field name 'images' (như API mong đợi)
-    for (int i = 0; i < images.length; i++) {
-      formData.files.add(
-        MapEntry(
-          'images', // Field name phải là 'images' (số ít)
-          await MultipartFile.fromFile(
-            images[i].path,
-            filename: 'face_image_${i + 1}.png',
-            contentType: MediaType('image', 'png'),
-          ),
-        ),
-      );
-    }
-
-    return formData;
-  }
-
-  // Đã loại bỏ các hàm generic single/multiple file upload không còn sử dụng
-
   /// Tạo FormData cho face register với multiple files cùng field name
   static Future<FormData> createFaceRegisterFormData({
     required List<File> images,

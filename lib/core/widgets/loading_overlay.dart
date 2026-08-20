@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/gen/assets.gen.dart';
+import 'package:attendancebyface/core/app_config.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 class LoadingOverlay extends StatefulWidget {
   final bool isLoading;
@@ -19,73 +20,104 @@ class LoadingOverlay extends StatefulWidget {
 
 class _LoadingOverlayState extends State<LoadingOverlay>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _rotationAnimation;
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    _rotationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.linear),
-    );
+    if (widget.isLoading) _controller.repeat();
   }
 
   @override
   void didUpdateWidget(LoadingOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isLoading) {
-      _animationController.repeat();
+      _controller.repeat();
     } else {
-      _animationController.stop();
+      _controller.stop();
     }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double sizeLoadingIndicator = MediaQuery.of(context).size.width * 0.2;
-
     return Stack(
       children: [
         widget.child,
         if (widget.isLoading)
           Container(
-            color: Colors.black.withValues(alpha: 0.75),
+            color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.6),
             child: Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    width: sizeLoadingIndicator,
-                    height: sizeLoadingIndicator,
-                    child: AnimatedBuilder(
-                      animation: _rotationAnimation,
-                      builder: (context, child) {
-                        return Transform.rotate(
-                          angle: _rotationAnimation.value * 2 * 3.14159,
-                          child: Assets.icon.logoAppChamCongBoTron.image(
-                            width: sizeLoadingIndicator,
-                            height: sizeLoadingIndicator,
-                            fit: BoxFit.contain,
-                          ),
-                        );
-                      },
+                  _AnimatingRing(controller: _controller),
+                  if (widget.message != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      widget.message!,
+                      style: TextConstants.appTextRegular.copyWith(
+                        color: ColorConstants.backgroundLight,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
           ),
       ],
+    );
+  }
+}
+
+/// vienLogoTo.png xoay bên trên, logo cố định ở dưới — cùng kích thước.
+class _AnimatingRing extends StatelessWidget {
+  final AnimationController controller;
+  static const double _size = AppConfig.sizeLogoApp;
+  static const String _ring = 'assets/images/vienLogoTo.png';
+
+  const _AnimatingRing({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Logo cố định ở dưới
+          Image.asset(
+            AppConfig.logoOrg,
+            width: _size,
+            height: _size,
+            fit: BoxFit.contain,
+          ),
+          // Viền xoay ở trên
+          AnimatedBuilder(
+            animation: controller,
+            builder: (_, __) => Transform.rotate(
+              angle: controller.value * 2 * 3.14159,
+              child: Image.asset(
+                _ring,
+                width: _size,
+                height: _size,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

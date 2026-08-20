@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/dialog_header.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   final Function(
@@ -115,14 +115,13 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     final primaryColor = theme.colorScheme.primary;
 
     return Dialog(
-      backgroundColor: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
           boxShadow: [
             BoxShadow(
-              color: ColorConstants.shadowColor,
+              color: ColorConstants.backgroundDark.withValues(alpha: 0.25),
               blurRadius: 20,
               offset: const Offset(0, 10),
               spreadRadius: 0,
@@ -158,7 +157,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                       enabled: !_isLoading,
                     ),
                     const SizedBox(height: 16),
-
                     // Mật khẩu mới
                     CustomTextField(
                       controller: _newPasswordController,
@@ -176,9 +174,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     const SizedBox(height: 20),
                     CustomButton(
                       text: _isLoading ? 'Đang xử lý...' : 'Đổi mật khẩu',
+                      icon: Icons.lock_outline,
                       onPressed: _isLoading ? null : _onConfirm,
-                      backgroundColor: primaryColor,
-                      textColor: Colors.white,
                     ),
                   ],
                 ),

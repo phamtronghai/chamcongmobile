@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/app_theme.dart';
 
 class PdfViewerScreen extends StatefulWidget {
   final String filePath;
@@ -37,7 +38,6 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: widget.title,
-        automaticallyImplyLeading: true,
       ),
       body: _buildBody(),
       bottomNavigationBar: _buildBottomBar(),
@@ -86,22 +86,23 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(Icons.error_outline, size: 64, color: ColorConstants.errorColor),
             const SizedBox(height: 16),
             Text(
               'Không thể hiển thị PDF',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: TextConstants.appTextBold,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               _errorMessage,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: TextConstants.appTextRegular,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             CustomButton(
               text: 'Quay lại',
+              icon: Icons.arrow_back,
               width: 150,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -122,7 +123,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: ColorConstants.backgroundDark.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -136,18 +137,15 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             text: 'Trang trước',
             icon: Icons.chevron_left,
             tooltip: 'Trang trước',
-            variant: CustomButtonVariant.iconCircle,
+            variant: CustomButtonVariant.iconButton,
             width: 40,
-            height: 40,
             onPressed: _currentPage > 0 ? _goToPreviousPage : null,
           ),
 
           // Thông tin trang hiện tại
           Text(
             '${_currentPage + 1} / $_totalPages',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: TextConstants.appTextBold,
           ),
 
           // Nút trang sau
@@ -155,9 +153,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             text: 'Trang sau',
             icon: Icons.chevron_right,
             tooltip: 'Trang sau',
-            variant: CustomButtonVariant.iconCircle,
+            variant: CustomButtonVariant.iconButton,
             width: 40,
-            height: 40,
             onPressed: _currentPage < _totalPages - 1 ? _goToNextPage : null,
           ),
         ],

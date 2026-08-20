@@ -20,15 +20,18 @@ class CustomDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Color defaultFillColor = theme.colorScheme.surface;
+    final Color defaultFillColor =
+        theme.colorScheme.primary.withValues(alpha: 0.06);
     final Color defaultBorderColor = theme.colorScheme.primary.withValues(
       alpha: 0.6,
     );
 
-    return DropdownButtonFormField<T>(
+    return Material(
+      color: Colors.transparent,
+      child: DropdownButtonFormField<T>(
       initialValue: value,
       isExpanded: true,
-      dropdownColor: defaultFillColor,
+      dropdownColor: theme.colorScheme.surfaceContainerHighest,
       style: theme.textTheme.bodyLarge,
       icon: Icon(
         Icons.keyboard_arrow_down_rounded,
@@ -67,6 +70,7 @@ class CustomDropdown<T> extends StatelessWidget {
           borderSide: BorderSide(color: theme.colorScheme.primary, width: 2.0),
         ),
       ),
+    ),
     );
   }
 }

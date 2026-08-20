@@ -19,24 +19,9 @@ class SecureStorage {
     return await _secureStorage.read(key: key);
   }
 
-  /// Kiểm tra xem key có tồn tại không
-  static Future<bool> containsKey(String key) async {
-    return await _secureStorage.containsKey(key: key);
-  }
-
   /// Xóa giá trị theo key
   static Future<void> remove(String key) async {
     await _secureStorage.delete(key: key);
-  }
-
-  /// Xóa tất cả dữ liệu
-  static Future<void> clear() async {
-    await _secureStorage.deleteAll();
-  }
-
-  /// Lấy tất cả các key-value
-  static Future<Map<String, String>> getAll() async {
-    return await _secureStorage.readAll();
   }
 
   /// Lưu token đăng nhập
@@ -102,36 +87,6 @@ class SecureStorage {
     }
 
     await saveBiometricAccounts(accounts);
-  }
-
-  /// Xóa tài khoản theo ID
-  static Future<void> removeBiometricAccount(String accountId) async {
-    final accounts = await getBiometricAccounts();
-    accounts.removeWhere((account) => account.id == accountId);
-    await saveBiometricAccounts(accounts);
-  }
-
-  /// Lấy tài khoản được chọn gần nhất
-  static Future<BiometricAccount?> getLastSelectedAccount() async {
-    try {
-      final lastSelectedId = await getString(
-        StorageKeys.biometricLastSelectedAccountId,
-      );
-      if (lastSelectedId == null || lastSelectedId.isEmpty) {
-        return null;
-      }
-
-      final accounts = await getBiometricAccounts();
-      return accounts.firstWhere(
-        (account) => account.id == lastSelectedId,
-        orElse: () => accounts.isNotEmpty
-            ? accounts.first
-            : throw StateError('No accounts'),
-      );
-    } catch (e) {
-      final accounts = await getBiometricAccounts();
-      return accounts.isNotEmpty ? accounts.first : null;
-    }
   }
 
   /// Lưu ID tài khoản được chọn gần nhất

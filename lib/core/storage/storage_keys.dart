@@ -3,7 +3,24 @@ class StorageKeys {
   // Các key cho thông tin người dùng
   static const String authToken = 'auth_token';
 
-  // Các key cho sinh trắc học
+  // Phiên đăng nhập gần nhất (SharedPreferences — không lưu mật khẩu)
+  static const String lastLoginUsername = 'last_login_username';
+  static const String lastLoginBaseUrl = 'last_login_base_url';
+  static const String lastLoginUnitSlug = 'last_login_unit_slug';
+  static const String lastLoginUnitName = 'last_login_unit_name';
+
+  // Danh sách tài khoản đã lưu (metadata, không có password)
+  static const String savedLoginAccounts = 'saved_login_accounts';
+  static const String savedLoginLastAccountId = 'saved_login_last_account_id';
+
+  /// Mật khẩu theo account id — chỉ trong secure storage
+  static String loginPasswordKey(String accountId) =>
+      'login_password_$accountId';
+
+  /// Mật khẩu phiên gần nhất
+  static const String lastLoginPassword = 'last_login_password';
+
+  // Các key cho sinh trắc học (legacy migration)
   static const String biometricUsername = 'biometric_username';
   static const String biometricPassword = 'biometric_password';
   static const String biometricBaseUrl = 'biometric_base_url';

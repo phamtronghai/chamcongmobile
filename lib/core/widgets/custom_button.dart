@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-enum CustomButtonVariant { filled, tonal, outlined, text, iconCircle }
+enum CustomButtonVariant {
+  iconButton,
+  normalButton,
+  ctaButton,
+  textButton,
+}
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -10,236 +15,242 @@ class CustomButton extends StatelessWidget {
   final VoidCallback? onLongPress;
   final IconData? icon;
   final String? svgPath;
-  final Color? backgroundColor;
-  final Color? textColor;
   final CustomButtonVariant variant;
   final double? width;
-  final double? height;
   final String? tooltip;
   final bool isLoading;
-  final double? fontSize;
-  final EdgeInsetsGeometry? contentPadding;
-  final bool iconCircleShowShadow;
-
-  /// [true]: chiều ngang vừa icon + chữ (FAB pill); [false]: giữ hành vi cũ ([width] hoặc full ngang).
-  final bool shrinkWrapWidth;
 
   const CustomButton({
     super.key,
-    required this.text,
+    this.text = '',
     this.onPressed,
     this.onLongPress,
     this.icon,
     this.svgPath,
-    this.backgroundColor,
-    this.textColor,
-    this.variant = CustomButtonVariant.filled,
+    this.variant = CustomButtonVariant.ctaButton,
     this.width,
-    this.height,
     this.tooltip,
     this.isLoading = false,
-    this.fontSize,
-    this.contentPadding,
-    this.iconCircleShowShadow = true,
-    this.shrinkWrapWidth = false,
   });
+
+  bool get _enabled => onPressed != null && !isLoading;
 
   @override
   Widget build(BuildContext context) {
-    if (variant == CustomButtonVariant.iconCircle) {
-      return SizedBox(
-        width: width ?? 48,
-        height: height ?? 48,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: backgroundColor ?? Theme.of(context).colorScheme.surface,
-            shape: BoxShape.circle,
-            boxShadow: iconCircleShowShadow
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: IconButton(
-            icon: _buildIcon(
-              iconColor: textColor ?? Theme.of(context).colorScheme.onSurface,
-            ),
-            tooltip: tooltip ?? text,
-            onPressed: isLoading ? null : onPressed,
-            onLongPress: isLoading ? null : onLongPress,
-          ),
-        ),
-      );
-    }
-
-    final colorScheme = Theme.of(context).colorScheme;
-    final ButtonStyle style;
-    switch (variant) {
-      case CustomButtonVariant.filled:
-        style = ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? colorScheme.primary,
-          foregroundColor: textColor ?? colorScheme.onPrimary,
-          padding:
-              contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(100),
-          ),
-          minimumSize: Size(0, height ?? 56),
-          alignment: Alignment.center,
-        );
-        break;
-      case CustomButtonVariant.tonal:
-        style = FilledButton.styleFrom(
-          backgroundColor: backgroundColor ?? colorScheme.secondaryContainer,
-          foregroundColor: textColor ?? colorScheme.onSecondaryContainer,
-          padding:
-              contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(100),
-          ),
-          minimumSize: Size(0, height ?? 56),
-          alignment: Alignment.center,
-        );
-        break;
-      case CustomButtonVariant.outlined:
-        style = OutlinedButton.styleFrom(
-          foregroundColor: textColor ?? colorScheme.primary,
-          side: BorderSide(
-            color:
-                backgroundColor ?? colorScheme.outline.withValues(alpha: 0.6),
-          ),
-          padding:
-              contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(100),
-          ),
-          minimumSize: Size(0, height ?? 56),
-          alignment: Alignment.center,
-        );
-        break;
-      case CustomButtonVariant.text:
-        style = TextButton.styleFrom(
-          foregroundColor: textColor ?? colorScheme.primary,
-          padding:
-              contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(100),
-          ),
-          minimumSize: Size(0, height ?? 40),
-          alignment: Alignment.center,
-        );
-        break;
-      case CustomButtonVariant.iconCircle:
-        // handled early return
-        style = const ButtonStyle();
-        break;
-    }
-
-    final resolvedTextColor = switch (variant) {
-      CustomButtonVariant.filled => textColor ?? colorScheme.onPrimary,
-      CustomButtonVariant.tonal =>
-        textColor ?? colorScheme.onSecondaryContainer,
-      CustomButtonVariant.outlined => textColor ?? colorScheme.primary,
-      CustomButtonVariant.text => textColor ?? colorScheme.primary,
-      CustomButtonVariant.iconCircle => textColor ?? colorScheme.onSurface,
-    };
-
-    final label = _buildLabelContent(
-      resolvedTextColor,
-      intrinsicWidth: shrinkWrapWidth,
+    assert(
+      _isValidConfig(),
+      'CustomButton: invalid config for variant $variant',
     );
 
-    final material = switch (variant) {
-      CustomButtonVariant.filled => ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: label,
-        ),
-      CustomButtonVariant.tonal => FilledButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: label,
-        ),
-      CustomButtonVariant.outlined => OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: label,
-        ),
-      CustomButtonVariant.text => TextButton(
-          onPressed: isLoading ? null : onPressed,
-          onLongPress: isLoading ? null : onLongPress,
-          style: style,
-          child: label,
-        ),
-      CustomButtonVariant.iconCircle => const SizedBox.shrink(),
+    final colorScheme = Theme.of(context).colorScheme;
+    final primary = colorScheme.primary;
+
+    final child = switch (variant) {
+      CustomButtonVariant.iconButton => _buildIconButton(context, primary),
+      CustomButtonVariant.normalButton => _buildNormalButton(context, primary),
+      CustomButtonVariant.ctaButton => _buildCtaButton(context, primary),
+      CustomButtonVariant.textButton => _buildTextButton(context, primary),
     };
 
-    if (shrinkWrapWidth) {
-      return IntrinsicWidth(child: material);
-    }
+    final wrapped = Opacity(
+      opacity: _enabled ? 1 : 0.38,
+      child: child,
+    );
 
+    if (tooltip != null && tooltip!.isNotEmpty) {
+      return Tooltip(message: tooltip!, child: wrapped);
+    }
+    return wrapped;
+  }
+
+  bool _isValidConfig() {
+    final hasIcon = icon != null || svgPath != null;
+    return switch (variant) {
+      CustomButtonVariant.iconButton => hasIcon,
+      CustomButtonVariant.normalButton => text.isNotEmpty,
+      CustomButtonVariant.ctaButton => text.isNotEmpty,
+      CustomButtonVariant.textButton =>
+        text.isNotEmpty && icon == null && svgPath == null,
+    };
+  }
+
+  Widget _buildIconButton(BuildContext context, Color primary) {
+    final size = width ?? ButtonConstants.iconButtonSize;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? ColorConstants.backgroundDark : ColorConstants.backgroundLight;
     return SizedBox(
-      width: width ?? double.infinity,
-      height: height,
-      child: material,
+      width: size,
+      height: size,
+      child: Material(
+        color: bgColor,
+        shape: CircleBorder(
+          side: BorderSide(color: primary, width: 1.5),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _enabled ? onPressed : null,
+          onLongPress: _enabled ? onLongPress : null,
+          customBorder: const CircleBorder(),
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: ButtonConstants.iconSize,
+                    height: ButtonConstants.iconSize,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(primary),
+                    ),
+                  )
+                : _buildIcon(iconColor: primary),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildLabelContent(
-    Color resolvedTextColor, {
-    required bool intrinsicWidth,
-  }) {
-    final textStyle = TextStyle(
-      color: resolvedTextColor,
-      fontSize: fontSize ?? TextConstants.body,
-      fontWeight: FontWeight.bold,
-      height: 1.0,
+  Widget _buildNormalButton(BuildContext context, Color primary) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark
+        ? ColorConstants.backgroundDark
+        : ColorConstants.backgroundLight;
+    final content = _buildLabelRow(
+      foreground: primary,
+      iconFirst: true,
     );
+
+    final button = Material(
+      color: bgColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+        side: BorderSide(color: primary, width: 1.5),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _enabled ? onPressed : null,
+        onLongPress: _enabled ? onLongPress : null,
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+        splashColor: primary.withValues(alpha: isDark ? 0.16 : 0.12),
+        highlightColor: primary.withValues(alpha: isDark ? 0.08 : 0.06),
+        child: SizedBox(
+          height: ButtonConstants.heightButton,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Center(child: content),
+          ),
+        ),
+      ),
+    );
+
+    return IntrinsicWidth(child: button);
+  }
+
+  Widget _buildCtaButton(BuildContext context, Color primary) {
+    final foreground = ButtonConstants.ctaForegroundOn(primary);
+    final content = _buildLabelRow(
+      foreground: foreground,
+      iconFirst: true,
+    );
+
+    final button = Material(
+      color: primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _enabled ? onPressed : null,
+        onLongPress: _enabled ? onLongPress : null,
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+        child: SizedBox(
+          height: ButtonConstants.heightButton,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Center(child: content),
+          ),
+        ),
+      ),
+    );
+
+    if (width != null) {
+      return SizedBox(width: width, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildTextButton(BuildContext context, Color primary) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _enabled ? onPressed : null,
+        onLongPress: _enabled ? onLongPress : null,
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: isLoading
+              ? SizedBox(
+                  width: ButtonConstants.iconSize,
+                  height: ButtonConstants.iconSize,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(primary),
+                  ),
+                )
+              : Text(
+                  text,
+                  style: TextConstants.appTextRegular.copyWith(color: primary),
+                  textAlign: TextAlign.center,
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabelRow({
+    required Color foreground,
+    required bool iconFirst,
+  }) {
     final textWidget = Text(
       text,
-      style: textStyle,
+      style: TextConstants.appTextBold.copyWith(
+        color: foreground,
+        height: 1.0,
+      ),
       textAlign: TextAlign.center,
       overflow: TextOverflow.ellipsis,
+      maxLines: 1,
     );
+
+    Widget leading;
+    if (isLoading) {
+      leading = SizedBox(
+        width: ButtonConstants.iconSize,
+        height: ButtonConstants.iconSize,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(foreground),
+        ),
+      );
+    } else {
+      leading = _buildIcon(iconColor: foreground);
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (isLoading) ...[
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(resolvedTextColor),
-            ),
-          ),
+        if (iconFirst) ...[
+          leading,
           const SizedBox(width: 8),
-        ] else if (icon != null || svgPath != null) ...[
-          _buildIcon(iconColor: resolvedTextColor),
-          const SizedBox(width: 8),
-        ],
-        if (intrinsicWidth)
-          textWidget
-        else
           Flexible(child: textWidget),
+        ] else ...[
+          Flexible(child: textWidget),
+          const SizedBox(width: 8),
+          leading,
+        ],
       ],
     );
   }
 
-  /// Xây dựng icon với hỗ trợ cả SVG và IconData
   Widget _buildIcon({required Color iconColor}) {
     if (svgPath != null) {
       final pathLower = svgPath!.toLowerCase();
@@ -249,21 +260,18 @@ class CustomButton extends StatelessWidget {
           pathLower.endsWith('.webp')) {
         return Image.asset(
           svgPath!,
-          width: 20,
-          height: 20,
+          width: ButtonConstants.iconSize,
+          height: ButtonConstants.iconSize,
           fit: BoxFit.contain,
         );
       }
       return SvgPicture.asset(
         svgPath!,
-        width: 20,
-        height: 20,
+        width: ButtonConstants.iconSize,
+        height: ButtonConstants.iconSize,
         colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
-    } else if (icon != null) {
-      return Icon(icon, size: 20, color: iconColor);
-    } else {
-      return Icon(Icons.close, size: 20, color: iconColor);
     }
+    return Icon(icon, size: ButtonConstants.iconSize, color: iconColor);
   }
 }

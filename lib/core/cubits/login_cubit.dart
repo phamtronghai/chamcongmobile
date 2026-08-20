@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:attendancebyface/core/cubits/login_state.dart';
 import 'package:attendancebyface/core/services/auth_service.dart';
 import 'package:attendancebyface/core/services/notification_service.dart';
 import 'package:attendancebyface/core/services/organization_service.dart';
 import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/storage/storage_keys.dart';
+import 'package:attendancebyface/core/storage/login_account_storage.dart';
 import 'package:attendancebyface/core/storage/secure_storage.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/utils/biometric_helper.dart';
@@ -17,13 +17,8 @@ import 'package:attendancebyface/core/service_locator.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final AuthService _authService = locator<AuthService>();
-  final LocalAuthentication _localAuth = LocalAuthentication();
 
   LoginCubit() : super(const LoginState());
-
-  void toggleAlternativeLogin(bool show) {
-    emit(state.copyWith(showAlternativeLogin: show));
-  }
 
   void toggleRememberAccount(bool remember) {
     emit(state.copyWith(rememberAccount: remember));
@@ -33,28 +28,42 @@ class LoginCubit extends Cubit<LoginState> {
     emit(state.copyWith(errorMessage: null));
   }
 
-  void selectUnit(OrganizationUnit unit) {
+  Future<void> selectUnit(OrganizationUnit unit) async {
     emit(state.copyWith(selectedUnit: unit));
-    OrganizationService.selectUnit(unit);
+    await OrganizationService.selectUnit(unit);
   }
 
-  /// Khi chỉ đổi base URL (không có đơn vị khớp trong discovery), bỏ chọn dropdown.
-  void clearSelectedUnit() {
-    emit(state.copyWith(selectedUnit: null));
-  }
-
-  void selectBiometricAccount(BiometricAccount account) {
+  Future<void> selectSavedAccount(BiometricAccount account) async {
     emit(state.copyWith(selectedBiometricAccount: account));
-    SecureStorage.setLastSelectedAccountId(account.id);
+    await LoginAccountStorage.setLastSelectedAccountId(account.id);
+
+    if (account.baseUrl.isNotEmpty) {
+      AppConfig.setBaseUrl(account.baseUrl);
+      await ApiClient().setBaseUrl(account.baseUrl);
+    }
+
+    OrganizationUnit? unit;
+    if (state.units.isNotEmpty) {
+      unit = OrganizationService.findUnitByBaseUrl(state.units, account.baseUrl);
+    }
+    if (unit != null) {
+      emit(state.copyWith(selectedUnit: unit, selectedBiometricAccount: account));
+    }
+
+    // Không emit prefillPassword — password sẽ được lấy khi authenticateWithBiometric
+    emit(state.copyWith(
+      selectedBiometricAccount: account,
+      selectedUnit: unit ?? state.selectedUnit,
+      prefillUsername: account.username,
+    ));
   }
 
   Future<void> init(BuildContext context) async {
-    // Áp dụng base URL đã chọn trước đó
-    OrganizationService.applySavedBaseUrlIfAny();
-    
-    // Khởi tạo các tác vụ song song (hoặc tuần tự nếu cần an toàn)
+    await OrganizationService.applySavedBaseUrlIfAny();
     await SecureStorage.migrateOldBiometricData();
-    await _loadBiometricAccounts();
+    await LoginAccountStorage.migrateLegacyBiometricAccounts();
+    await _loadSavedAccounts();
+    await _restoreLastSession();
     await loadUnits();
     if (!context.mounted) return;
     await _checkAutoLogin();
@@ -63,42 +72,66 @@ class LoginCubit extends Cubit<LoginState> {
   Future<void> loadUnits() async {
     try {
       final units = await OrganizationService.fetchUnits(appSlug: 'cham-cong');
-      emit(state.copyWith(units: units, selectedUnit: null));
+      OrganizationUnit? selected;
+      if (state.prefillUnitSlug.isNotEmpty) {
+        selected = OrganizationService.findUnitBySlug(
+          units,
+          state.prefillUnitSlug,
+        );
+      }
+      selected ??= state.prefillBaseUrl.isNotEmpty
+          ? OrganizationService.findUnitByBaseUrl(units, state.prefillBaseUrl)
+          : null;
+      selected ??= state.selectedBiometricAccount != null
+          ? OrganizationService.findUnitByBaseUrl(
+              units,
+              state.selectedBiometricAccount!.baseUrl,
+            )
+          : null;
+      if (selected != null) {
+        await OrganizationService.selectUnit(selected);
+      }
+      emit(state.copyWith(units: units, selectedUnit: selected));
     } catch (e) {
       debugPrint('Không thể tải danh sách đơn vị: $e');
     }
   }
 
-  Future<void> _loadBiometricAccounts() async {
+  Future<void> _loadSavedAccounts() async {
     try {
-      final accounts = await SecureStorage.getBiometricAccounts();
-      final lastSelected = await SecureStorage.getLastSelectedAccount();
-
+      final accounts = await LoginAccountStorage.getSavedAccounts();
+      final lastSelected = await LoginAccountStorage.getLastSelectedAccount();
       emit(state.copyWith(
         biometricAccounts: accounts,
         selectedBiometricAccount: lastSelected,
       ));
     } catch (e) {
-      debugPrint('Lỗi khi load danh sách tài khoản sinh trắc học: $e');
+      debugPrint('Lỗi khi load danh sách tài khoản: $e');
     }
+  }
+
+  Future<void> _restoreLastSession() async {
+    final session = await LoginAccountStorage.loadLastSession();
+    if (session == null) return;
+
+    if (session.baseUrl.isNotEmpty) {
+      AppConfig.setBaseUrl(session.baseUrl);
+      await ApiClient().setBaseUrl(session.baseUrl);
+    }
+
+    emit(state.copyWith(
+      prefillUsername: session.username,
+      // Không điền mật khẩu vào form — user phải tự nhập
+      prefillBaseUrl: session.baseUrl,
+      prefillUnitSlug: session.unitSlug,
+    ));
   }
 
   Future<void> _checkAutoLogin() async {
     emit(state.copyWith(status: LoginStatus.loading));
 
     try {
-      // Lấy tài khoản được chọn gần nhất
-      final lastSelectedAccount = await SecureStorage.getLastSelectedAccount();
-
-      // Nếu có tài khoản được chọn, áp dụng base URL trước khi auto login
-      if (lastSelectedAccount != null && lastSelectedAccount.baseUrl.isNotEmpty) {
-        AppConfig.setBaseUrl(lastSelectedAccount.baseUrl);
-        final apiClient = ApiClient();
-        await apiClient.setBaseUrl(lastSelectedAccount.baseUrl);
-      }
-
       final user = await _authService.autoLogin();
-
       if (user != null) {
         emit(state.copyWith(
           status: LoginStatus.success,
@@ -119,23 +152,23 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final biometricType = await BiometricHelper.getPrimaryBiometricType();
       final supportsBiometric = biometricType != null;
-
       final prefs = await SharedPreferences.getInstance();
-      final biometricEnabled = prefs.getBool(StorageKeys.biometricEnabled) ?? false;
+      final biometricEnabled =
+          prefs.getBool(StorageKeys.biometricEnabled) ?? false;
 
       emit(state.copyWith(
-        biometricEnabled: biometricEnabled && supportsBiometric && state.biometricAccounts.isNotEmpty,
+        biometricEnabled:
+            biometricEnabled && supportsBiometric && state.biometricAccounts.isNotEmpty,
       ));
     } catch (e) {
       debugPrint('Lỗi khi kiểm tra hỗ trợ sinh trắc học: $e');
     }
   }
 
-  Future<void> deleteBiometricAccount(BiometricAccount account) async {
+  Future<void> deleteSavedAccount(BiometricAccount account) async {
     try {
-      await SecureStorage.removeBiometricAccount(account.id);
-      await _loadBiometricAccounts();
-
+      await LoginAccountStorage.removeAccount(account.id);
+      await _loadSavedAccounts();
       if (state.biometricAccounts.isEmpty) {
         emit(state.copyWith(biometricEnabled: false));
       }
@@ -153,6 +186,14 @@ class LoginCubit extends Cubit<LoginState> {
       return;
     }
 
+    if (state.selectedUnit == null && state.units.isNotEmpty) {
+      emit(state.copyWith(
+        status: LoginStatus.failure,
+        errorMessage: 'Vui lòng chọn đơn vị',
+      ));
+      return;
+    }
+
     emit(state.copyWith(status: LoginStatus.loading, errorMessage: null));
 
     try {
@@ -161,7 +202,7 @@ class LoginCubit extends Cubit<LoginState> {
     } catch (e) {
       emit(state.copyWith(
         status: LoginStatus.failure,
-        errorMessage: null, // ErrorInterceptor sẽ show lỗi từ server
+        errorMessage: null,
       ));
     }
   }
@@ -171,53 +212,97 @@ class LoginCubit extends Cubit<LoginState> {
 
     try {
       final selectedAccount = account ?? state.selectedBiometricAccount;
-
       if (selectedAccount == null) {
-        emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'Không tìm thấy tài khoản'));
-        return;
-      }
-
-      final biometricType = await BiometricHelper.getPrimaryBiometricType();
-      final displayName = biometricType != null
-          ? BiometricHelper.getBiometricInfo(biometricType)['name'] as String
-          : 'sinh trắc học';
-
-      final String authReason = 'Sử dụng $displayName để đăng nhập';
-      final bool didAuthenticate = await _localAuth.authenticate(localizedReason: authReason);
-
-      if (!didAuthenticate) {
-        emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'Lỗi sinh trắc học'));
+        emit(state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: 'Không tìm thấy tài khoản',
+        ));
         return;
       }
 
       if (selectedAccount.baseUrl.isNotEmpty) {
         AppConfig.setBaseUrl(selectedAccount.baseUrl);
-        final apiClient = ApiClient();
-        await apiClient.setBaseUrl(selectedAccount.baseUrl);
+        await ApiClient().setBaseUrl(selectedAccount.baseUrl);
       }
 
-      final user = await _authService.login(selectedAccount.username, selectedAccount.password);
+      final password =
+          await LoginAccountStorage.getPasswordForAccount(selectedAccount.id);
+      if (password == null || password.isEmpty) {
+        emit(state.copyWith(
+          status: LoginStatus.failure,
+          errorMessage: 'Không tìm thấy mật khẩu đã lưu',
+        ));
+        return;
+      }
 
-      final updatedAccount = selectedAccount.markAsUsed();
-      await SecureStorage.addBiometricAccount(updatedAccount);
-      await SecureStorage.setLastSelectedAccountId(updatedAccount.id);
-      await _loadBiometricAccounts();
+      final user = await _authService.login(
+        selectedAccount.username,
+        password,
+      );
 
-      emit(state.copyWith(status: LoginStatus.success, user: user, showSuccessMessage: false));
-    } catch (e) {
+      await _persistSession(
+        username: selectedAccount.username,
+        password: password,
+        user: user,
+        rememberInList: true,
+        existingAccount: selectedAccount.markAsUsed(),
+      );
+
       emit(state.copyWith(
-        status: LoginStatus.failure,
-        errorMessage: null, // Đã được xử lý bởi ErrorInterceptor
+        status: LoginStatus.success,
+        user: user,
+        showSuccessMessage: false,
       ));
+    } catch (e) {
+      emit(state.copyWith(status: LoginStatus.failure, errorMessage: null));
     }
   }
 
-  Future<void> _handleLoginSuccess(UserModel user, String username, String password) async {
+  Future<void> _handleLoginSuccess(
+    UserModel user,
+    String username,
+    String password,
+  ) async {
     try {
-      await NotificationService.instance.requestPermissionAndSyncToken(userId: user.id);
+      await NotificationService.instance.requestPermissionAndSyncToken(
+        userId: user.id,
+      );
     } catch (e) {
       debugPrint('Không thể đồng bộ FCM token sau đăng nhập: $e');
     }
+
+    await _persistSession(
+      username: username,
+      password: password,
+      user: user,
+      rememberInList: true,
+    );
+
+    emit(state.copyWith(
+      status: LoginStatus.success,
+      user: user,
+      showSuccessMessage: true,
+    ));
+  }
+
+  Future<void> _persistSession({
+    required String username,
+    required String password,
+    required UserModel user,
+    required bool rememberInList,
+    BiometricAccount? existingAccount,
+  }) async {
+    final baseUrl = state.selectedUnit?.url ?? AppConfig.apiBaseUrl;
+    final unitSlug = state.selectedUnit?.slug ?? '';
+    final unitName = state.selectedUnit?.name ?? '';
+
+    await LoginAccountStorage.saveLastSession(
+      username: username,
+      baseUrl: baseUrl,
+      unitSlug: unitSlug,
+      unitName: unitName,
+      password: password,
+    );
 
     try {
       final biometricType = await BiometricHelper.getPrimaryBiometricType();
@@ -225,30 +310,35 @@ class LoginCubit extends Cubit<LoginState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(StorageKeys.biometricEnabled, supportsBiometric);
 
-      if (state.rememberAccount) {
-        final baseUrl = state.selectedUnit?.url ?? AppConfig.defaultBaseUrl;
-        final organizationName = state.selectedUnit?.name ?? 'Đơn vị mặc định';
+      // Luôn lưu, chỉ giữ đúng 1 tài khoản — xóa hết tài khoản cũ trước
+      final newAccount = existingAccount?.copyWith(
+            name: user.name,
+            avatar: user.image,
+            organizationName: unitName,
+            baseUrl: baseUrl,
+            lastUsedAt: DateTime.now(),
+          ) ??
+          BiometricAccount(
+            id: BiometricAccount.generateId(),
+            username: username,
+            password: '',
+            name: user.name,
+            avatar: user.image,
+            baseUrl: baseUrl,
+            organizationName: unitName,
+            createdAt: DateTime.now(),
+            lastUsedAt: DateTime.now(),
+          );
 
-        final newAccount = BiometricAccount(
-          id: BiometricAccount.generateId(),
-          username: username,
-          password: password,
-          name: user.name,
-          avatar: user.image,
-          baseUrl: baseUrl,
-          organizationName: organizationName,
-          createdAt: DateTime.now(),
-          lastUsedAt: DateTime.now(),
-        );
-
-        await SecureStorage.addBiometricAccount(newAccount);
-        await SecureStorage.setLastSelectedAccountId(newAccount.id);
-        await _loadBiometricAccounts();
-      }
+      // Xóa tất cả tài khoản cũ rồi lưu lại đúng 1 tài khoản mới nhất
+      await LoginAccountStorage.clearAllAndSave(newAccount, password);
+      await _loadSavedAccounts();
     } catch (e) {
-      debugPrint('Không thể bật sinh trắc học tự động: $e');
+      debugPrint('Không thể lưu tài khoản: $e');
     }
+  }
 
-    emit(state.copyWith(status: LoginStatus.success, user: user, showSuccessMessage: true));
+  void clearPrefillNotifiers() {
+    emit(state.copyWith(clearPrefill: true));
   }
 }

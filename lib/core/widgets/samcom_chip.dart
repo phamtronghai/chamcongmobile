@@ -1,14 +1,11 @@
+import 'package:attendancebyface/core/app_theme.dart';
 import 'package:flutter/material.dart';
 
 enum SamcomChipVariant { filled, outlined }
 
 /// Chip dùng chung cho toàn bộ ứng dụng SAMCOM
 ///
-/// Quy ước:
-/// - Bo góc cố định: 20
-/// - Padding mặc định: horizontal 12, vertical 6
-/// - Font: bodyMedium, size 16, bold
-/// - Luôn 1 dòng, tràn thì ellipsis
+/// Quy ước: [TextConstants.appTextBold], bo góc 20, 1 dòng.
 class SamcomChip extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -18,6 +15,7 @@ class SamcomChip extends StatelessWidget {
   final Color? color;
   final bool dense;
   final EdgeInsetsGeometry? padding;
+  final double? fontSize;
 
   const SamcomChip({
     super.key,
@@ -29,6 +27,7 @@ class SamcomChip extends StatelessWidget {
     this.color,
     this.dense = false,
     this.padding,
+    this.fontSize,
   });
 
   @override
@@ -44,7 +43,7 @@ class SamcomChip extends StatelessWidget {
     if (variant == SamcomChipVariant.filled) {
       if (selected) {
         backgroundColor = baseColor;
-        textColor = Colors.white;
+        textColor = ButtonConstants.ctaForegroundOn(baseColor);
         borderColor = Colors.transparent;
       } else {
         backgroundColor = baseColor.withValues(alpha: 0.15);
@@ -52,15 +51,8 @@ class SamcomChip extends StatelessWidget {
         borderColor = Colors.transparent;
       }
     } else {
-      // outlined — nền tách khỏi scaffold, chữ tương phản (tránh ActionChip
-      // disabled dùng onSurface trùng nền trắng ở một số theme).
-      final bool lightBg = theme.brightness == Brightness.light;
-      backgroundColor = lightBg
-          ? const Color(0xFFF1F5F9)
-          : theme.colorScheme.surfaceContainerHighest;
-      textColor = lightBg
-          ? const Color(0xFF0F172A)
-          : theme.colorScheme.onSurface;
+      backgroundColor = baseColor.withValues(alpha: 0.08);
+      textColor = theme.colorScheme.onSurface;
       borderColor = baseColor;
     }
 
@@ -70,12 +62,9 @@ class SamcomChip extends StatelessWidget {
           vertical: dense ? 4 : 6,
         );
 
-    final TextStyle chipTextStyle = (theme.textTheme.bodyMedium ??
-            const TextStyle())
-        .copyWith(
+    final TextStyle chipTextStyle = TextConstants.appTextBold.copyWith(
       color: textColor,
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
+      fontSize: fontSize ?? TextConstants.fontSizeApp,
       height: 1.2,
       leadingDistribution: TextLeadingDistribution.even,
     );
@@ -102,7 +91,7 @@ class SamcomChip extends StatelessWidget {
     return Material(
       color: backgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
         side: BorderSide(
           color: borderColor,
           width: variant == SamcomChipVariant.outlined ? 1.5 : 0,
@@ -113,7 +102,7 @@ class SamcomChip extends StatelessWidget {
           ? Padding(padding: effectivePadding, child: labelRow)
           : InkWell(
               onTap: onPressed,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
               child: Padding(
                 padding: effectivePadding,
                 child: labelRow,
