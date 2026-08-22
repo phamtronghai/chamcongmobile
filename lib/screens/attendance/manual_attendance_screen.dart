@@ -5,8 +5,10 @@ import 'package:attendancebyface/core/cubits/attendance_cubit.dart';
 import 'package:attendancebyface/core/repositories/attendance_repository.dart';
 import 'package:attendancebyface/core/service_locator.dart';
 import 'package:attendancebyface/core/widgets/base_empty_state.dart';
+import 'package:attendancebyface/core/widgets/centered_day_slot_navigator.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
+import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
@@ -44,6 +46,8 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   final DateFormat _timeFmt = DateFormat('HH:mm');
   final Random _random = Random();
 
+  bool _isMultiDay = false;
+  DateTime _singleDate = _dateOnly(DateTime.now());
   late DateTimeRange _range;
   bool _isLoading = false;
   List<_DayGap> _gaps = [];
@@ -56,7 +60,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
       start: DateTime(today.year, today.month, 1),
       end: today,
     );
-    _loadRange();
+    _loadCurrentMode();
   }
 
   static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -175,6 +179,38 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
     return _DayGap(date: date, recorded: recorded, fills: fills);
   }
 
+  void _loadCurrentMode() {
+    if (_isMultiDay) {
+      _loadRange();
+    } else {
+      _loadSingleDay(_singleDate);
+    }
+  }
+
+  Future<void> _loadSingleDay(DateTime date) async {
+    setState(() => _isLoading = true);
+    try {
+      await _repository.init();
+      final d = _dateOnly(date);
+      final key = DateFormat('yyyy-MM-dd').format(d);
+      final records = await _repository.getAttendancesByDate(key);
+      final gap = _buildGap(d, records);
+
+      if (!mounted) return;
+      setState(() => _gaps = [gap]);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _gaps = []);
+      CustomSnackbar.show(
+        context: context,
+        message: 'Không tải được lịch sử chấm công',
+        type: CustomSnackbarType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _loadRange() async {
     setState(() => _isLoading = true);
     try {
@@ -213,6 +249,13 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  bool _sameTime(DateTime a, DateTime b) =>
+      a.year == b.year &&
+      a.month == b.month &&
+      a.day == b.day &&
+      a.hour == b.hour &&
+      a.minute == b.minute;
+
   void _rerandomizeFills() {
     setState(() {
       _gaps = _gaps
@@ -233,6 +276,21 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   void _removeDay(_DayGap gap) {
     setState(() {
       _gaps = _gaps.where((g) => !_sameDay(g.date, gap.date)).toList();
+    });
+  }
+
+  void _removeFill(_DayGap gap, DateTime fill) {
+    setState(() {
+      _gaps = _gaps
+          .map((g) {
+            if (!_sameDay(g.date, gap.date)) return g;
+            final fills = g.fills
+                .where((t) => !_sameTime(t, fill))
+                .toList();
+            return _DayGap(date: g.date, recorded: g.recorded, fills: fills);
+          })
+          .where((g) => _isMultiDay ? g.fills.isNotEmpty : true)
+          .toList();
     });
   }
 
@@ -270,22 +328,60 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (!_isLoading) _buildStatsLegend(theme),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: DatePickerField(
-                  mode: DatePickerFieldMode.range,
-                  selectedRange: _range,
-                  label: 'Khoảng ngày',
-                  dialogTitle: 'Chọn khoảng ngày',
-                  dialogSubtitle: 'Quét lịch sử chấm công trong khoảng đã chọn',
-                  maxDate: _dateOnly(DateTime.now()),
-                  onRangeChanged: (range) {
-                    setState(() => _range = range);
-                    _loadRange();
-                  },
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Center(
+                  child: CustomSegmentedButton<bool>(
+                    options: const [
+                      CustomSegmentOption(value: false, label: '1 ngày'),
+                      CustomSegmentOption(value: true, label: 'Nhiều ngày'),
+                    ],
+                    selected: {_isMultiDay},
+                    onSelectionChanged: (selected) {
+                      if (selected.isEmpty) return;
+                      final nextMode = selected.first;
+                      if (nextMode == _isMultiDay) return;
+                      setState(() {
+                        _isMultiDay = nextMode;
+                        if (!_isMultiDay) {
+                          _singleDate = _dateOnly(DateTime.now());
+                        }
+                      });
+                      _loadCurrentMode();
+                    },
+                  ),
                 ),
               ),
-              if (!_isLoading) _buildStatsLegend(theme),
+              const SizedBox(height: 8),
+              if (_isMultiDay)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: DatePickerField(
+                    mode: DatePickerFieldMode.range,
+                    selectedRange: _range,
+                    label: 'Khoảng ngày',
+                    dialogTitle: 'Chọn khoảng ngày',
+                    dialogSubtitle:
+                        'Quét lịch sử chấm công trong khoảng đã chọn',
+                    maxDate: _dateOnly(DateTime.now()),
+                    onRangeChanged: (range) {
+                      setState(() => _range = range);
+                      _loadRange();
+                    },
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: CenteredDaySlotNavigator(
+                    selectedDate: _singleDate,
+                    onDateSelected: (date) {
+                      setState(() => _singleDate = _dateOnly(date));
+                      _loadSingleDay(_singleDate);
+                    },
+                  ),
+                ),
               const SizedBox(height: 8),
               Expanded(child: _buildList(theme)),
               Padding(
@@ -321,10 +417,14 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   }
 
   Widget _buildStatsLegend(ThemeData theme) {
+    final missingLabel = _isMultiDay
+        ? 'Thiếu: ${_gaps.length} ngày'
+        : 'Thiếu: $_fillCount mốc';
+
     return ColoredBox(
       color: theme.scaffoldBackgroundColor,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
         child: SizedBox(
           width: double.infinity,
           child: Wrap(
@@ -334,7 +434,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               SamcomChip(
-                label: 'Thiếu: ${_gaps.length} ngày',
+                label: missingLabel,
                 dense: true,
                 variant: SamcomChipVariant.filled,
                 selected: true,
@@ -417,23 +517,25 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 24,
-                  child: Material(
-                    color: ColorConstants.errorColor,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: _isLoading ? null : () => _removeDay(gap),
-                      child: const Icon(
-                        Icons.remove,
-                        color: ColorConstants.backgroundLight,
-                        size: 18,
+                if (_isMultiDay) ...[
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 24,
+                    child: Material(
+                      color: ColorConstants.errorColor,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: _isLoading ? null : () => _removeDay(gap),
+                        child: const Icon(
+                          Icons.remove,
+                          color: ColorConstants.backgroundLight,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
             if (chips.isNotEmpty) ...[
@@ -451,6 +553,9 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
                           : SamcomChipVariant.filled,
                       selected: !item.$2,
                       color: theme.colorScheme.primary,
+                      onPressed: item.$2 && !_isLoading
+                          ? () => _removeFill(gap, item.$1)
+                          : null,
                     ),
                 ],
               ),

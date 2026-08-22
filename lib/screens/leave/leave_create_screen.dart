@@ -71,6 +71,16 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
     super.initState();
   }
 
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  DateTimeRange _defaultMultiDayRange() {
+    final today = _dateOnly(DateTime.now());
+    return DateTimeRange(
+      start: today.add(const Duration(days: 1)),
+      end: today.add(const Duration(days: 2)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
@@ -98,6 +108,7 @@ class _LeaveCreateScreenState extends State<_LeaveCreateScreenContent> {
                       _isMultiDay = nextMode;
                       if (_isMultiDay) {
                         _leaveType = LeaveType.fullDay;
+                        _range = _defaultMultiDayRange();
                       }
                     });
                   },

@@ -71,8 +71,9 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
 
   Future<void> _prepareTrialAndLogin() async {
     final cubit = context.read<LoginCubit>();
-    final target =
-        OrganizationService.normalizeBaseUrl(AppConfig.defaultBaseUrl);
+    final target = OrganizationService.normalizeBaseUrl(
+      AppConfig.defaultBaseUrl,
+    );
     OrganizationUnit? match;
     for (final u in cubit.state.units) {
       if (OrganizationService.normalizeBaseUrl(u.url) == target) {
@@ -100,8 +101,9 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
           child: Container(
             decoration: BoxDecoration(
               color: colorScheme.surface,
-              borderRadius:
-                  BorderRadius.circular(ColorConstants.defaultBorderRadius),
+              borderRadius: BorderRadius.circular(
+                ColorConstants.defaultBorderRadius,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: ColorConstants.backgroundDark.withValues(alpha: 0.25),
@@ -138,7 +140,8 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
   /// Xác thực sinh trắc học rồi đăng nhập bằng tài khoản đã lưu.
   Future<void> _loginWithSavedAccount(BiometricAccount account) async {
     try {
-      final canCheck = await _localAuth.canCheckBiometrics ||
+      final canCheck =
+          await _localAuth.canCheckBiometrics ||
           await _localAuth.isDeviceSupported();
       if (canCheck) {
         final ok = await _localAuth.authenticate(
@@ -198,9 +201,7 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
 
   Widget _avatarFallback(double size, BiometricAccount account) {
     final primary = Theme.of(context).colorScheme.primary;
-    final initial = (account.name.isNotEmpty
-            ? account.name
-            : account.username)
+    final initial = (account.name.isNotEmpty ? account.name : account.username)
         .characters
         .first
         .toUpperCase();
@@ -285,7 +286,7 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'SAMCOM - Ứng dụng chấm công',
+                            'Chấm công'.toUpperCase(),
                             style: TextConstants.appTextBold.copyWith(
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -351,14 +352,16 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: ColorConstants.errorColor
-                                    .withValues(alpha: 0.1),
+                                color: ColorConstants.errorColor.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(
                                   ColorConstants.defaultBorderRadius,
                                 ),
                                 border: Border.all(
-                                  color: ColorConstants.errorColor
-                                      .withValues(alpha: 0.3),
+                                  color: ColorConstants.errorColor.withValues(
+                                    alpha: 0.3,
+                                  ),
                                 ),
                               ),
                               child: Text(
@@ -410,8 +413,9 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                               Text(
                                 'Trải nghiệm ứng dụng? ',
                                 style: TextConstants.appTextRegular.copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                 ),
                               ),
                               CustomButton(
@@ -434,10 +438,7 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
-                      CustomFooter(),
-                      SizedBox(height: 8),
-                    ],
+                    children: const [CustomFooter(), SizedBox(height: 8)],
                   ),
                 ),
               ),

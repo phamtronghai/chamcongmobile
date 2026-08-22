@@ -15,9 +15,6 @@ workflows:
       app_store_connect: ChamCong
     max_build_duration: 60
     environment:
-      # Import group biến Codemagic (ADMIN_PWD, …) vào job build
-      groups:
-        - ChamCong
       flutter: stable
       xcode: latest
       ios_signing:
@@ -62,8 +59,7 @@ workflows:
         script: |
           export PATH="$PATH:$HOME/.pub-cache/bin"
           flutter build ipa --release --export-options-plist=/tmp/export_options.plist \
-            --obfuscate --split-debug-info=build/symbols \
-            --dart-define=ADMIN_PWD=$ADMIN_PWD
+            --obfuscate --split-debug-info=build/symbols
     artifacts:
       - build/ios/ipa/*.ipa
       - build/symbols/**

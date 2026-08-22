@@ -18,10 +18,7 @@ enum _QuickAction { oto, khac, camera }
 class DanhSachTrucBanTab extends StatefulWidget {
   final DateTime selectedDate;
 
-  const DanhSachTrucBanTab({
-    super.key,
-    required this.selectedDate,
-  });
+  const DanhSachTrucBanTab({super.key, required this.selectedDate});
 
   @override
   State<DanhSachTrucBanTab> createState() => _DanhSachTrucBanTabState();
@@ -58,7 +55,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 current is TrucBanStateError,
             builder: (context, state) {
               if (state is TrucBanStateLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const SizedBox.shrink();
               }
               if (state is TrucBanStateDanhSachTrucBanLoaded) {
                 if (state.danhSach.isEmpty) {
@@ -157,10 +154,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
               current.target == TrucBanLoadTarget.dsTrucBan),
       builder: (context, state) {
         if (state is TrucBanStateLoading) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const SizedBox.shrink();
         }
 
         if (state is TrucBanStateDanhSachTrucBanLoaded &&

@@ -4,6 +4,7 @@ import 'package:attendancebyface/core/cubits/user_state.dart';
 import 'package:attendancebyface/core/database/app_database.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/gradient_ring.dart';
+import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -17,6 +18,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   final String title;
+
+  /// Chỉ truyền từ 3 tab trong [CustomNavBar] (Nghỉ phép / Chấm công / Trực ban).
   final VoidCallback? onNotificationTap;
 
   /// Avatar trái (GradientAvatarRing) — dùng ở 3 tab chính; tap mở Thông tin cá nhân.
@@ -116,54 +119,61 @@ class _NotificationAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
 
-    Widget bellIconButton({required int count}) {
+    Widget bellWithCount({required int count}) {
+      final showBadge = count > 0;
       final label = count > 10 ? '10+' : '$count';
-      return Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          IconButton(
-            tooltip: 'Thông báo',
-            icon: Icon(Icons.notifications_outlined, color: primary),
-            onPressed: onTap,
-          ),
-          if (count > 0)
-            Positioned(
-              right: -4,
-              top: -6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: ColorConstants.errorColor,
-                  borderRadius: BorderRadius.circular(
-                    ColorConstants.defaultBorderRadius,
-                  ),
-                  border: Border.all(color: primary, width: 1),
-                ),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 16),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextConstants.appTextBold.copyWith(
-                    color: ButtonConstants.ctaForegroundOn(primary),
-                    height: 1.1,
-                  ),
-                ),
+
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                tooltip: 'Thông báo',
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                icon: Icon(Icons.notifications_outlined, color: primary),
+                onPressed: onTap,
               ),
-            ),
-        ],
+              if (showBadge)
+                Positioned(
+                  right: 2,
+                  top: 4,
+                  child: IgnorePointer(
+                    child: SamcomChip(
+                      label: label,
+                      variant: SamcomChipVariant.filled,
+                      selected: true,
+                      color: primary,
+                      dense: true,
+                      fitContentWidth: true,
+                      fontSize: 11,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       );
     }
 
     if (!GetIt.instance.isRegistered<AppDatabase>()) {
-      return bellIconButton(count: 0);
+      return bellWithCount(count: 0);
     }
 
     return StreamBuilder<int>(
       stream: GetIt.instance<AppDatabase>().watchUnreadNotificationCount(),
       builder: (context, snapshot) {
-        final count = snapshot.data ?? 0;
-        return bellIconButton(count: count);
+        return bellWithCount(count: snapshot.data ?? 0);
       },
     );
   }

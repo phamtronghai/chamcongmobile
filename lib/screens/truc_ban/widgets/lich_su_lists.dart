@@ -43,7 +43,9 @@ class LichSuRaNgoaiList extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color.withAlpha(25),
-                    borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+                    borderRadius: BorderRadius.circular(
+                      ColorConstants.defaultBorderRadius,
+                    ),
                   ),
                   child: Text(
                     yeuCau.trangThai.moTa,
@@ -59,12 +61,7 @@ class LichSuRaNgoaiList extends StatelessWidget {
           );
         }
         if (state is TrucBanStateLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
+          return const SizedBox.shrink();
         }
         return const BaseEmptyState();
       },
@@ -84,12 +81,7 @@ class LichSuKhachList extends StatelessWidget {
               current.target == TrucBanLoadTarget.dangKyKhach),
       builder: (context, state) {
         if (state is TrucBanStateLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-          );
+          return const SizedBox.shrink();
         }
         if (state is TrucBanStateDanhSachKhachLoaded) {
           if (state.danhSach.isEmpty) {

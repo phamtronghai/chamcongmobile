@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
@@ -6,6 +8,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
+import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 
@@ -19,15 +22,27 @@ class CameraRTSPScreen extends StatefulWidget {
 }
 
 class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
-  late final Player _player;
-  late final VideoController _videoController;
+  Player? _player;
+  VideoController? _videoController;
   bool _isPlayerInitialized = false;
   bool _isCameraLoading = true;
   String? _cameraError;
   int _selectedCameraIndex = 0;
   bool _isDisposed = false;
+  bool _forceSoftwareDecoding = false;
   final List<StreamSubscription<dynamic>> _cameraSubscriptions = [];
   static const int _cameraTimeout = 30;
+
+  VideoControllerConfiguration get _videoControllerConfiguration {
+    if (Platform.isAndroid) {
+      // hwdec để null → SDK tự chọn auto-safe hoặc no trên emulator.
+      return const VideoControllerConfiguration(
+        vo: 'gpu',
+        androidAttachSurfaceAfterVideoParameters: true,
+      );
+    }
+    return const VideoControllerConfiguration();
+  }
 
   @override
   void initState() {
@@ -43,43 +58,8 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   Future<void> _initializeCamera() async {
     try {
       MediaKit.ensureInitialized();
-      _player = Player();
-      _videoController = VideoController(_player);
-      _isPlayerInitialized = true;
-
-      await _configurePlayerForRTSP();
-
-      _cameraSubscriptions.add(
-        _player.stream.error.listen((error) {
-          if (mounted && !_isDisposed) {
-            setState(() {
-              _cameraError = 'Lỗi stream: $error';
-              _isCameraLoading = false;
-            });
-          }
-        }),
-      );
-
-      _cameraSubscriptions.add(
-        _player.stream.playing.listen((playing) {
-          if (mounted && !_isDisposed && playing) {
-            setState(() {
-              _isCameraLoading = false;
-              _cameraError = null;
-            });
-          }
-        }),
-      );
-
-      _cameraSubscriptions.add(
-        _player.stream.buffering.listen((buffering) {
-          if (mounted && !_isDisposed) {
-            setState(() {
-              _isCameraLoading = buffering;
-            });
-          }
-        }),
-      );
+      await _createPlayer();
+      _bindPlayerListeners();
 
       if (mounted) {
         await _openCameraStream();
@@ -95,25 +75,125 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
     }
   }
 
-  Future<void> _configurePlayerForRTSP() async {
-    if (_player.platform is NativePlayer) {
-      final nativePlayer = _player.platform as NativePlayer;
-      await nativePlayer.setProperty('hwdec', 'auto');
-      await nativePlayer.setProperty('profile', 'low-latency');
-      await nativePlayer.setProperty('untimed', 'yes');
-      await nativePlayer.setProperty('rtsp-transport', 'tcp');
-      await nativePlayer.setProperty('framedrop', 'vo');
-      await nativePlayer.setProperty('demuxer-max-bytes', '32M');
-      await nativePlayer.setProperty('demuxer-max-back-bytes', '0');
-      await nativePlayer.setProperty('network-timeout', '$_cameraTimeout');
+  void _bindPlayerListeners() {
+    final player = _player;
+    if (player == null) return;
+
+    _cameraSubscriptions.add(
+      player.stream.error.listen((error) {
+        if (mounted && !_isDisposed) {
+          final message = error.toString();
+          if (message.contains('Could not open codec')) {
+            _forceSoftwareDecoding = true;
+          }
+          setState(() {
+            _cameraError = 'Lỗi stream: $error';
+            _isCameraLoading = false;
+          });
+        }
+      }),
+    );
+
+    _cameraSubscriptions.add(
+      player.stream.playing.listen((playing) {
+        if (mounted && !_isDisposed && playing) {
+          setState(() {
+            _isCameraLoading = false;
+            _cameraError = null;
+          });
+        }
+      }),
+    );
+
+    _cameraSubscriptions.add(
+      player.stream.buffering.listen((buffering) {
+        if (mounted && !_isDisposed) {
+          setState(() {
+            _isCameraLoading = buffering;
+          });
+        }
+      }),
+    );
+  }
+
+  Future<void> _createPlayer() async {
+    _releasePlayer();
+
+    final player = Player();
+    final controller = VideoController(
+      player,
+      configuration: _videoControllerConfiguration,
+    );
+
+    await controller.platform.future;
+
+    if (!mounted || _isDisposed) {
+      player.dispose();
+      return;
+    }
+
+    setState(() {
+      _player = player;
+      _videoController = controller;
+      _isPlayerInitialized = true;
+    });
+
+    await WidgetsBinding.instance.endOfFrame;
+    await _configurePlayerForRTSP();
+  }
+
+  void _releasePlayer() {
+    final player = _player;
+    _player = null;
+    _videoController = null;
+    _isPlayerInitialized = false;
+
+    if (player != null) {
+      try {
+        player.dispose();
+      } catch (e) {
+        debugPrint('Lỗi khi dispose player: $e');
+      }
     }
   }
 
+  void _releaseAll() {
+    for (final sub in _cameraSubscriptions) {
+      sub.cancel();
+    }
+    _cameraSubscriptions.clear();
+    _releasePlayer();
+  }
+
+  Future<void> _applyDecodingPreference() async {
+    if (!_forceSoftwareDecoding || !Platform.isAndroid) return;
+    final player = _player;
+    if (player == null || player.platform is! NativePlayer) return;
+    final nativePlayer = player.platform as NativePlayer;
+    await nativePlayer.setProperty('hwdec', 'no');
+  }
+
+  Future<void> _configurePlayerForRTSP() async {
+    final player = _player;
+    if (player == null || player.platform is! NativePlayer) return;
+
+    final nativePlayer = player.platform as NativePlayer;
+    await _applyDecodingPreference();
+    await nativePlayer.setProperty('profile', 'low-latency');
+    await nativePlayer.setProperty('untimed', 'yes');
+    await nativePlayer.setProperty('rtsp-transport', 'tcp');
+    await nativePlayer.setProperty('framedrop', 'vo');
+    await nativePlayer.setProperty('demuxer-max-bytes', '32M');
+    await nativePlayer.setProperty('demuxer-max-back-bytes', '0');
+    await nativePlayer.setProperty('network-timeout', '$_cameraTimeout');
+  }
+
   Future<void> _openCameraStream() async {
-    if (!_isPlayerInitialized || _isDisposed) return;
+    final player = _player;
+    if (!_isPlayerInitialized || player == null || _isDisposed) return;
     try {
       final url = AppConfig.camerasRTSP[_selectedCameraIndex].url;
-      await _player.open(Media(url));
+      await player.open(Media(url));
     } catch (e) {
       if (mounted && !_isDisposed) {
         setState(() {
@@ -125,9 +205,10 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   }
 
   Future<void> _stopPlayer() async {
-    if (!_isPlayerInitialized) return;
+    final player = _player;
+    if (!_isPlayerInitialized || player == null) return;
     try {
-      await _player.stop();
+      await player.stop();
     } catch (e) {
       debugPrint('Lỗi khi dừng player: $e');
     }
@@ -142,17 +223,33 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
     });
     await _stopPlayer();
     if (!_isDisposed) {
+      await _applyDecodingPreference();
       await _openCameraStream();
     }
   }
 
   Future<void> _retryCamera() async {
-    if (!_isPlayerInitialized || _isDisposed) return;
+    if (_isDisposed) return;
+    if (_cameraError?.contains('Could not open codec') ?? false) {
+      _forceSoftwareDecoding = true;
+    }
     setState(() {
       _isCameraLoading = true;
       _cameraError = null;
     });
-    await _stopPlayer();
+
+    if (_forceSoftwareDecoding) {
+      for (final sub in _cameraSubscriptions) {
+        sub.cancel();
+      }
+      _cameraSubscriptions.clear();
+      await _createPlayer();
+      _bindPlayerListeners();
+    } else {
+      await _stopPlayer();
+      await _applyDecodingPreference();
+    }
+
     if (!_isDisposed) {
       await _openCameraStream();
     }
@@ -168,18 +265,7 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
       DeviceOrientation.portraitDown,
     ]);
 
-    for (final sub in _cameraSubscriptions) {
-      sub.cancel();
-    }
-    _cameraSubscriptions.clear();
-
-    if (_isPlayerInitialized) {
-      try {
-        _player.dispose();
-      } catch (e) {
-        debugPrint('Lỗi khi dispose player: $e');
-      }
-    }
+    _releaseAll();
     super.dispose();
   }
 
@@ -214,87 +300,83 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isConnecting =
+        !_isPlayerInitialized || (_isCameraLoading && _cameraError == null);
+    final controller = _videoController;
+
     return Scaffold(
       appBar: const CustomAppBar(title: 'Camera Giám Sát'),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Center(
-            child: _isPlayerInitialized
-                ? Video(controller: _videoController)
-                : const CircularProgressIndicator(),
-          ),
-          if (_isCameraLoading || _cameraError != null)
-            Container(
-              color: ColorConstants.backgroundDark.withValues(alpha: 0.87),
-              child: Center(
-                child: _isCameraLoading
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CircularProgressIndicator(
+      body: LoadingOverlay(
+        isLoading: isConnecting,
+        message: 'Đang kết nối camera...',
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Center(
+              child: controller != null
+                  ? Video(controller: controller)
+                  : const SizedBox.shrink(),
+            ),
+            if (_cameraError != null)
+              Container(
+                color: ColorConstants.backgroundDark.withValues(alpha: 0.87),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: ColorConstants.errorColor,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          _cameraError ?? 'Lỗi không xác định',
+                          style: TextConstants.appTextRegular.copyWith(
                             color: ColorConstants.backgroundLight,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Đang kết nối camera...',
-                            style: TextConstants.appTextRegular.copyWith(
-                              color: ColorConstants.backgroundLight,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: ColorConstants.errorColor,
-                            size: 48,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _cameraError ?? 'Lỗi không xác định',
-                            style: TextConstants.appTextRegular.copyWith(
-                              color: ColorConstants.backgroundLight,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          CustomButton(
-                            text: 'Thử lại',
-                            icon: Icons.refresh,
-                            onPressed: _retryCamera,
-                            width: 120,
-                          ),
-                        ],
+                          textAlign: TextAlign.center,
+                        ),
                       ),
+                      const SizedBox(height: 24),
+                      IntrinsicWidth(
+                        child: CustomButton(
+                          text: 'Thử lại',
+                          icon: Icons.refresh,
+                          onPressed: _retryCamera,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            Positioned(
+              top: 8,
+              left: 16,
+              right: 16,
+              child: SafeArea(
+                child: CustomSegmentedButton<int>(
+                  style: _overlaySegmentStyle(),
+                  options: [
+                    for (var i = 0; i < AppConfig.camerasRTSP.length; i++)
+                      CustomSegmentOption(
+                        value: i,
+                        label: AppConfig.camerasRTSP[i].label,
+                        icon: Icons.videocam,
+                      ),
+                  ],
+                  selected: {_selectedCameraIndex},
+                  onSelectionChanged: (selected) {
+                    if (selected.isEmpty) return;
+                    _switchCamera(selected.first);
+                  },
+                ),
               ),
             ),
-          Positioned(
-            top: 8,
-            left: 16,
-            right: 16,
-            child: SafeArea(
-              child: CustomSegmentedButton<int>(
-                style: _overlaySegmentStyle(),
-                options: [
-                  for (var i = 0; i < AppConfig.camerasRTSP.length; i++)
-                    CustomSegmentOption(
-                      value: i,
-                      label: AppConfig.camerasRTSP[i].label,
-                      icon: Icons.videocam,
-                    ),
-                ],
-                selected: {_selectedCameraIndex},
-                onSelectionChanged: (selected) {
-                  if (selected.isEmpty) return;
-                  _switchCamera(selected.first);
-                },
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

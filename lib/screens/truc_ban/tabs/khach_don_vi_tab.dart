@@ -40,7 +40,7 @@ class _KhachDonViTabState extends State<KhachDonViTab>
           current is TrucBanStateError,
       builder: (context, state) {
         if (state is TrucBanStateLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const SizedBox.shrink();
         }
         if (state is TrucBanStateDanhSachKhachLoaded) {
           if (state.danhSach.isEmpty) {

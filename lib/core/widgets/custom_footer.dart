@@ -33,7 +33,29 @@ class CustomFooter extends StatelessWidget {
               color: Theme.of(
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: TextConstants.fontSizeApp,
+              fontSize: 12,
+            ),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text.rich(
+          TextSpan(
+            children: [
+              const TextSpan(text: 'Phát triển bởi '),
+              TextSpan(
+                text: 'Tổ nghiên cứu phát triển khoa học công nghệ',
+                style: TextConstants.appTextBold.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+            style: TextConstants.appTextRegular.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 10,
             ),
           ),
           textAlign: TextAlign.center,

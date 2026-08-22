@@ -22,14 +22,15 @@ class CenteredDaySlotNavigator extends StatefulWidget {
 class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   static const int _slotLength = 5;
   static const int _centerIndex = 2; // ngày giữa cửa sổ xem (5 ô)
-  static const int _initialPage = 10000;
-  static const int _pageCount = _initialPage * 2 + 1;
+  /// Carousel 3 trang: trước / hiện tại / sau — recenter sau mỗi lần vuốt.
+  static const int _centerPage = 1;
+  static const int _pageCount = 3;
   /// 5 ô gần vuông → tỷ lệ hàng ≈ 5.
   static const double _dayRowAspectRatio = 5;
 
   PageController? _pageController;
-  /// Anchor (ngày giữa) tương ứng [_initialPage].
-  DateTime? _anchorAtInitialPage;
+  /// Ngày giữa cửa sổ 5 ô đang hiển thị ở trang [_centerPage].
+  DateTime? _viewAnchor;
   DateTime? _monthCursor;
   bool _ignorePageCallback = false;
 
@@ -48,13 +49,13 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   /// Hot reload không chạy lại [initState] — khởi tạo lười an toàn.
   void _ensureInitialized() {
     final d = _dateOnly(widget.selectedDate);
-    _anchorAtInitialPage ??= d;
+    _viewAnchor ??= d;
     _monthCursor ??= DateTime(d.year, d.month);
-    _pageController ??= PageController(initialPage: _initialPage);
+    _pageController ??= PageController(initialPage: _centerPage);
   }
 
-  DateTime get _safeAnchorBase =>
-      _anchorAtInitialPage ?? _dateOnly(widget.selectedDate);
+  DateTime get _safeViewAnchor =>
+      _viewAnchor ?? _dateOnly(widget.selectedDate);
 
   DateTime get _safeMonthCursor =>
       _monthCursor ??
@@ -67,31 +68,23 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
     final next = _dateOnly(widget.selectedDate);
     final prev = _dateOnly(oldWidget.selectedDate);
     if (next == prev) return;
-    if (_isSameDay(next, _currentAnchor())) return;
+    if (_isSameDay(next, _safeViewAnchor)) return;
     _jumpToDate(next);
-  }
-
-  DateTime _currentAnchor() {
-    final controller = _pageController;
-    final page = controller != null && controller.hasClients
-        ? (controller.page?.round() ?? _initialPage)
-        : _initialPage;
-    return _anchorForPage(page);
   }
 
   void _jumpToDate(DateTime date) {
     _ensureInitialized();
     final d = _dateOnly(date);
     setState(() {
-      _anchorAtInitialPage = d;
+      _viewAnchor = d;
       _monthCursor = DateTime(d.year, d.month);
     });
     final controller = _pageController;
     if (controller == null || !controller.hasClients) return;
     _ignorePageCallback = true;
-    controller.jumpToPage(_initialPage);
+    controller.jumpToPage(_centerPage);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ignorePageCallback = false;
+      if (mounted) _ignorePageCallback = false;
     });
   }
 
@@ -103,9 +96,8 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   bool _isSelectable(DateTime date) => true;
 
   DateTime _anchorForPage(int page) {
-    final deltaDays = (page - _initialPage) * _slotLength;
-    final anchor = _safeAnchorBase.add(Duration(days: deltaDays));
-    return _dateOnly(anchor);
+    final deltaDays = (page - _centerPage) * _slotLength;
+    return _dateOnly(_safeViewAnchor.add(Duration(days: deltaDays)));
   }
 
   List<DateTime> _daysForAnchor(DateTime anchor) {
@@ -116,14 +108,25 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   }
 
   void _onPageChanged(int page) {
-    if (_ignorePageCallback) return;
+    if (_ignorePageCallback || page == _centerPage) return;
     _ensureInitialized();
-    final raw = _safeAnchorBase.add(
-      Duration(days: (page - _initialPage) * _slotLength),
+
+    final deltaDays = page < _centerPage ? -_slotLength : _slotLength;
+    final anchor = _dateOnly(
+      _safeViewAnchor.add(Duration(days: deltaDays)),
     );
-    final anchor = _dateOnly(raw);
+
     setState(() {
+      _viewAnchor = anchor;
       _monthCursor = DateTime(anchor.year, anchor.month);
+    });
+
+    final controller = _pageController;
+    if (controller == null || !controller.hasClients) return;
+    _ignorePageCallback = true;
+    controller.jumpToPage(_centerPage);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _ignorePageCallback = false;
     });
   }
 

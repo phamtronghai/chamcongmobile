@@ -3,7 +3,7 @@ description: "Chấm công bằng khuôn mặt."
 
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 2.9.0+40
+version: 3.0.0+41
 
 environment:
   sdk: ^3.8.1
@@ -90,6 +90,10 @@ dev_dependencies:
 
 # media_kit trên git chưa publish native libs; lấy cùng commit để có SPM trên iOS.
 dependency_overrides:
+  # syncfusion_flutter_pdfviewer 34.x → xml ^7; flutter_native_splash 2.4.x → xml ^6 / meta ^1.18
+  # (Flutter 3.41 pins meta 1.17.0 via flutter_test). Override để pub get resolve được.
+  xml: ^7.0.1
+  meta: 1.17.0
   media_kit:
     git:
       url: https://github.com/media-kit/media-kit.git
@@ -183,24 +187,28 @@ flutter_gen:
     image: true
     flutter_svg: true
 
-# Biểu tượng ứng dụng: bản vuông (launcher iOS/Android)
+# Biểu tượng: Android dùng logoAppAndroid; iOS giữ logoApp.jpg
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/logoApp.jpg"
-  min_sdk_android: 21 # android min sdk min:16, default 21
-  remove_alpha_ios: true # Loại bỏ kênh alpha cho biểu tượng iOS
+  image_path_android: "assets/icon/logoAppAndroid.png"
+  adaptive_icon_background: "#79915A"
+  adaptive_icon_foreground: "assets/icon/logoAppAndroid.png"
+  adaptive_icon_foreground_inset: 0
+  min_sdk_android: 21
+  remove_alpha_ios: true
 
-# Splash: mascot SAMCOM; nền sáng/tối khớp theme app
+# Splash: logo SAMCOM trên canvas vuông (A12 có safe zone tròn)
 flutter_native_splash:
   color: "#F5F7F0"
   color_dark: "#121810"
-  image: assets/images/logoSamCom.png
-  image_dark: assets/images/logoSamCom.png
+  image: assets/images/logoSamCom_splash.png
+  image_dark: assets/images/logoSamCom_splash_dark.png
   android_12:
     color: "#F5F7F0"
     color_dark: "#121810"
-    image: assets/images/logoSamCom.png
-    image_dark: assets/images/logoSamCom.png
+    image: assets/images/logoSamCom_splash_a12.png
+    image_dark: assets/images/logoSamCom_splash_a12_dark.png
   ios: true
   android: true

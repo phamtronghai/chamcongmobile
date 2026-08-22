@@ -9,17 +9,11 @@ class AppConfig {
   /// Kích thước logo mặc định (px).
   static const double sizeLogoApp = 60;
 
-  /// Mật khẩu admin
-  static const String adminPassword = String.fromEnvironment(
-    'ADMIN_PWD',
-    defaultValue: '',
-  );
-
   /// Danh sách camera RTSP giám sát
   static const List<({String label, String url})> camerasRTSP = [
-    (label: 'Camera 1', url: 'rtsp://samcom.com.vn:554/cam04'),
-    (label: 'Camera 2', url: 'rtsp://samcom.com.vn:554/cam05'),
-    (label: 'Camera 3', url: 'rtsp://samcom.com.vn:554/cam06'),
+    (label: 'CAM 01', url: 'rtsp://samcom.com.vn:554/cam04'),
+    (label: 'CAM 02', url: 'rtsp://samcom.com.vn:554/cam05'),
+    (label: 'CAM 03', url: 'rtsp://samcom.com.vn:554/cam06'),
   ];
 
   /// Base URL mặc định cho API

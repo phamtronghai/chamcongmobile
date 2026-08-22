@@ -150,18 +150,17 @@ class _CameraScreenState extends State<CameraScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      backgroundColor: ColorConstants.backgroundDark,
       appBar: const CustomAppBar(title: 'Chụp ảnh'),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Camera preview - full màn hình
           if (_isCameraInitialized && _cameraController != null)
-            CameraPreview(_cameraController!)
+            _FullScreenCameraPreview(controller: _cameraController!)
           else
             Center(
               child: CircularProgressIndicator(color: colorScheme.primary),
             ),
-
-          // Nút chụp ảnh ở giữa dưới màn hình
           Positioned(
             left: 0,
             right: 0,
@@ -180,7 +179,10 @@ class _CameraScreenState extends State<CameraScreen> {
                         color: _isCapturing
                             ? colorScheme.onSurface.withValues(alpha: 0.38)
                             : ColorConstants.backgroundLight,
-                        border: Border.all(color: colorScheme.primary, width: 4),
+                        border: Border.all(
+                          color: colorScheme.primary,
+                          width: 4,
+                        ),
                       ),
                       child: _isCapturing
                           ? Center(
@@ -198,6 +200,40 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Cover toàn bộ khung (giống MobileScanner [BoxFit.cover]), không để letterbox.
+class _FullScreenCameraPreview extends StatelessWidget {
+  const _FullScreenCameraPreview({required this.controller});
+
+  final CameraController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final previewSize = controller.value.previewSize;
+        if (previewSize == null ||
+            previewSize.width == 0 ||
+            previewSize.height == 0) {
+          return CameraPreview(controller);
+        }
+
+        // previewSize của plugin thường là landscape; widget xoay theo orientation.
+        final previewAspect = previewSize.height / previewSize.width;
+        final screenAspect = constraints.maxWidth / constraints.maxHeight;
+        var scale = screenAspect / previewAspect;
+        if (scale < 1) scale = 1 / scale;
+
+        return ClipRect(
+          child: Transform.scale(
+            scale: scale,
+            child: Center(child: CameraPreview(controller)),
+          ),
+        );
+      },
     );
   }
 }

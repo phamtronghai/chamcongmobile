@@ -19,6 +19,7 @@ class CustomButton extends StatelessWidget {
   final double? width;
   final String? tooltip;
   final bool isLoading;
+  final Color? accentColor;
 
   const CustomButton({
     super.key,
@@ -31,6 +32,7 @@ class CustomButton extends StatelessWidget {
     this.width,
     this.tooltip,
     this.isLoading = false,
+    this.accentColor,
   });
 
   bool get _enabled => onPressed != null && !isLoading;
@@ -43,7 +45,7 @@ class CustomButton extends StatelessWidget {
     );
 
     final colorScheme = Theme.of(context).colorScheme;
-    final primary = colorScheme.primary;
+    final primary = accentColor ?? colorScheme.primary;
 
     final child = switch (variant) {
       CustomButtonVariant.iconButton => _buildIconButton(context, primary),

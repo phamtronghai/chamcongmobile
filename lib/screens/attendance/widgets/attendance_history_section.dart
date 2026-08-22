@@ -106,13 +106,8 @@ class _AttendanceHistorySectionState extends State<AttendanceHistorySection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (widget.isLoadingRecords) {
-      return const Center(
-        child: SizedBox(
-          width: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
+    if (widget.isLoadingRecords && widget.attendanceRecords.isEmpty) {
+      return const SizedBox.shrink();
     }
 
     if (widget.attendanceRecords.isEmpty) {

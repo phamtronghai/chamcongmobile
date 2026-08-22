@@ -1,6 +1,5 @@
 import 'package:attendancebyface/models/worklog_model.dart';
 import 'package:flutter/material.dart';
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/screens/attendance/widgets/attendance_timeline.dart';
 import 'package:attendancebyface/screens/attendance/widgets/worklog_form_sheet.dart';
 
@@ -46,68 +45,46 @@ class DailyWorklogsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (isLoadingWorklogs) {
-      return const Center(
-        child: SizedBox(
-          width: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
+    if (isLoadingWorklogs && worklogs.isEmpty) {
+      return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Text(
-            'Công việc trong ngày',
-            style: TextConstants.appTextBold.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            itemCount: _sessions.length,
-            itemBuilder: (context, index) {
-              final session = _sessions[index];
-              final items =
-                  worklogs.where((w) => w.sessionId == session.id).toList()
-                    ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-              final isLast = index == _sessions.length - 1;
-              final isEmpty = items.isEmpty;
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: _sessions.length,
+      itemBuilder: (context, index) {
+        final session = _sessions[index];
+        final items =
+            worklogs.where((w) => w.sessionId == session.id).toList()
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        final isLast = index == _sessions.length - 1;
+        final isEmpty = items.isEmpty;
 
-              return AttendanceTimelineTile(
-                isLast: isLast,
-                leading: Icon(
-                  session.icon,
-                  color: theme.colorScheme.primary,
-                  size: 22,
-                ),
-                title: session.label,
-                onTap: isEmpty
-                    ? () => _openWorklogPopup(
-                        context: context,
-                        sessionId: session.id,
-                        sessionLabel: session.label,
-                      )
-                    : null,
-                child: Text(
-                  isEmpty
-                      ? 'Chạm để nhập'
-                      : items.map((e) => e.workName).join('\n'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: timelineContentStyle(theme, muted: isEmpty),
-                ),
-              );
-            },
+        return AttendanceTimelineTile(
+          isLast: isLast,
+          leading: Icon(
+            session.icon,
+            color: theme.colorScheme.primary,
+            size: 22,
           ),
-        ),
-      ],
+          title: session.label,
+          onTap: isEmpty
+              ? () => _openWorklogPopup(
+                  context: context,
+                  sessionId: session.id,
+                  sessionLabel: session.label,
+                )
+              : null,
+          child: Text(
+            isEmpty
+                ? 'Chạm để nhập'
+                : items.map((e) => e.workName).join('\n'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: timelineContentStyle(theme, muted: isEmpty),
+          ),
+        );
+      },
     );
   }
 }

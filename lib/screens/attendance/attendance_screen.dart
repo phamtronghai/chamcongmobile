@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
-import 'package:attendancebyface/screens/attendance/widgets/attendance_result_dialog.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/samcom_tab_bar.dart';
@@ -36,7 +35,7 @@ class AttendanceScreen extends BaseScreen {
   Widget buildLoading() {
     return const LoadingOverlay(
       isLoading: true,
-      child: Scaffold(body: Center(child: CircularProgressIndicator())),
+      child: SizedBox.shrink(),
     );
   }
 }
@@ -87,29 +86,24 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
     );
   }
 
-  void _showAttendanceResultDialog(
-    BuildContext context,
-    AttendanceState state,
-  ) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AttendanceResultDialog(
-          isSuccess: state.status == AttendanceStatus.success,
-          errorMessage: state.errorMessage,
-          onClose: () {
-            context.read<AttendanceCubit>().clearResultStatus();
-          },
-          onSecondaryAction: () {
-            if (state.status != AttendanceStatus.success) {
-              context.read<AttendanceCubit>().clearResultStatus();
-              context.read<AttendanceCubit>().takePicture(context, widget.user);
-            }
-          },
+  void _showAttendanceResult(BuildContext context, AttendanceState state) {
+    if (state.status == AttendanceStatus.success) {
+      CustomSnackbar.show(
+        context: context,
+        message: 'Thông tin chấm công đã được ghi nhận',
+        type: CustomSnackbarType.success,
+      );
+    } else if (state.status == AttendanceStatus.failure) {
+      final message = state.errorMessage?.trim();
+      if (message != null && message.isNotEmpty) {
+        CustomSnackbar.show(
+          context: context,
+          message: message,
+          type: CustomSnackbarType.error,
         );
-      },
-    );
+      }
+    }
+    context.read<AttendanceCubit>().clearResultStatus();
   }
 
   void _openAttendanceMap(BuildContext context, AttendanceState state) {
@@ -154,7 +148,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
           (current.status == AttendanceStatus.success ||
               current.status == AttendanceStatus.failure),
       listener: (context, state) {
-        _showAttendanceResultDialog(context, state);
+        _showAttendanceResult(context, state);
       },
       buildWhen: (previous, current) =>
           previous.isProcessing != current.isProcessing ||
@@ -177,7 +171,11 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
             },
           ),
           body: LoadingOverlay(
-            isLoading: state.isProcessing || state.isLoadingReport,
+            isLoading:
+                state.isProcessing ||
+                state.isLoadingReport ||
+                state.isLoadingRecords ||
+                state.isLoadingWorklogs,
             child: SafeArea(
               bottom: false,
               child: Column(

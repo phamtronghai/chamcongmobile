@@ -45,7 +45,7 @@ class _DuyetRaNgoaiTabState extends State<DuyetRaNgoaiTab>
           current is TrucBanStateError,
       builder: (context, state) {
         if (state is TrucBanStateLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const SizedBox.shrink();
         }
         if (state is TrucBanStateDanhSachRaNgoaiLoaded) {
           if (state.danhSach.isEmpty) {

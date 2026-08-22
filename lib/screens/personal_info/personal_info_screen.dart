@@ -7,11 +7,9 @@ import 'package:attendancebyface/core/widgets/gradient_ring.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
-import 'package:attendancebyface/core/services/face_service.dart';
 import 'package:attendancebyface/core/services/auth_service.dart';
 import 'package:attendancebyface/core/services/notification_service.dart';
 import 'package:attendancebyface/core/storage/secure_storage.dart';
-import 'package:attendancebyface/core/app_config.dart';
 import 'package:attendancebyface/core/service_locator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
@@ -19,7 +17,6 @@ import 'dart:convert';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/screens/personal_info/widgets/profile_update_sheet.dart';
 import 'package:attendancebyface/screens/personal_info/widgets/change_password_sheet.dart';
-import 'package:attendancebyface/screens/personal_info/widgets/custom_password_sheet.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:attendancebyface/core/app_router.dart';
 import 'package:attendancebyface/core/app_theme.dart';
@@ -43,7 +40,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
   AdaptiveThemeMode _themeMode = AdaptiveThemeMode.system;
   final ImagePicker _imagePicker = ImagePicker();
   final ApiClient _apiClient = ApiClient();
-  final FaceService _faceService = locator<FaceService>();
   final AuthService _authService = locator<AuthService>();
 
   static const List<AdaptiveThemeMode> _themeCycle = [
@@ -132,51 +128,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
       return;
     }
     AppRouter.goToRegisterFace(context, _user);
-  }
-
-  Future<void> _handleDeleteFaceByLongPress() async {
-    if (!_isFaceRegistered) return;
-    final result = await CustomPasswordSheet.show(
-      context,
-      title: 'Xóa khuôn mặt',
-      label: 'Nhập mật khẩu',
-      hint: 'Nhập mật khẩu để xác nhận',
-    );
-    if (!mounted || result == null || result.isEmpty) return;
-    if (result != AppConfig.adminPassword) {
-      CustomSnackbar.show(
-        context: context,
-        message: 'Mật khẩu không đúng!',
-        type: CustomSnackbarType.error,
-      );
-      return;
-    }
-    await _deleteFaceData();
-  }
-
-  Future<void> _deleteFaceData() async {
-    try {
-      setState(() => _isLoading = true);
-      await _faceService.deleteFace(_user.id);
-      final isRegistered = await _faceService.checkRegistered(_user.id);
-      if (!mounted) return;
-      setState(() => _isFaceRegistered = isRegistered);
-      context.read<UserCubit>().updateFaceRegistrationStatus(isRegistered);
-      CustomSnackbar.show(
-        context: context,
-        message: 'Đã xóa dữ liệu khuôn mặt thành công!',
-        type: CustomSnackbarType.success,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      CustomSnackbar.show(
-        context: context,
-        message: 'Lỗi: ${e.toString()}',
-        type: CustomSnackbarType.error,
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   void _showChangePasswordSheet() {
@@ -347,10 +298,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
       message: 'Đang xử lý...',
       child: Scaffold(
         backgroundColor: colorScheme.surface,
-        appBar: CustomAppBar(
-          title: 'Thông tin cá nhân',
-          onNotificationTap: () => AppRouter.goToNotification(context, _user),
-        ),
+        appBar: const CustomAppBar(title: 'Thông tin cá nhân'),
         body: Column(
           children: [
             // Header
@@ -360,66 +308,39 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Stack(
-                      clipBehavior: Clip.none,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        GradientAvatarRing(
-                          size: 120,
-                          outerPadding: 4,
-                          innerPadding: 3,
-                          child: CircleAvatar(
-                            radius: 52,
-                            backgroundImage: _user.image.isNotEmpty
-                                ? NetworkImage(_user.image)
-                                : null,
-                            child: _user.image.isEmpty
-                                ? Icon(
-                                    Icons.account_circle,
-                                    size: 60,
-                                    color: colorScheme.primary,
-                                  )
-                                : null,
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: SizedBox(
-                            width: 40,
-                            height: 40,
-                            child: CustomButton(
-                              text: '',
-                              icon: _isUpdatingAvatar
-                                  ? Icons.hourglass_top
-                                  : Icons.camera_alt,
-                              variant: CustomButtonVariant.iconButton,
-                              onPressed: _isUpdatingAvatar
-                                  ? null
-                                  : _changeAvatar,
-                            ),
+                        _buildAvatarSection(colorScheme),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _user.name,
+                                style: TextConstants.appTextBold.copyWith(
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _user.email,
+                                style: TextConstants.appTextRegular.copyWith(
+                                  color: colorScheme.onSurface.withValues(
+                                    alpha: 0.65,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _user.name,
-                      style: TextConstants.appTextBold.copyWith(
-                        color: colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _user.email,
-                      style: TextConstants.appTextRegular.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.65),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
                     const SizedBox(height: 20),
-                    _buildQuickActions(),
+                    Center(child: _buildQuickActions()),
                   ],
                 ),
               ),
@@ -436,7 +357,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
                     vertical: 8,
                   ),
                   tabs: const [
-                    Tab(text: 'Thông tin cơ bản'),
+                    Tab(text: 'Cơ bản'),
                     Tab(text: 'Căn cước'),
                   ],
                 ),
@@ -447,10 +368,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: [
-                  _buildBasicInfoTab(colorScheme),
-                  _buildCitizenTab(),
-                ],
+                children: [_buildBasicInfoTab(colorScheme), _buildCitizenTab()],
               ),
             ),
           ],
@@ -459,23 +377,66 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
     );
   }
 
+  Widget _buildAvatarSection(ColorScheme colorScheme) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        GradientAvatarRing(
+          size: 108,
+          outerPadding: 4,
+          innerPadding: 3,
+          child: CircleAvatar(
+            radius: 46,
+            backgroundImage:
+                _user.image.isNotEmpty ? NetworkImage(_user.image) : null,
+            child: _user.image.isEmpty
+                ? Icon(
+                    Icons.account_circle,
+                    size: 52,
+                    color: colorScheme.primary,
+                  )
+                : null,
+          ),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: CustomButton(
+              text: '',
+              icon: _isUpdatingAvatar ? Icons.hourglass_top : Icons.camera_alt,
+              variant: CustomButtonVariant.iconButton,
+              width: 36,
+              onPressed: _isUpdatingAvatar ? null : _changeAvatar,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildQuickActions() {
     final colorScheme = Theme.of(context).colorScheme;
-    final faceLabel = _isFaceRegistered ? 'Khuôn mặt' : 'Khuôn mặt';
+    final faceAccent = _isFaceRegistered
+        ? colorScheme.primary
+        : ColorConstants.errorColor;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 12,
+      runSpacing: 12,
       children: [
         _buildIconAction(
           colorScheme: colorScheme,
-          label: faceLabel,
-          child: GestureDetector(
-            onLongPress: _handleDeleteFaceByLongPress,
-            child: CustomButton(
-              svgPath: 'assets/icon/FaceID.svg',
-              variant: CustomButtonVariant.iconButton,
-              onPressed: _handleRegisterFace,
-            ),
+          label: 'Khuôn mặt',
+          labelColor: faceAccent,
+          child: CustomButton(
+            svgPath: 'assets/icon/FaceID.svg',
+            variant: CustomButtonVariant.iconButton,
+            accentColor: faceAccent,
+            onPressed: _handleRegisterFace,
           ),
         ),
         _buildIconAction(
@@ -513,6 +474,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
     required ColorScheme colorScheme,
     required String label,
     required Widget child,
+    Color? labelColor,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -522,7 +484,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
         Text(
           label,
           style: TextConstants.appTextRegular.copyWith(
-            color: colorScheme.onSurface.withValues(alpha: 0.75),
+            color: labelColor ??
+                colorScheme.onSurface.withValues(alpha: 0.75),
             fontSize: 12,
           ),
           textAlign: TextAlign.center,

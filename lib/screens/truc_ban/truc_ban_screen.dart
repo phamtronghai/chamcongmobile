@@ -221,9 +221,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
       );
       setState(() => _isProcessing = false);
     } else if (state is TrucBanStateLoading) {
-      if (state.target != TrucBanLoadTarget.general) {
-        setState(() => _isProcessing = true);
-      }
+      setState(() => _isProcessing = true);
     } else if (state is TrucBanStatePhanQuyenLoaded) {
       _phanQuyen = state.phanQuyen;
       _syncTabController(state.phanQuyen);
