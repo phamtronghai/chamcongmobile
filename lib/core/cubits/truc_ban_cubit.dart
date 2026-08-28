@@ -22,6 +22,14 @@ class TrucBanCubit extends Cubit<TrucBanState> {
   /// Getter cho phân quyền đã cache
   PhanQuyen? get phanQuyen => _cachedPhanQuyen;
 
+  String _cleanErrorMessage(dynamic e) {
+    var msg = e.toString();
+    if (msg.startsWith('Exception: ')) {
+      msg = msg.substring('Exception: '.length);
+    }
+    return msg;
+  }
+
   // ======== PHÂN QUYỀN ========
 
   /// Lấy thông tin phân quyền
@@ -37,7 +45,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       _cachedPhanQuyen = await _repository.layPhanQuyen();
       emit(TrucBanState.phanQuyenLoaded(phanQuyen: _cachedPhanQuyen!));
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -60,7 +68,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         ),
       );
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -89,7 +97,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       );
       emit(const TrucBanState.success(message: 'Đăng ký khách thành công'));
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -106,7 +114,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     } catch (e, st) {
       debugLog('[TrucBan/Cubit] layLichSuKhachCaNhan FAIL → emit Error: $e');
       debugLog('$st');
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -119,7 +127,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       final danhSach = await _repository.layDsKhachToanDonVi(ngay);
       emit(TrucBanState.danhSachKhachLoaded(danhSach: danhSach));
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -155,7 +163,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       );
     } catch (e, st) {
       debugLog('[TrucBan/Cubit] dangKyRaNgoai FAIL: $e\n$st');
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -203,7 +211,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     } catch (e, st) {
       debugLog('[TrucBan/Cubit] layLichSuRaNgoaiCaNhan FAIL → emit Error: $e');
       debugLog('$st');
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -220,7 +228,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       );
       emit(TrucBanState.danhSachRaNgoaiLoaded(danhSach: danhSach));
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -241,7 +249,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         );
       }
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -262,7 +270,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         );
       }
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 
@@ -275,7 +283,7 @@ class TrucBanCubit extends Cubit<TrucBanState> {
       await _repository.moCua(loaiPhuongTien);
       emit(const TrucBanState.success(message: 'Mở cửa thành công'));
     } catch (e) {
-      emit(TrucBanState.error(message: e.toString()));
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }
   }
 }

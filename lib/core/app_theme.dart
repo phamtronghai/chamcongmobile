@@ -9,7 +9,7 @@ class ColorConstants {
   static const Color warningColor = Color(0xFFFF9800);
   static const Color infoColor = Color(0xFF3D5A80);
 
-  static const double defaultBorderRadius = 48.0;
+  static const double defaultBorderRadius = 60.0;
 
   static const Color backgroundLight = Color(0xFFFFFFFF);
   static const Color backgroundDark = Color(0xFF000000);

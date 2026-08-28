@@ -1,4 +1,4 @@
-library fw_tab_bar;
+library;
 
 import 'package:flutter/material.dart';
 

@@ -106,7 +106,7 @@ class _AnimatingRing extends StatelessWidget {
           // Viền xoay ở trên
           AnimatedBuilder(
             animation: controller,
-            builder: (_, __) => Transform.rotate(
+            builder: (_, _) => Transform.rotate(
               angle: controller.value * 2 * 3.14159,
               child: Image.asset(
                 _ring,

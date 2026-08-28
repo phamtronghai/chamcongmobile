@@ -17,6 +17,24 @@ const double kNavBarHorizontalPadding = 16;
 /// Chiều cao pill FAB filled.
 const double kFabFilledPillHeight = ButtonConstants.heightButton;
 
+/// Chiều rộng mỗi item trong navbar để navbar luôn ôm sát nội dung (fit-content).
+const double kNavItemWidth = 96.0;
+
+const List<LiquidGlassNavItem> _kNavItems = [
+  LiquidGlassNavItem(
+    icon: Icons.event_note_outlined,
+    label: 'Nghỉ phép',
+  ),
+  LiquidGlassNavItem(
+    icon: Icons.timer,
+    label: 'Chấm công',
+  ),
+  LiquidGlassNavItem(
+    icon: Icons.security_outlined,
+    label: 'Trực ban',
+  ),
+];
+
 class CustomNavBar extends StatefulWidget {
   final UserModel user;
   final int? initialIndex;
@@ -138,28 +156,16 @@ class _CustomNavBarState extends State<CustomNavBar> {
                   kNavBarHorizontalPadding,
                   navBarBottomPad,
                 ),
-                child: Stack(
+                child: Align(
                   alignment: Alignment.bottomCenter,
-                  clipBehavior: Clip.none,
-                  children: [
-                    LiquidBottomNavBar(
+                  child: SizedBox(
+                    width: _kNavItems.length * kNavItemWidth,
+                    child: LiquidBottomNavBar(
                       height: 65,
+                      bubbleWidth: kNavItemWidth,
                       currentIndex: _currentIndex,
                       onTap: _onTabTap,
-                      items: const [
-                        LiquidGlassNavItem(
-                          icon: Icons.event_note_outlined,
-                          label: 'Nghỉ phép',
-                        ),
-                        LiquidGlassNavItem(
-                          icon: Icons.timer,
-                          label: 'Chấm công',
-                        ),
-                        LiquidGlassNavItem(
-                          icon: Icons.security_outlined,
-                          label: 'Trực ban',
-                        ),
-                      ],
+                      items: _kNavItems,
                       backgroundColor: colorScheme.surface,
                       itemColor: colorScheme.onSurfaceVariant,
                       bubbleColor: colorScheme.primary,
@@ -168,13 +174,12 @@ class _CustomNavBarState extends State<CustomNavBar> {
                       blurStrength: 12,
                       borderRadius: ColorConstants.defaultBorderRadius,
                       iconSize: 20,
-                      // fontSize: TextConstants.fontSizeApp,
                       fontSize: 12,
                       elevation: 14,
                       bottomPadding: 0,
                       horizontalPadding: 0,
                     ),
-                  ],
+                  ),
                 ),
               ),
             );

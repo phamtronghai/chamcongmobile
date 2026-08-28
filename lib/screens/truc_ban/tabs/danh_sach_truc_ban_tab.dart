@@ -27,6 +27,29 @@ class DanhSachTrucBanTab extends StatefulWidget {
 class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     with AutomaticKeepAliveClientMixin {
   _QuickAction? _quickAction;
+  List<TrucBan>? _danhSach;
+  TrucChiHuy? _trucChiHuy;
+
+  @override
+  void initState() {
+    super.initState();
+    final cubitState = context.read<TrucBanCubit>().state;
+    if (cubitState is TrucBanStateDanhSachTrucBanLoaded) {
+      _danhSach = cubitState.danhSach;
+      _trucChiHuy = cubitState.trucChiHuy;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant DanhSachTrucBanTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate != widget.selectedDate) {
+      setState(() {
+        _danhSach = null;
+        _trucChiHuy = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,26 +62,35 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
           builder: (context, state) {
             final canViewCamera =
                 context.read<TrucBanCubit>().phanQuyen?.canViewCamera == true;
-            if (!canViewCamera) return const SizedBox.shrink();
-            return _buildQuickActionBar();
+            return _buildQuickActionBar(canViewCamera: canViewCamera);
           },
         ),
         _buildSectionTitle('Trực chỉ huy'),
         _buildTrucChiHuyBanner(),
         _buildSectionTitle('Danh sách trực ban'),
         Expanded(
-          child: BlocBuilder<TrucBanCubit, TrucBanState>(
+          child: BlocConsumer<TrucBanCubit, TrucBanState>(
+            listenWhen: (prev, curr) =>
+                curr is TrucBanStateDanhSachTrucBanLoaded,
+            listener: (context, state) {
+              if (state is TrucBanStateDanhSachTrucBanLoaded) {
+                setState(() {
+                  _danhSach = state.danhSach;
+                  _trucChiHuy = state.trucChiHuy;
+                });
+              }
+            },
             buildWhen: (previous, current) =>
                 current is TrucBanStateDanhSachTrucBanLoaded ||
                 (current is TrucBanStateLoading &&
                     current.target == TrucBanLoadTarget.dsTrucBan) ||
                 current is TrucBanStateError,
             builder: (context, state) {
-              if (state is TrucBanStateLoading) {
+              if (state is TrucBanStateLoading && _danhSach == null) {
                 return const SizedBox.shrink();
               }
-              if (state is TrucBanStateDanhSachTrucBanLoaded) {
-                if (state.danhSach.isEmpty) {
+              if (_danhSach != null) {
+                if (_danhSach!.isEmpty) {
                   return const BaseEmptyState();
                 }
                 return RefreshIndicator(
@@ -67,14 +99,14 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                       .layDanhSachTrucBan(widget.selectedDate),
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    itemCount: state.danhSach.length,
+                    itemCount: _danhSach!.length,
                     itemBuilder: (context, index) {
-                      return _buildTrucBanCard(state.danhSach[index]);
+                      return _buildTrucBanCard(_danhSach![index]);
                     },
                   ),
                 );
               }
-              if (state is TrucBanStateError) {
+              if (state is TrucBanStateError && _danhSach == null) {
                 return AppErrorWidget(
                   message: state.message,
                   onRetry: () => context
@@ -90,27 +122,30 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     );
   }
 
-  Widget _buildQuickActionBar() {
+  Widget _buildQuickActionBar({required bool canViewCamera}) {
+    final options = [
+      const CustomSegmentOption(
+        value: _QuickAction.oto,
+        label: 'Ô tô',
+        icon: Icons.directions_car,
+      ),
+      const CustomSegmentOption(
+        value: _QuickAction.khac,
+        label: 'Xe khác',
+        icon: Icons.two_wheeler,
+      ),
+      if (canViewCamera)
+        const CustomSegmentOption(
+          value: _QuickAction.camera,
+          label: 'Camera',
+          icon: Icons.videocam_outlined,
+        ),
+    ];
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: CustomSegmentedButton<_QuickAction>(
-        options: const [
-          CustomSegmentOption(
-            value: _QuickAction.oto,
-            label: 'Ô tô',
-            icon: Icons.directions_car,
-          ),
-          CustomSegmentOption(
-            value: _QuickAction.khac,
-            label: 'Xe khác',
-            icon: Icons.two_wheeler,
-          ),
-          CustomSegmentOption(
-            value: _QuickAction.camera,
-            label: 'Camera',
-            icon: Icons.videocam_outlined,
-          ),
-        ],
+        options: options,
         selected: _quickAction == null ? {} : {_quickAction!},
         emptySelectionAllowed: true,
         onSelectionChanged: (selected) {
@@ -147,101 +182,92 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
   }
 
   Widget _buildTrucChiHuyBanner() {
-    return BlocBuilder<TrucBanCubit, TrucBanState>(
-      buildWhen: (previous, current) =>
-          current is TrucBanStateDanhSachTrucBanLoaded ||
-          (current is TrucBanStateLoading &&
-              current.target == TrucBanLoadTarget.dsTrucBan),
-      builder: (context, state) {
-        if (state is TrucBanStateLoading) {
-          return const SizedBox.shrink();
-        }
+    if (_trucChiHuy != null) {
+      final chiHuy = _trucChiHuy!;
+      final title = [
+        if (chiHuy.capBac != null && chiHuy.capBac!.isNotEmpty)
+          chiHuy.capBac!,
+        chiHuy.hoTen,
+      ].join(' ');
 
-        if (state is TrucBanStateDanhSachTrucBanLoaded &&
-            state.trucChiHuy != null) {
-          final chiHuy = state.trucChiHuy!;
-          final title = [
-            if (chiHuy.capBac != null && chiHuy.capBac!.isNotEmpty)
-              chiHuy.capBac!,
-            chiHuy.hoTen,
-          ].join(' ');
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Column(
-              children: [
-                BaseInfoCard(
-                  title: title,
-                  onTap:
-                      (chiHuy.soDienThoai != null &&
-                          chiHuy.soDienThoai!.isNotEmpty)
-                      ? () => _callPhone(chiHuy.soDienThoai!)
-                      : null,
-                  badge: Icon(
-                    Icons.shield_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  highlightText: 'Trực chỉ huy',
-                  highlightBackgroundColor: ColorConstants.errorColor.withAlpha(
-                    40,
-                  ),
-                  highlightTextColor: ColorConstants.errorColor,
-                  detailText: chiHuy.donVi?.isNotEmpty == true
-                      ? '• ${chiHuy.donVi}'
-                      : null,
-                  subInfoWidget:
-                      (chiHuy.soDienThoai != null &&
-                          chiHuy.soDienThoai!.isNotEmpty)
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Column(
+          children: [
+            BaseInfoCard(
+              title: title,
+              onTap:
+                  (chiHuy.soDienThoai != null &&
+                      chiHuy.soDienThoai!.isNotEmpty)
+                  ? () => _callPhone(chiHuy.soDienThoai!)
+                  : null,
+              badge: Icon(
+                Icons.shield_outlined,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              highlightText: 'Trực chỉ huy',
+              highlightBackgroundColor: ColorConstants.errorColor.withAlpha(
+                40,
+              ),
+              highlightTextColor: ColorConstants.errorColor,
+              detailText: chiHuy.donVi?.isNotEmpty == true
+                  ? '• ${chiHuy.donVi}'
+                  : null,
+              subInfoWidget:
+                  (chiHuy.soDienThoai != null &&
+                      chiHuy.soDienThoai!.isNotEmpty)
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ColorConstants.errorColor,
+                        borderRadius: BorderRadius.circular(
+                          ColorConstants.defaultBorderRadius,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.phone,
+                            size: 14,
+                            color: ColorConstants.backgroundLight,
                           ),
-                          decoration: BoxDecoration(
-                            color: ColorConstants.errorColor,
-                            borderRadius: BorderRadius.circular(
-                              ColorConstants.defaultBorderRadius,
+                          const SizedBox(width: 4),
+                          Text(
+                            chiHuy.soDienThoai!,
+                            style: const TextStyle(
+                              color: ColorConstants.backgroundLight,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.phone,
-                                size: 14,
-                                color: ColorConstants.backgroundLight,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                chiHuy.soDienThoai!,
-                                style: const TextStyle(
-                                  color: ColorConstants.backgroundLight,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : null,
-                ),
-                const Align(
-                  alignment: Alignment.center,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.25,
-                    child: Divider(height: 10, thickness: 0.5),
-                  ),
-                ),
-              ],
+                        ],
+                      ),
+                    )
+                  : null,
             ),
-          );
-        }
+            const Align(
+              alignment: Alignment.center,
+              child: FractionallySizedBox(
+                widthFactor: 0.25,
+                child: Divider(height: 10, thickness: 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-        return const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: const BaseEmptyState(),
-        );
-      },
-    );
+    if (_danhSach != null && _trucChiHuy == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: BaseEmptyState(),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildTrucBanCard(TrucBan trucBan) {

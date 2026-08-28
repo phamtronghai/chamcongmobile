@@ -19,9 +19,15 @@ class KhachDonViTab extends StatefulWidget {
 
 class _KhachDonViTabState extends State<KhachDonViTab>
     with AutomaticKeepAliveClientMixin {
+  List<Khach>? _danhSach;
+
   @override
   void initState() {
     super.initState();
+    final cubitState = context.read<TrucBanCubit>().state;
+    if (cubitState is TrucBanStateDanhSachKhachLoaded) {
+      _danhSach = cubitState.danhSach;
+    }
     _loadData();
   }
 
@@ -32,18 +38,26 @@ class _KhachDonViTabState extends State<KhachDonViTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return BlocBuilder<TrucBanCubit, TrucBanState>(
+    return BlocConsumer<TrucBanCubit, TrucBanState>(
+      listenWhen: (prev, curr) => curr is TrucBanStateDanhSachKhachLoaded,
+      listener: (context, state) {
+        if (state is TrucBanStateDanhSachKhachLoaded) {
+          setState(() {
+            _danhSach = state.danhSach;
+          });
+        }
+      },
       buildWhen: (previous, current) =>
           current is TrucBanStateDanhSachKhachLoaded ||
           (current is TrucBanStateLoading &&
               current.target == TrucBanLoadTarget.dsKhachToanDonVi) ||
           current is TrucBanStateError,
       builder: (context, state) {
-        if (state is TrucBanStateLoading) {
+        if (state is TrucBanStateLoading && _danhSach == null) {
           return const SizedBox.shrink();
         }
-        if (state is TrucBanStateDanhSachKhachLoaded) {
-          if (state.danhSach.isEmpty) {
+        if (_danhSach != null) {
+          if (_danhSach!.isEmpty) {
             return RefreshIndicator(
               onRefresh: () async => _loadData(),
               child: ListView(
@@ -59,14 +73,14 @@ class _KhachDonViTabState extends State<KhachDonViTab>
             onRefresh: () async => _loadData(),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              itemCount: state.danhSach.length,
+              itemCount: _danhSach!.length,
               itemBuilder: (context, index) {
-                return _KhachCard(khach: state.danhSach[index]);
+                return _KhachCard(khach: _danhSach![index]);
               },
             ),
           );
         }
-        if (state is TrucBanStateError) {
+        if (state is TrucBanStateError && _danhSach == null) {
           return AppErrorWidget(message: state.message, onRetry: _loadData);
         }
         return const SizedBox.shrink();

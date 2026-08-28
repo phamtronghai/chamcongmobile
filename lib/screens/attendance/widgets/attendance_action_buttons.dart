@@ -21,7 +21,7 @@ class AttendanceActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primaryTooltip = hasRegisteredFace
-        ? 'Chấm công (Nhấn giữ để chấm công thủ công)'
+        ? 'Chấm công'
         : 'Đăng ký khuôn mặt';
 
     final primaryIcon = hasRegisteredFace ? Icons.timer : null;

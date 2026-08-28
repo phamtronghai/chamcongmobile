@@ -189,7 +189,7 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                 ? Image.network(
                     avatarUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
+                    errorBuilder: (_, _, _) =>
                         _avatarFallback(size, account),
                   )
                 : _avatarFallback(size, account),
