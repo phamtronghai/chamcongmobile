@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:attendancebyface/core/app_theme.dart';
 
 import 'package:attendancebyface/core/cubits/attendance_cubit.dart';
+import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/repositories/attendance_repository.dart';
 import 'package:attendancebyface/core/service_locator.dart';
 import 'package:attendancebyface/core/widgets/base_empty_state.dart';
@@ -284,9 +285,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
       _gaps = _gaps
           .map((g) {
             if (!_sameDay(g.date, gap.date)) return g;
-            final fills = g.fills
-                .where((t) => !_sameTime(t, fill))
-                .toList();
+            final fills = g.fills.where((t) => !_sameTime(t, fill)).toList();
             return _DayGap(date: g.date, recorded: g.recorded, fills: fills);
           })
           .where((g) => _isMultiDay ? g.fills.isNotEmpty : true)
@@ -328,6 +327,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _buildUserHeader(theme),
               if (!_isLoading) _buildStatsLegend(theme),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -414,6 +414,64 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildUserHeader(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final user = widget.user;
+    final imageUrl = _toAbsoluteUrl(user.image);
+    final hasImage = imageUrl.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+            backgroundImage: hasImage ? NetworkImage(imageUrl) : null,
+            child: hasImage
+                ? null
+                : Text(
+                    _initials(user.name),
+                    style: TextConstants.appTextSemiBold.copyWith(
+                      color: colorScheme.primary,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              user.name.isEmpty ? 'Người dùng' : user.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextConstants.appTextSemiBold.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _toAbsoluteUrl(String value) {
+    if (value.isEmpty) return value;
+    if (value.startsWith('http')) return value;
+    final base = ApiClient().dio.options.baseUrl;
+    final normalizedBase = base.endsWith('/')
+        ? base.substring(0, base.length - 1)
+        : base;
+    final normalizedPath = value.startsWith('/') ? value : '/$value';
+    return '$normalizedBase$normalizedPath';
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   Widget _buildStatsLegend(ThemeData theme) {

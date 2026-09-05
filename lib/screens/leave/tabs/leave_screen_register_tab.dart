@@ -293,12 +293,13 @@ class _LeaveScreenRegisterTabState
               _buildHeader(),
               Expanded(
                 child: _requests.isEmpty && !_isLoading
-                    ? Padding(
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.only(
                           bottom: MediaQuery.paddingOf(context).bottom +
                               kFabFilledPillHeight,
                         ),
-                        child: const BaseEmptyState(),
+                        children: const [BaseEmptyState()],
                       )
                     : _buildList(),
               ),

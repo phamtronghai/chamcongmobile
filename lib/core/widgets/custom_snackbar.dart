@@ -22,6 +22,8 @@ class CustomSnackbar {
     );
   }
 
+  static OverlayEntry? _currentEntry;
+
   static void show({
     required BuildContext context,
     required String message,
@@ -91,12 +93,16 @@ class CustomSnackbar {
       ),
     );
 
-    // Tránh chèn overlay trong lúc đang build khung hiện tại
+    // Tránh chèn overlay trong lúc đang build khung hiện tại; thay snackbar cũ nếu còn.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _currentEntry?.remove();
+      _currentEntry = overlayEntry;
       overlayState.insert(overlayEntry);
     });
     Future.delayed(duration, () {
+      if (!identical(_currentEntry, overlayEntry)) return;
       overlayEntry.remove();
+      _currentEntry = null;
     });
   }
 

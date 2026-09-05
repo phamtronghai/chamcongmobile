@@ -1,4 +1,3 @@
-import 'package:attendancebyface/core/app_theme.dart';
 import 'package:attendancebyface/core/widgets/samcom_header.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +7,8 @@ class SamcomSheet extends StatelessWidget {
   final String? subtitle;
   final Widget? subtitleWidget;
   final IconData? icon;
+  /// Widget thay logo mặc định ở [SamcomHeader] (vd. avatar).
+  final Widget? leading;
   final Color? primaryColor;
   final Widget child;
   final bool expandChild;
@@ -20,6 +21,7 @@ class SamcomSheet extends StatelessWidget {
     this.subtitle,
     this.subtitleWidget,
     this.icon,
+    this.leading,
     this.primaryColor,
     this.expandChild = false,
     this.maxHeightFactor = 0.92,
@@ -47,11 +49,7 @@ class SamcomSheet extends StatelessWidget {
 
     final body = expandChild
         ? Expanded(child: child)
-        : Flexible(
-            child: SingleChildScrollView(
-              child: child,
-            ),
-          );
+        : Flexible(child: SingleChildScrollView(child: child));
 
     final column = Column(
       mainAxisSize: expandChild ? MainAxisSize.max : MainAxisSize.min,
@@ -67,6 +65,7 @@ class SamcomSheet extends StatelessWidget {
         ),
         SamcomHeader(
           icon: icon,
+          leading: leading,
           title: title,
           subtitle: subtitle,
           subtitleWidget: subtitleWidget,
@@ -80,9 +79,7 @@ class SamcomSheet extends StatelessWidget {
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Material(
         color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(ColorConstants.defaultBorderRadius),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: maxHeight),

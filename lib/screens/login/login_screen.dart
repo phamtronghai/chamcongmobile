@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
-import 'package:attendancebyface/core/widgets/samcom_header.dart';
+import 'package:attendancebyface/core/widgets/samcom_sheet.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
 import 'package:attendancebyface/core/widgets/custom_dropdown.dart';
@@ -92,44 +92,27 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
     cubit.login(AppConfig.trialLoginUsername, AppConfig.trialLoginPassword);
   }
 
-  void _showForgotPasswordDialog() {
-    showDialog<void>(
+  void _showForgotPasswordSheet() {
+    SamcomSheet.show<void>(
       context: context,
       builder: (ctx) {
         final colorScheme = Theme.of(ctx).colorScheme;
-        return Dialog(
-          child: Container(
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(
-                ColorConstants.defaultBorderRadius,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: ColorConstants.backgroundDark.withValues(alpha: 0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+        return SamcomSheet(
+          icon: Icons.lock_reset_outlined,
+          title: 'Thông báo',
+          subtitle: 'Liên hệ với admin để khôi phục mật khẩu.',
+          primaryColor: colorScheme.primary,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              8,
+              24,
+              24 + MediaQuery.paddingOf(ctx).bottom,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SamcomHeader(
-                  icon: Icons.lock_reset_outlined,
-                  title: 'Thông báo',
-                  subtitle: 'Liên hệ với admin để khôi phục mật khẩu.',
-                  primaryColor: colorScheme.primary,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                  child: CustomButton(
-                    text: 'Đã hiểu',
-                    icon: Icons.check,
-                    onPressed: () => Navigator.of(ctx).pop(),
-                  ),
-                ),
-              ],
+            child: CustomButton(
+              text: 'Đã hiểu',
+              icon: Icons.check,
+              onPressed: () => Navigator.of(ctx).pop(),
             ),
           ),
         );
@@ -292,6 +275,16 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                             ),
                             textAlign: TextAlign.center,
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Công ty TNHH MTV Trắc địa Bản đồ - Cục Tác chiến',
+                            style: TextConstants.appTextRegular.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                           const SizedBox(height: 32),
                           if (state.units.isNotEmpty) ...[
                             CustomDropdown<OrganizationUnit>(
@@ -344,7 +337,7 @@ class _LoginScreenViewState extends State<_LoginScreenView> {
                             child: CustomButton(
                               text: 'Quên mật khẩu',
                               variant: CustomButtonVariant.textButton,
-                              onPressed: _showForgotPasswordDialog,
+                              onPressed: _showForgotPasswordSheet,
                             ),
                           ),
                           const SizedBox(height: 16),

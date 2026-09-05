@@ -2,8 +2,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
-import 'package:attendancebyface/core/widgets/custom_button.dart';
-import 'package:attendancebyface/core/widgets/samcom_header.dart';
+import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/app_theme.dart';
 
 /// Màn hình camera đơn giản để chụp ảnh khuôn mặt
@@ -55,7 +54,7 @@ class _CameraScreenState extends State<CameraScreen> {
     } catch (e) {
       debugPrint('Error initializing camera: $e');
       if (mounted) {
-        _showError('Không thể khởi động camera.');
+        _showError('Không thể khởi động camera.', pop: true);
       }
     }
   }
@@ -86,50 +85,17 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  /// Hiển thị lỗi và quay lại màn hình trước
-  void _showError(String message) {
+  /// Hiển thị lỗi qua snackbar; [pop] = true thì quay lại màn trước (lỗi camera).
+  void _showError(String message, {bool pop = false}) {
     if (!mounted) return;
-
-    showDialog(
+    CustomSnackbar.show(
       context: context,
-      builder: (dialogContext) => Dialog(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: ColorConstants.backgroundDark.withValues(alpha: 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SamcomHeader(
-                icon: Icons.error_rounded,
-                title: 'Lỗi',
-                subtitle: message,
-                primaryColor: ColorConstants.errorColor,
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: CustomButton(
-                  text: 'OK',
-                  icon: Icons.check,
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop(); // Đóng dialog
-                    Navigator.of(context).pop(); // Quay lại màn hình trước
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      message: message,
+      type: CustomSnackbarType.error,
     );
+    if (pop) {
+      Navigator.of(context).pop();
+    }
   }
 
   /// Dispose camera

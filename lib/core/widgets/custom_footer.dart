@@ -7,60 +7,41 @@ class CustomFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 8),
-        Image.asset(
-          AppConfig.logoOrg,
-          height: AppConfig.sizeLogoApp,
-          fit: BoxFit.contain,
-        ),
-        const SizedBox(height: 16),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: '© ${DateTime.now().year}. Bản quyền thuộc về '),
-              TextSpan(
-                text: 'SAMCOM',
-                style: TextConstants.appTextBold.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+    final muted = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.7);
+    final primary = Theme.of(context).colorScheme.primary;
+    final mutedStyle = TextConstants.appTextRegular.copyWith(
+      color: muted,
+      fontSize: 10,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(AppConfig.logoOrg, height: 48, fit: BoxFit.contain),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Phát triển bởi', style: mutedStyle),
+                Text(
+                  'Tổ nghiên cứu phát triển khoa học công nghệ',
+                  style: TextConstants.appTextBold.copyWith(
+                    color: primary,
+                    fontSize: 10,
+                  ),
                 ),
-              ),
-            ],
-            style: TextConstants.appTextRegular.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 12,
+                Text('©${DateTime.now().year}. SAMCOM', style: mutedStyle),
+              ],
             ),
           ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text.rich(
-          TextSpan(
-            children: [
-              const TextSpan(text: 'Phát triển bởi '),
-              TextSpan(
-                text: 'Tổ nghiên cứu phát triển khoa học công nghệ',
-                style: TextConstants.appTextBold.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-            style: TextConstants.appTextRegular.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 10,
-            ),
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

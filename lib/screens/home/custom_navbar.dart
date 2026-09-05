@@ -1,6 +1,7 @@
 import 'package:attendancebyface/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:attendancebyface/screens/admin/admin_screen.dart';
 import 'package:attendancebyface/screens/attendance/attendance_screen.dart';
 import 'package:attendancebyface/screens/leave/leave_screen.dart';
 import 'package:attendancebyface/screens/truc_ban/truc_ban_screen.dart';
@@ -20,20 +21,22 @@ const double kFabFilledPillHeight = ButtonConstants.heightButton;
 /// Chiều rộng mỗi item trong navbar để navbar luôn ôm sát nội dung (fit-content).
 const double kNavItemWidth = 96.0;
 
-const List<LiquidGlassNavItem> _kNavItems = [
-  LiquidGlassNavItem(
-    icon: Icons.event_note_outlined,
-    label: 'Nghỉ phép',
-  ),
-  LiquidGlassNavItem(
-    icon: Icons.timer,
-    label: 'Chấm công',
-  ),
-  LiquidGlassNavItem(
-    icon: Icons.security_outlined,
-    label: 'Trực ban',
-  ),
-];
+List<LiquidGlassNavItem> _navItemsFor(UserModel user) {
+  final items = <LiquidGlassNavItem>[
+    const LiquidGlassNavItem(
+      icon: Icons.event_note_outlined,
+      label: 'Nghỉ phép',
+    ),
+    const LiquidGlassNavItem(icon: Icons.timer, label: 'Chấm công'),
+    const LiquidGlassNavItem(icon: Icons.security_outlined, label: 'Trực ban'),
+  ];
+  if (user.role == 'admin') {
+    items.add(
+      const LiquidGlassNavItem(icon: Icons.manage_accounts, label: 'Quản trị'),
+    );
+  }
+  return items;
+}
 
 class CustomNavBar extends StatefulWidget {
   final UserModel user;
@@ -47,15 +50,19 @@ class CustomNavBar extends StatefulWidget {
 
 class _CustomNavBarState extends State<CustomNavBar> {
   static const int _defaultPageIndex = 1;
-  static const int _screenCount = 3;
 
   late final PageController _pageController;
   late int _currentIndex;
   late final List<Widget?> _screens;
+  late final List<LiquidGlassNavItem> _navItems;
+
+  int get _screenCount => _navItems.length;
 
   @override
   void initState() {
     super.initState();
+
+    _navItems = _navItemsFor(widget.user);
 
     int initialIndex = widget.initialIndex ?? _defaultPageIndex;
     if (initialIndex >= _screenCount) {
@@ -81,6 +88,10 @@ class _CustomNavBarState extends State<CustomNavBar> {
         _screens[1] ??= const AttendanceScreen();
       case 2:
         _screens[2] = TrucBanScreen(isActive: _currentIndex == 2);
+      case 3:
+        if (_screenCount > 3) {
+          _screens[3] ??= const AdminScreen();
+        }
     }
   }
 
@@ -88,7 +99,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
     setState(() {
       _currentIndex = index;
       _ensureScreen(index);
-      if (_screens[2] != null) {
+      if (_screens.length > 2 && _screens[2] != null) {
         _screens[2] = TrucBanScreen(isActive: index == 2);
       }
     });
@@ -133,7 +144,6 @@ class _CustomNavBarState extends State<CustomNavBar> {
                   double.infinity,
                 );
             final double navTotalHeight = 65 + navBarBottomPad + 32;
-
             return Scaffold(
               resizeToAvoidBottomInset: false,
               body: MediaQuery(
@@ -159,13 +169,13 @@ class _CustomNavBarState extends State<CustomNavBar> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
-                    width: _kNavItems.length * kNavItemWidth,
+                    width: _navItems.length * kNavItemWidth,
                     child: LiquidBottomNavBar(
                       height: 65,
                       bubbleWidth: kNavItemWidth,
                       currentIndex: _currentIndex,
                       onTap: _onTabTap,
-                      items: _kNavItems,
+                      items: _navItems,
                       backgroundColor: colorScheme.surface,
                       itemColor: colorScheme.onSurfaceVariant,
                       bubbleColor: colorScheme.primary,

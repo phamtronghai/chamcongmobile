@@ -91,7 +91,15 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
               }
               if (_danhSach != null) {
                 if (_danhSach!.isEmpty) {
-                  return const BaseEmptyState();
+                  return RefreshIndicator(
+                    onRefresh: () => context
+                        .read<TrucBanCubit>()
+                        .layDanhSachTrucBan(widget.selectedDate),
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [BaseEmptyState()],
+                    ),
+                  );
                 }
                 return RefreshIndicator(
                   onRefresh: () => context
@@ -261,10 +269,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     }
 
     if (_danhSach != null && _trucChiHuy == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: BaseEmptyState(),
-      );
+      return const BaseEmptyState();
     }
 
     return const SizedBox.shrink();

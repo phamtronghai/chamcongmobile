@@ -176,8 +176,13 @@ class _LeaveScreenBodListTabState extends State<_LeaveScreenBodListTabContent> {
               child: _requests.isEmpty && !_isLoading
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.paddingOf(context).bottom),
-                      children: [const BaseEmptyState()],
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        0,
+                        16,
+                        MediaQuery.paddingOf(context).bottom,
+                      ),
+                      children: const [BaseEmptyState()],
                     )
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),

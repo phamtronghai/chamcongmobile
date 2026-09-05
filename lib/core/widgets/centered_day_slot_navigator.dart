@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:attendancebyface/core/widgets/custom_datepicker.dart';
+import 'package:attendancebyface/core/widgets/date_picker_bottom_sheet.dart';
 
 /// Strip chọn ngày dùng chung (vuốt xem, chạm chọn).
+///
+/// Hàng: 1 ô tháng–năm cố định (`09` / `26`) + 4 ô ngày cuộn.
 class CenteredDaySlotNavigator extends StatefulWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
@@ -20,16 +22,18 @@ class CenteredDaySlotNavigator extends StatefulWidget {
 }
 
 class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
-  static const int _slotLength = 5;
-  static const int _centerIndex = 2; // ngày giữa cửa sổ xem (5 ô)
+  /// Số ô ngày trong cửa sổ (không gồm ô tháng cố định).
+  static const int _slotLength = 4;
+  /// Ngày neo nằm gần giữa cửa sổ 4 ô (index 1).
+  static const int _centerIndex = 1;
   /// Carousel 3 trang: trước / hiện tại / sau — recenter sau mỗi lần vuốt.
   static const int _centerPage = 1;
   static const int _pageCount = 3;
-  /// 5 ô gần vuông → tỷ lệ hàng ≈ 5.
+  /// 5 slot visual (1 tháng + 4 ngày) gần vuông → tỷ lệ hàng ≈ 5.
   static const double _dayRowAspectRatio = 5;
 
   PageController? _pageController;
-  /// Ngày giữa cửa sổ 5 ô đang hiển thị ở trang [_centerPage].
+  /// Ngày neo cửa sổ 4 ô đang hiển thị ở trang [_centerPage].
   DateTime? _viewAnchor;
   DateTime? _monthCursor;
   bool _ignorePageCallback = false;
@@ -68,7 +72,12 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
     final next = _dateOnly(widget.selectedDate);
     final prev = _dateOnly(oldWidget.selectedDate);
     if (next == prev) return;
-    if (_isSameDay(next, _safeViewAnchor)) return;
+    if (_isSameDay(next, _safeViewAnchor)) {
+      setState(() {
+        _monthCursor = DateTime(next.year, next.month);
+      });
+      return;
+    }
     _jumpToDate(next);
   }
 
@@ -133,19 +142,17 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   Future<void> _pickMonthYear() async {
     _ensureInitialized();
     final initial = _dateOnly(widget.selectedDate);
-    final result = await showCustomDatePickerSheet(
-      context: context,
-      initialDates: {initial},
-      initialMode: CustomDatePickerMode.single,
+    await AppDatePickerBottomSheet.show(
+      context,
+      initialDate: initial,
       initialDisplayDate: _safeMonthCursor,
-      showModeToggle: false,
-      confirmLabel: 'Chọn ngày',
+      title: 'Chọn ngày',
+      onDateSelected: (picked) {
+        if (!mounted) return;
+        _jumpToDate(picked);
+        widget.onDateSelected(picked);
+      },
     );
-    if (result == null || result.isEmpty || !mounted) return;
-
-    final picked = result.first;
-    _jumpToDate(picked);
-    widget.onDateSelected(picked);
   }
 
   @override
@@ -157,109 +164,168 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
     final primary = colorScheme.primary;
     final deActive = isDark ? colorScheme.onPrimary : colorScheme.surface;
     final textStyle = TextConstants.appTextRegular;
-    final monthYearLabel = DateFormat(
-      'MMMM yyyy',
-      'vi',
-    ).format(_safeMonthCursor);
     final selected = _dateOnly(widget.selectedDate);
+    final monthSource = selected;
     final controller = _pageController!;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _MonthYearChip(
-              label: monthYearLabel,
-              primary: primary,
-              deActive: deActive,
-              onTap: _pickMonthYear,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final height = width > 0 ? width / _dayRowAspectRatio : 72.0;
-            return SizedBox(
-              height: height,
-              width: width,
-              child: PageView.builder(
-                controller: controller,
-                itemCount: _pageCount,
-                onPageChanged: _onPageChanged,
-                itemBuilder: (context, page) {
-                  final days = _daysForAnchor(_anchorForPage(page));
-                  return Row(
-                    children: [
-                      for (final date in days)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: _DayBox(
-                              date: date,
-                              isSelected: _isSameDay(date, selected),
-                              isSelectable: _isSelectable(date),
-                              primary: primary,
-                              deActive: deActive,
-                              textStyle: textStyle,
-                              onTap: _isSelectable(date)
-                                  ? () {
-                                      _jumpToDate(date);
-                                      widget.onDateSelected(date);
-                                    }
-                                  : null,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final height = width > 0 ? width / _dayRowAspectRatio : 72.0;
+        return SizedBox(
+          height: height,
+          width: width,
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _MonthBox(
+                    month: monthSource.month,
+                    year: monthSource.year,
+                    primary: primary,
+                    deActive: deActive,
+                    textStyle: textStyle,
+                    onTap: _pickMonthYear,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: VerticalDivider(
+                  width: 12,
+                  thickness: 1,
+                  color: primary.withValues(alpha: 0.35),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: PageView.builder(
+                  controller: controller,
+                  itemCount: _pageCount,
+                  onPageChanged: _onPageChanged,
+                  itemBuilder: (context, page) {
+                    final days = _daysForAnchor(_anchorForPage(page));
+                    return Row(
+                      children: [
+                        for (final date in days)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: _DayBox(
+                                date: date,
+                                isSelected: _isSameDay(date, selected),
+                                isSelectable: _isSelectable(date),
+                                primary: primary,
+                                deActive: deActive,
+                                textStyle: textStyle,
+                                onTap: _isSelectable(date)
+                                    ? () {
+                                        _jumpToDate(date);
+                                        widget.onDateSelected(date);
+                                      }
+                                    : null,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
               ),
-            );
-          },
-        ),
-      ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class _MonthYearChip extends StatelessWidget {
-  final String label;
+/// Ô tháng–năm cố định: nền primary, gạch chéo 45° (phải → trái) chia tháng / năm.
+class _MonthBox extends StatelessWidget {
+  final int month;
+  final int year;
   final Color primary;
   final Color deActive;
+  final TextStyle textStyle;
   final VoidCallback onTap;
 
-  const _MonthYearChip({
-    required this.label,
+  const _MonthBox({
+    required this.month,
+    required this.year,
     required this.primary,
     required this.deActive,
+    required this.textStyle,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final monthLabel = month.toString().padLeft(2, '0');
+    final yearLabel = (year % 100).toString().padLeft(2, '0');
+    final labelStyle = textStyle.copyWith(
+      fontSize: TextConstants.fontSizeApp,
+      color: deActive,
+      fontWeight: FontWeight.w600,
+    );
+
     return Material(
       color: primary,
-      borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Text(
-            label,
-            style: TextConstants.appTextSemiBold.copyWith(
-              color: deActive,
+        customBorder: const CircleBorder(),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CustomPaint(
+              painter: _MonthDiagonalPainter(
+                color: deActive.withValues(alpha: 0.55),
+              ),
             ),
-          ),
+            // Phần trên-trái: tháng
+            Align(
+              alignment: const Alignment(-0.4, -0.35),
+              child: Text(monthLabel, maxLines: 1, style: labelStyle),
+            ),
+            // Phần dưới-phải: năm
+            Align(
+              alignment: const Alignment(0.4, 0.35),
+              child: Text(yearLabel, maxLines: 1, style: labelStyle),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+/// Gạch chéo 45° từ góc phải-trên sang trái-dưới.
+class _MonthDiagonalPainter extends CustomPainter {
+  final Color color;
+
+  const _MonthDiagonalPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.25
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(
+      Offset(size.width, 0),
+      Offset(0, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MonthDiagonalPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 class _DayBox extends StatelessWidget {
@@ -285,21 +351,22 @@ class _DayBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final weekday = DateFormat('EEE', 'vi').format(date);
     final isToday = DateUtils.isSameDay(date, DateTime.now());
-    final fg = isSelected
-        ? deActive
-        : isSelectable
+    final fg = isSelectable
         ? primary
         : primary.withValues(alpha: 0.45);
+    final borderWidth = isSelected
+        ? 2.5
+        : isToday
+            ? 2.0
+            : 1.0;
+    final borderColor = isSelected || isToday
+        ? primary
+        : primary.withValues(alpha: 0.35);
 
     return Material(
-      color: isSelected ? primary : deActive,
+      color: deActive,
       shape: CircleBorder(
-        side: BorderSide(
-          width: isToday ? 2.5 : 1,
-          color: isSelected || isToday
-              ? primary
-              : primary.withValues(alpha: 0.35),
-        ),
+        side: BorderSide(width: borderWidth, color: borderColor),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -316,9 +383,7 @@ class _DayBox extends StatelessWidget {
                 style: textStyle.copyWith(
                   fontSize: TextConstants.fontSizeApp,
                   color: fg,
-                  fontWeight: isSelected
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 2),
@@ -326,9 +391,7 @@ class _DayBox extends StatelessWidget {
                 '${date.day}',
                 style: textStyle.copyWith(
                   fontSize: TextConstants.fontSizeApp,
-                  fontWeight: isSelected
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+                  fontWeight: FontWeight.normal,
                   color: fg,
                 ),
               ),

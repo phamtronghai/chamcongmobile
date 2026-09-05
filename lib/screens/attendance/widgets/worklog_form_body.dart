@@ -162,7 +162,6 @@ class _WorklogFormBodyState extends State<WorklogFormBody> {
         children: [
           CustomTextField(
             controller: _controller,
-            fieldType: CustomTextFieldType.multiline,
             label: 'Nội dung',
             hint: 'Nhập công việc…',
             autofocus: !widget.isLocked,

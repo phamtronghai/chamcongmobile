@@ -63,7 +63,6 @@ class _KhachDonViTabState extends State<KhachDonViTab>
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
-                  SizedBox(height: 120),
                   BaseEmptyState(),
                 ],
               ),

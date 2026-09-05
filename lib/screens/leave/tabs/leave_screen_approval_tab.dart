@@ -546,11 +546,13 @@ class _LeaveScreenApprovalTabState
             child: list.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.paddingOf(context).bottom),
-                    children: [
-                      const SizedBox(height: 16),
-                      const BaseEmptyState(),
-                    ],
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      0,
+                      16,
+                      MediaQuery.paddingOf(context).bottom,
+                    ),
+                    children: const [BaseEmptyState()],
                   )
                 : ListView.builder(
                     padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.paddingOf(context).bottom),

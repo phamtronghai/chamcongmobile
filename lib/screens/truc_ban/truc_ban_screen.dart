@@ -111,7 +111,7 @@ class _TrucBanScreenState extends State<TrucBanScreen>
       return switch (kind) {
         _TrucBanTabKind.trucBan => const Tab(text: 'Trực ban'),
         _TrucBanTabKind.dangKy => const Tab(text: 'Đăng ký'),
-        _TrucBanTabKind.khachDonVi => const Tab(text: 'DS Khách'),
+        _TrucBanTabKind.khachDonVi => const Tab(text: 'Khách'),
         _TrucBanTabKind.duyet => const Tab(text: 'Duyệt'),
       };
     }).toList();

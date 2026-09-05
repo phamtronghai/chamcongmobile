@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:fw_tab_bar/fw_tab_bar.dart';
 
 /// Tab bar chuẩn SAMCOM: sliding pill qua [FwTabBar], style từ theme.
+///
+/// Mặc định mỗi tab fit-content; tràn ngang thì cuộn. [tabWidth] ép rộng cố định.
 class SamcomTabBar extends StatelessWidget {
   final TabController? controller;
   final List<Widget> tabs;

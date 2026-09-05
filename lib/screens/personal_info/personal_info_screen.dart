@@ -595,10 +595,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen>
               onPressed: () => AppRouter.goToQRScanner(context),
             ),
           ] else ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: BaseEmptyState(),
-            ),
+            const BaseEmptyState(),
             CustomButton(
               text: 'Thêm Căn cước (QR)',
               icon: Icons.qr_code_scanner,

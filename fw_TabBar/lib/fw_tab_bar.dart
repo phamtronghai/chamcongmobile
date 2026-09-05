@@ -1,8 +1,12 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 /// Sliding pill tab bar — hỗ trợ [TabController], N tabs, icon + text.
+///
+/// Mặc định mỗi tab **fit-content**. Tràn bề ngang → cuộn trái/phải.
+/// Truyền [tabWidth] để ép chiều rộng cố định (hành vi cũ).
 class FwTabBar extends StatefulWidget {
   final TabController? controller;
   final List<Widget> tabs;
@@ -45,11 +49,20 @@ class FwTabBar extends StatefulWidget {
 class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin {
   TabController? _controller;
   bool _ownsController = false;
+  final ScrollController _scrollController = ScrollController();
+  late List<GlobalKey> _tabKeys;
+  List<double> _tabWidths = const [];
 
   TabController get _effectiveController {
     final c = _controller;
     assert(c != null, 'No TabController for FwTabBar');
     return c!;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabKeys = List.generate(widget.tabs.length, (_) => GlobalKey());
   }
 
   @override
@@ -61,6 +74,10 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
   @override
   void didUpdateWidget(covariant FwTabBar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.tabs.length != widget.tabs.length) {
+      _tabKeys = List.generate(widget.tabs.length, (_) => GlobalKey());
+      _tabWidths = const [];
+    }
     if (oldWidget.controller != widget.controller ||
         oldWidget.tabs.length != widget.tabs.length) {
       _syncController();
@@ -94,7 +111,9 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
   }
 
   void _onControllerTick() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    _scrollSelectedIntoView();
   }
 
   @override
@@ -103,6 +122,7 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
     c?.animation?.removeListener(_onControllerTick);
     c?.removeListener(_onControllerTick);
     if (_ownsController) c?.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -120,6 +140,76 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
     final c = _effectiveController;
     if (c.index == index) return;
     c.animateTo(index);
+  }
+
+  void _scheduleMeasure() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _measureTabs();
+    });
+  }
+
+  void _measureTabs() {
+    if (widget.tabWidth != null) return;
+    final widths = <double>[];
+    var changed = _tabWidths.length != _tabKeys.length;
+    for (var i = 0; i < _tabKeys.length; i++) {
+      final box =
+          _tabKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      final w = box?.hasSize == true ? box!.size.width : 0.0;
+      widths.add(w);
+      if (!changed &&
+          (i >= _tabWidths.length || (w - _tabWidths[i]).abs() > 0.5)) {
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    setState(() => _tabWidths = widths);
+    _scrollSelectedIntoView();
+  }
+
+  double _leftOf(int index, EdgeInsets margin) {
+    var left = margin.left;
+    for (var i = 0; i < index; i++) {
+      left += _widthAt(i) + margin.horizontal;
+    }
+    return left;
+  }
+
+  double _widthAt(int index) {
+    if (widget.tabWidth != null) return widget.tabWidth!;
+    if (index < _tabWidths.length && _tabWidths[index] > 0) {
+      return _tabWidths[index];
+    }
+    return 88;
+  }
+
+  void _scrollSelectedIntoView() {
+    if (!_scrollController.hasClients) return;
+    final count = widget.tabs.length;
+    if (count == 0) return;
+    final margin = widget.buttonMargin.resolve(Directionality.of(context));
+    final index = _effectiveController.index.clamp(0, count - 1);
+    final left = _leftOf(index, margin);
+    final right = left + _widthAt(index) + margin.right;
+    final viewStart = _scrollController.offset;
+    final viewEnd = viewStart + _scrollController.position.viewportDimension;
+    double? target;
+    if (left < viewStart) {
+      target = left;
+    } else if (right > viewEnd) {
+      target = right - _scrollController.position.viewportDimension;
+    }
+    if (target == null) return;
+    target = target.clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -146,6 +236,10 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
         );
 
     final count = widget.tabs.length;
+    if (_tabKeys.length != count) {
+      _tabKeys = List.generate(count, (_) => GlobalKey());
+    }
+
     final animationValue =
         _effectiveController.animation?.value ??
         _effectiveController.index.toDouble();
@@ -159,44 +253,48 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
                 ? constraints.maxWidth
                 : double.infinity);
         final marginsTotal = margin.horizontal * count;
+        final fitContent = widget.tabWidth == null;
 
-        // Chiều rộng mỗi tab + có cần scroll không.
-        late final double eachWidth;
-        late final bool scrollable;
-
-        if (widget.tabWidth != null) {
-          eachWidth = widget.tabWidth!;
-          final total = eachWidth * count + marginsTotal;
-          scrollable = maxWidth.isFinite && total > maxWidth + 0.5;
-        } else if (maxWidth.isFinite) {
-          final equalWidth = (maxWidth - marginsTotal) / count;
-          const minReadable = 88.0;
-          if (equalWidth >= minReadable) {
-            eachWidth = equalWidth;
-            scrollable = false;
-          } else {
-            eachWidth = minReadable;
-            scrollable = true;
-          }
+        late final List<double> widths;
+        if (!fitContent) {
+          widths = List.filled(count, widget.tabWidth!);
+        } else if (_tabWidths.length == count &&
+            _tabWidths.every((w) => w > 0)) {
+          widths = _tabWidths;
         } else {
-          eachWidth = 120;
-          scrollable = true;
+          widths = List.filled(count, 88);
+          _scheduleMeasure();
         }
 
-        // physics NeverScrollable mà nội dung vẫn tràn → vẫn bật scroll
-        // (tránh overflow khi nhiều tab).
+        final contentTotal =
+            widths.fold<double>(0, (sum, w) => sum + w) + marginsTotal;
+        final scrollable =
+            maxWidth.isFinite && contentTotal > maxWidth + 0.5;
         final physics = scrollable
-            ? (widget.physics is NeverScrollableScrollPhysics ||
-                    widget.physics == null
-                ? const BouncingScrollPhysics()
-                : widget.physics!)
+            ? (widget.physics ?? const BouncingScrollPhysics())
             : const NeverScrollableScrollPhysics();
 
-        final totalWidth = eachWidth * count + marginsTotal;
-        final trackWidth = scrollable ? totalWidth : maxWidth;
+        final trackWidth = scrollable
+            ? contentTotal
+            : (maxWidth.isFinite ? maxWidth : contentTotal);
+
+        // Pill lerp theo animation giữa 2 tab.
+        double leftOf(int i) {
+          var left = margin.left;
+          for (var j = 0; j < i; j++) {
+            left += widths[j] + margin.horizontal;
+          }
+          return left;
+        }
+
+        final from = animationValue.floor().clamp(0, count - 1);
+        final to = animationValue.ceil().clamp(0, count - 1);
+        final t = (animationValue - from).clamp(0.0, 1.0);
+        final pillLeft = leftOf(from) + (leftOf(to) - leftOf(from)) * t;
+        final pillWidth = widths[from] + (widths[to] - widths[from]) * t;
 
         final track = Container(
-          width: trackWidth,
+          width: fitContent && !scrollable ? null : trackWidth,
           decoration: BoxDecoration(
             color: unselectedBg,
             borderRadius: BorderRadius.circular(widget.radius),
@@ -205,11 +303,10 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
           child: Stack(
             children: [
               Positioned(
-                left: margin.left +
-                    animationValue * (eachWidth + margin.horizontal),
+                left: pillLeft,
                 top: margin.top,
                 bottom: margin.bottom,
-                width: eachWidth,
+                width: pillWidth,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: selectedBg,
@@ -221,37 +318,38 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(count, (i) {
                   final selected = i == index;
-                  return Padding(
-                    padding: margin,
-                    child: SizedBox(
-                      width: eachWidth,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _onTap(i),
-                          borderRadius:
-                              BorderRadius.circular(widget.radius),
-                          child: Padding(
-                            padding: widget.contentPadding,
-                            child: Center(
-                              child: DefaultTextStyle(
-                                style: selected
-                                    ? selectedStyle
-                                    : unselectedStyle,
-                                child: IconTheme(
-                                  data: IconThemeData(
-                                    size: 18,
-                                    color: selected
-                                        ? selectedStyle.color
-                                        : unselectedStyle.color,
-                                  ),
-                                  child: _FwTabLabel(tab: widget.tabs[i]),
-                                ),
+                  final tabChild = Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _onTap(i),
+                      borderRadius: BorderRadius.circular(widget.radius),
+                      child: Padding(
+                        padding: widget.contentPadding,
+                        child: Center(
+                          child: DefaultTextStyle(
+                            style: selected ? selectedStyle : unselectedStyle,
+                            child: IconTheme(
+                              data: IconThemeData(
+                                size: 18,
+                                color: selected
+                                    ? selectedStyle.color
+                                    : unselectedStyle.color,
                               ),
+                              child: _FwTabLabel(tab: widget.tabs[i]),
                             ),
                           ),
                         ),
                       ),
+                    ),
+                  );
+
+                  return Padding(
+                    padding: margin,
+                    child: KeyedSubtree(
+                      key: _tabKeys[i],
+                      child: fitContent
+                          ? tabChild
+                          : SizedBox(width: widths[i], child: tabChild),
                     ),
                   );
                 }),
@@ -260,19 +358,25 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
           ),
         );
 
+        _scheduleMeasure();
+
+        Widget child;
         if (scrollable) {
-          return SizedBox(
+          child = SizedBox(
             width: maxWidth.isFinite ? maxWidth : null,
             child: SingleChildScrollView(
+              controller: _scrollController,
               scrollDirection: Axis.horizontal,
               physics: physics,
               child: track,
             ),
           );
+        } else if (widget.center) {
+          child = Center(child: track);
+        } else {
+          child = track;
         }
-
-        if (widget.center) return Center(child: track);
-        return track;
+        return child;
       },
     );
 
@@ -302,6 +406,7 @@ class _FwTabLabel extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
+            softWrap: false,
           ),
         );
       } else if (t.child != null) {
