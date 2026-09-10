@@ -226,12 +226,10 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
                           children: [
                             Padding(
                               padding: EdgeInsets.only(
-                                bottom:
-                                    MediaQuery.paddingOf(context).bottom +
-                                    kFabFilledPillHeight +
-                                    (_canViewQuanSoReport
-                                        ? kFabFilledPillHeight + 12
-                                        : 0),
+                                bottom: fabListBottomPadding(
+                                  context,
+                                  fabRows: _canViewQuanSoReport ? 2 : 1,
+                                ),
                               ),
                               child: AttendanceHistorySection(
                                 isLoadingRecords: state.isLoadingRecords,
@@ -240,9 +238,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
                             ),
                             Padding(
                               padding: EdgeInsets.only(
-                                bottom:
-                                    MediaQuery.paddingOf(context).bottom +
-                                    kFabFilledPillHeight,
+                                bottom: fabListBottomPadding(context),
                               ),
                               child: DailyWorklogsSection(
                                 isLoadingWorklogs: state.isLoadingWorklogs,
@@ -269,9 +265,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
                                 child: Padding(
                                   padding: EdgeInsets.only(
                                     right: kNavBarHorizontalPadding,
-                                    bottom: MediaQuery.paddingOf(
-                                      context,
-                                    ).bottom,
+                                    bottom: fabBottomOffset(context),
                                   ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -293,7 +287,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
                                                   ),
                                           ),
                                         ),
-                                        const SizedBox(height: 12),
+                                        const SizedBox(height: kFabStackGap),
                                       ],
                                       AttendanceActionButtons(
                                         hasRegisteredFace:
@@ -329,9 +323,7 @@ class _AttendanceScreenState extends State<_AttendanceScreenContent>
                                 child: Padding(
                                   padding: EdgeInsets.only(
                                     right: kNavBarHorizontalPadding,
-                                    bottom: MediaQuery.paddingOf(
-                                      context,
-                                    ).bottom,
+                                    bottom: fabBottomOffset(context),
                                   ),
                                   child: IntrinsicWidth(
                                     child: CustomButton(

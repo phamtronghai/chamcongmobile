@@ -12,6 +12,7 @@ import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/screens/leave/widgets/leave_request_tile.dart';
 import 'package:attendancebyface/screens/leave/widgets/leave_request_detail_sheet.dart';
 import 'package:attendancebyface/core/widgets/samcom_sheet.dart';
+import 'package:attendancebyface/screens/home/custom_navbar.dart';
 import 'package:attendancebyface/core/network/api_client.dart';
 import 'package:attendancebyface/core/cubits/user_cubit.dart';
 import 'package:attendancebyface/core/cubits/user_state.dart';
@@ -550,12 +551,12 @@ class _LeaveScreenApprovalTabState
                       16,
                       0,
                       16,
-                      MediaQuery.paddingOf(context).bottom,
+                      fabListBottomPadding(context, fabRows: 0),
                     ),
                     children: const [BaseEmptyState()],
                   )
                 : ListView.builder(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.paddingOf(context).bottom),
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, fabListBottomPadding(context, fabRows: 0)),
                     itemCount: list.length,
                     itemBuilder: (context, index) {
                       final item = list[index];

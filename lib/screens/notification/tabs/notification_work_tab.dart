@@ -7,6 +7,7 @@ import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
 import 'package:attendancebyface/core/widgets/samcom_sheet.dart';
+import 'package:attendancebyface/core/widgets/server_connection_empty_state.dart';
 import 'package:attendancebyface/models/qlvb_notification.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -161,19 +162,7 @@ class _NotificationWorkTabState extends State<NotificationWorkTab> {
     }
 
     if (_error != null && _items.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _load,
-        color: colorScheme.primary,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            BaseEmptyState(
-              icon: Icons.cloud_off_outlined,
-              title: 'Không kết nối được máy chủ',
-            ),
-          ],
-        ),
-      );
+      return ServerConnectionEmptyState(onRefresh: _load);
     }
 
     return Column(
@@ -347,7 +336,6 @@ class _NotificationWorkTabState extends State<NotificationWorkTab> {
 
   Widget _buildSheetSubtitle(QlvbNotification notification, DateFormat fmt) {
     final colorScheme = Theme.of(context).colorScheme;
-    final eventLabel = _eventTypeLabel(notification.eventType);
 
     return Wrap(
       spacing: 8,
@@ -360,14 +348,6 @@ class _NotificationWorkTabState extends State<NotificationWorkTab> {
             color: colorScheme.onSurface.withValues(alpha: 0.68),
           ),
         ),
-        if (eventLabel != null)
-          SamcomChip(
-            label: eventLabel,
-            dense: true,
-            fontSize: 12,
-            variant: SamcomChipVariant.outlined,
-            color: ColorConstants.infoColor,
-          ),
         SamcomChip(
           label: notification.isRead ? 'Đã đọc' : 'Chưa đọc',
           dense: true,
@@ -379,14 +359,6 @@ class _NotificationWorkTabState extends State<NotificationWorkTab> {
         ),
       ],
     );
-  }
-
-  String? _eventTypeLabel(String? eventType) {
-    if (eventType == null || eventType.isEmpty) return null;
-    return switch (eventType) {
-      'document_assigned_to_staff' => 'Giao văn bản',
-      _ => eventType,
-    };
   }
 
   String _formatTimestamp(DateTime timestamp) {

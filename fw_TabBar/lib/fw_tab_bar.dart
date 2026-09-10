@@ -268,15 +268,22 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
 
         final contentTotal =
             widths.fold<double>(0, (sum, w) => sum + w) + marginsTotal;
-        final scrollable =
-            maxWidth.isFinite && contentTotal > maxWidth + 0.5;
+        final hasMeasuredWidths = !fitContent ||
+            (_tabWidths.length == count && _tabWidths.every((w) => w > 0));
+        // fitContent chưa đo xong → cho cuộn để Row không bị ép maxWidth.
+        final scrollable = maxWidth.isFinite &&
+            ((fitContent && !hasMeasuredWidths) ||
+                contentTotal > maxWidth + 0.5);
         final physics = scrollable
             ? (widget.physics ?? const BouncingScrollPhysics())
             : const NeverScrollableScrollPhysics();
 
-        final trackWidth = scrollable
-            ? contentTotal
-            : (maxWidth.isFinite ? maxWidth : contentTotal);
+        // fitContent: luôn ôm nội dung (không width:null → bị expand maxWidth).
+        final resolvedTrackWidth = fitContent
+            ? (hasMeasuredWidths ? contentTotal : null)
+            : (scrollable
+                ? contentTotal
+                : (maxWidth.isFinite ? maxWidth : contentTotal));
 
         // Pill lerp theo animation giữa 2 tab.
         double leftOf(int i) {
@@ -294,26 +301,28 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
         final pillWidth = widths[from] + (widths[to] - widths[from]) * t;
 
         final track = Container(
-          width: fitContent && !scrollable ? null : trackWidth,
+          width: resolvedTrackWidth,
           decoration: BoxDecoration(
             color: unselectedBg,
             borderRadius: BorderRadius.circular(widget.radius),
           ),
           clipBehavior: Clip.antiAlias,
           child: Stack(
+            fit: StackFit.passthrough,
             children: [
-              Positioned(
-                left: pillLeft,
-                top: margin.top,
-                bottom: margin.bottom,
-                width: pillWidth,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: selectedBg,
-                    borderRadius: BorderRadius.circular(widget.radius),
+              if (hasMeasuredWidths)
+                Positioned(
+                  left: pillLeft,
+                  top: margin.top,
+                  bottom: margin.bottom,
+                  width: pillWidth,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: selectedBg,
+                      borderRadius: BorderRadius.circular(widget.radius),
+                    ),
                   ),
                 ),
-              ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(count, (i) {
@@ -343,13 +352,16 @@ class _FwTabBarState extends State<FwTabBar> with SingleTickerProviderStateMixin
                     ),
                   );
 
+                  // Đo intrinsic khi chưa có width; sau đó ép khớp contentTotal.
+                  final sizedChild = hasMeasuredWidths
+                      ? SizedBox(width: widths[i], child: tabChild)
+                      : tabChild;
+
                   return Padding(
                     padding: margin,
                     child: KeyedSubtree(
                       key: _tabKeys[i],
-                      child: fitContent
-                          ? tabChild
-                          : SizedBox(width: widths[i], child: tabChild),
+                      child: sizedChild,
                     ),
                   );
                 }),

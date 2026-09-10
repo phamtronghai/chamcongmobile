@@ -48,9 +48,16 @@ enum TrangThaiRaNgoai {
 
   const TrangThaiRaNgoai(this.value, this.moTa);
 
+  /// Query `trangThai` cho GET danh-sach-yeu-cau.
+  String get danhSachQueryValue => value;
+
   static TrangThaiRaNgoai fromValue(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (normalized == 'TUCHOI' || normalized == 'TU_CHOI') {
+      return TrangThaiRaNgoai.tuChoi;
+    }
     return TrangThaiRaNgoai.values.firstWhere(
-      (e) => e.value == value,
+      (e) => e.value == normalized,
       orElse: () => TrangThaiRaNgoai.choDuyet,
     );
   }

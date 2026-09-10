@@ -3,7 +3,7 @@ description: "Chấm công bằng khuôn mặt."
 
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 3.0.2+43
+version: 3.0.3+44
 
 environment:
   sdk: ^3.8.1

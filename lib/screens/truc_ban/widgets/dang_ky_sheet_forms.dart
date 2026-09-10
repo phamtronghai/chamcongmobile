@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_text_field.dart';
@@ -24,16 +24,123 @@ class DangKyRaNgoaiSheetForm extends StatefulWidget {
 class _DangKyRaNgoaiSheetFormState extends State<DangKyRaNgoaiSheetForm> {
   final _formKey = GlobalKey<FormState>();
   final _lyDoController = TextEditingController();
-  TimeOfDay _thoiGianRa = TimeOfDay.now();
-  TimeOfDay _thoiGianVao = TimeOfDay(
-    hour: (TimeOfDay.now().hour + 1) % 24,
-    minute: TimeOfDay.now().minute,
-  );
+  late final TextEditingController _gioController;
+
+  static String _formatTimeOfDay(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}${t.minute.toString().padLeft(2, '0')}';
+
+  /// `11101230` / `11:10 - 12:30` → (ra, vào).
+  static (TimeOfDay, TimeOfDay)? _parseTimeRange(String? raw) {
+    if (raw == null) return null;
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 8) return null;
+    final h1 = int.tryParse(digits.substring(0, 2));
+    final m1 = int.tryParse(digits.substring(2, 4));
+    final h2 = int.tryParse(digits.substring(4, 6));
+    final m2 = int.tryParse(digits.substring(6, 8));
+    if (h1 == null || m1 == null || h2 == null || m2 == null) return null;
+    if (h1 > 23 || m1 > 59 || h2 > 23 || m2 > 59) return null;
+    return (TimeOfDay(hour: h1, minute: m1), TimeOfDay(hour: h2, minute: m2));
+  }
+
+  static String _formatDigitsAsRange(String digits) {
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i == 2 || i == 6) buf.write(':');
+      if (i == 4) buf.write(' - ');
+      buf.write(digits[i]);
+    }
+    return buf.toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final now = TimeOfDay.now();
+    final vao = TimeOfDay(hour: (now.hour + 1) % 24, minute: now.minute);
+    final digits = '${_formatTimeOfDay(now)}${_formatTimeOfDay(vao)}';
+    _gioController = TextEditingController(text: _formatDigitsAsRange(digits));
+  }
 
   @override
   void dispose() {
     _lyDoController.dispose();
+    _gioController.dispose();
     super.dispose();
+  }
+
+  String? _validateGio(String? value) {
+    final parsed = _parseTimeRange(value);
+    if (parsed == null) {
+      return 'Nhập 8 số, ví dụ 11101230 → 11:10 - 12:30';
+    }
+    final (raTod, vaoTod) = parsed;
+    final now = DateTime.now();
+    // So sánh theo phút: hiện tại <= giờ ra < giờ vào
+    final nowFloor = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+    );
+    final ra = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      raTod.hour,
+      raTod.minute,
+    );
+    final vao = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      vaoTod.hour,
+      vaoTod.minute,
+    );
+
+    if (ra.isBefore(nowFloor)) {
+      return 'Giờ ra phải từ thời điểm hiện tại trở đi';
+    }
+    if (!vao.isAfter(ra)) {
+      return 'Giờ vào phải sau giờ ra';
+    }
+    return null;
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final (raTod, vaoTod) = _parseTimeRange(_gioController.text)!;
+    final now = DateTime.now();
+    final thoiGianRa = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      raTod.hour,
+      raTod.minute,
+    );
+    final thoiGianVao = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      vaoTod.hour,
+      vaoTod.minute,
+    );
+
+    final userState = context.read<UserCubit>().state;
+    String tenUser = '';
+    if (userState is UserLoaded) {
+      tenUser = userState.user.name;
+    }
+
+    context.read<TrucBanCubit>().dangKyRaNgoai(
+      thoiGianRa: thoiGianRa,
+      thoiGianVao: thoiGianVao,
+      lyDo: _lyDoController.text.trim(),
+      tenNguoiDangKy: tenUser,
+    );
+    Navigator.pop(context);
   }
 
   @override
@@ -44,24 +151,18 @@ class _DangKyRaNgoaiSheetFormState extends State<DangKyRaNgoaiSheetForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildTimeField(
-                  label: 'Giờ ra',
-                  time: _thoiGianRa,
-                  onTap: () => _selectTime(true),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTimeField(
-                  label: 'Giờ vào',
-                  time: _thoiGianVao,
-                  onTap: () => _selectTime(false),
-                ),
-              ),
-            ],
+          CustomTextField(
+            controller: _gioController,
+            label: 'Giờ ra - Giờ vào *',
+            hint: '11101230 → 11:10 - 12:30',
+            prefixIcon: Icons.access_time,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            textStyle: TextConstants.appTextBold.copyWith(
+              fontSize: TextConstants.fontSizeApp,
+            ),
+            inputFormatters: const [_RaNgoaiTimeRangeFormatter()],
+            validator: _validateGio,
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -76,94 +177,31 @@ class _DangKyRaNgoaiSheetFormState extends State<DangKyRaNgoaiSheetForm> {
           CustomButton(
             text: 'ĐĂNG KÝ',
             icon: Icons.app_registration,
-            onPressed: () {
-              if (_formKey.currentState?.validate() ?? false) {
-                final now = DateTime.now();
-                final thoiGianRa = DateTime(
-                  now.year,
-                  now.month,
-                  now.day,
-                  _thoiGianRa.hour,
-                  _thoiGianRa.minute,
-                );
-                final thoiGianVao = DateTime(
-                  now.year,
-                  now.month,
-                  now.day,
-                  _thoiGianVao.hour,
-                  _thoiGianVao.minute,
-                );
-
-                // Lấy tên user từ UserCubit
-                final userState = context.read<UserCubit>().state;
-                String tenUser = '';
-                if (userState is UserLoaded) {
-                  tenUser = userState.user.name;
-                }
-
-                context.read<TrucBanCubit>().dangKyRaNgoai(
-                  thoiGianRa: thoiGianRa,
-                  thoiGianVao: thoiGianVao,
-                  lyDo: _lyDoController.text.trim(),
-                  tenNguoiDangKy: tenUser,
-                );
-                Navigator.pop(context);
-              }
-            },
+            onPressed: _submit,
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildTimeField({
-    required String label,
-    required TimeOfDay time,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(Icons.access_time),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(
-              ColorConstants.defaultBorderRadius,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-        ),
-        child: Text(
-          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-          style: TextConstants.appTextBold,
-        ),
-      ),
+/// Chỉ nhận số (tối đa 8); tự chèn `:` và ` - ` → `11:10 - 12:30`.
+class _RaNgoaiTimeRangeFormatter extends TextInputFormatter {
+  const _RaNgoaiTimeRangeFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final clipped = digits.length > 8 ? digits.substring(0, 8) : digits;
+    final formatted = _DangKyRaNgoaiSheetFormState._formatDigitsAsRange(
+      clipped,
     );
-  }
-
-  Future<void> _selectTime(bool isRa) async {
-    Navigator.of(context).push(
-      showPicker(
-        context: context,
-        value: Time(
-          hour: isRa ? _thoiGianRa.hour : _thoiGianVao.hour,
-          minute: isRa ? _thoiGianRa.minute : _thoiGianVao.minute,
-        ),
-        onChange: (picked) {
-          setState(() {
-            final newTime = TimeOfDay(hour: picked.hour, minute: picked.minute);
-            isRa ? _thoiGianRa = newTime : _thoiGianVao = newTime;
-          });
-        },
-        is24HrFormat: true,
-        okText: 'CHỌN',
-        cancelText: 'HỦY',
-      ),
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
@@ -283,5 +321,4 @@ class _DangKyKhachSheetFormState extends State<DangKyKhachSheetForm> {
       ),
     );
   }
-
 }

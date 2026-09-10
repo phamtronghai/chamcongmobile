@@ -66,8 +66,8 @@ class TrucBanRepository {
 
   // ======== ĐĂNG KÝ RA NGOÀI ========
 
-  /// Đăng ký ra ngoài
-  Future<bool> dangKyRaNgoai({
+  /// Đăng ký ra ngoài — trả về id yêu cầu nếu có.
+  Future<String?> dangKyRaNgoai({
     required DateTime thoiGianRa,
     required DateTime thoiGianVao,
     required String lyDo,
@@ -89,13 +89,47 @@ class TrucBanRepository {
   /// Lấy danh sách yêu cầu ra ngoài (cho Lãnh đạo)
   Future<List<YeuCauRaNgoai>> layDsYeuCauRaNgoai({
     required DateTime ngay,
-    TrangThaiRaNgoai? trangThai,
+    required TrangThaiRaNgoai trangThai,
   }) {
     final ngayStr = _formatDate(ngay);
     return _service.danhSachYeuCauRaNgoai(
       ngay: ngayStr,
-      trangThai: trangThai?.value,
+      trangThai: trangThai.danhSachQueryValue,
     );
+  }
+
+  /// Gọi song song 3 trạng thái; lỗi từng trạng thái không làm hỏng các trạng thái khác.
+  Future<DsYeuCauRaNgoaiBundle> layDsYeuCauRaNgoaiTatCaTrangThai(
+    DateTime ngay,
+  ) async {
+    Future<({TrangThaiRaNgoai status, List<YeuCauRaNgoai>? items})> one(
+      TrangThaiRaNgoai status,
+    ) async {
+      try {
+        final items = await layDsYeuCauRaNgoai(ngay: ngay, trangThai: status);
+        return (status: status, items: items);
+      } catch (_) {
+        return (status: status, items: null);
+      }
+    }
+
+    final results = await Future.wait([
+      one(TrangThaiRaNgoai.choDuyet),
+      one(TrangThaiRaNgoai.daDuyet),
+      one(TrangThaiRaNgoai.tuChoi),
+    ]);
+
+    final merged = <YeuCauRaNgoai>[];
+    final failed = <TrangThaiRaNgoai>{};
+    for (final r in results) {
+      if (r.items == null) {
+        failed.add(r.status);
+      } else {
+        merged.addAll(r.items!);
+      }
+    }
+    merged.sort((a, b) => b.thoiGianRa.compareTo(a.thoiGianRa));
+    return DsYeuCauRaNgoaiBundle(items: merged, failedStatuses: failed);
   }
 
   /// Duyệt yêu cầu ra ngoài
@@ -120,4 +154,15 @@ class TrucBanRepository {
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
+}
+
+/// Kết quả gọi song song 3 trạng thái — [failedStatuses] chỉ các API lỗi.
+class DsYeuCauRaNgoaiBundle {
+  final List<YeuCauRaNgoai> items;
+  final Set<TrangThaiRaNgoai> failedStatuses;
+
+  const DsYeuCauRaNgoaiBundle({
+    required this.items,
+    required this.failedStatuses,
+  });
 }

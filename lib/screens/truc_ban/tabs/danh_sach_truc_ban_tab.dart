@@ -10,8 +10,11 @@ import 'package:attendancebyface/core/widgets/base_empty_state.dart';
 import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/error_widget.dart';
+import 'package:attendancebyface/core/widgets/samcom_sheet.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
+import 'package:attendancebyface/screens/home/custom_navbar.dart';
+import 'package:attendancebyface/screens/truc_ban/widgets/truc_ban_detail_sheet.dart';
 
 enum _QuickAction { oto, khac, camera }
 
@@ -35,7 +38,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     super.initState();
     final cubitState = context.read<TrucBanCubit>().state;
     if (cubitState is TrucBanStateDanhSachTrucBanLoaded) {
-      _danhSach = cubitState.danhSach;
+      _danhSach = _sortedByCa(cubitState.danhSach);
       _trucChiHuy = cubitState.trucChiHuy;
     }
   }
@@ -75,7 +78,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
             listener: (context, state) {
               if (state is TrucBanStateDanhSachTrucBanLoaded) {
                 setState(() {
-                  _danhSach = state.danhSach;
+                  _danhSach = _sortedByCa(state.danhSach);
                   _trucChiHuy = state.trucChiHuy;
                 });
               }
@@ -97,7 +100,12 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                         .layDanhSachTrucBan(widget.selectedDate),
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [BaseEmptyState()],
+                      children: [
+                        const BaseEmptyState(),
+                        SizedBox(
+                          height: fabListBottomPadding(context, fabRows: 0),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -107,8 +115,13 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                       .layDanhSachTrucBan(widget.selectedDate),
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    itemCount: _danhSach!.length,
+                    itemCount: _danhSach!.length + 1,
                     itemBuilder: (context, index) {
+                      if (index == _danhSach!.length) {
+                        return SizedBox(
+                          height: fabListBottomPadding(context, fabRows: 0),
+                        );
+                      }
                       return _buildTrucBanCard(_danhSach![index]);
                     },
                   ),
@@ -145,7 +158,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
       if (canViewCamera)
         const CustomSegmentOption(
           value: _QuickAction.camera,
-          label: 'Camera',
+          label: 'Giám sát',
           icon: Icons.videocam_outlined,
         ),
     ];
@@ -193,8 +206,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
     if (_trucChiHuy != null) {
       final chiHuy = _trucChiHuy!;
       final title = [
-        if (chiHuy.capBac != null && chiHuy.capBac!.isNotEmpty)
-          chiHuy.capBac!,
+        if (chiHuy.capBac != null && chiHuy.capBac!.isNotEmpty) chiHuy.capBac!,
         chiHuy.hoTen,
       ].join(' ');
 
@@ -205,8 +217,7 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
             BaseInfoCard(
               title: title,
               onTap:
-                  (chiHuy.soDienThoai != null &&
-                      chiHuy.soDienThoai!.isNotEmpty)
+                  (chiHuy.soDienThoai != null && chiHuy.soDienThoai!.isNotEmpty)
                   ? () => _callPhone(chiHuy.soDienThoai!)
                   : null,
               badge: Icon(
@@ -214,16 +225,13 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
                 color: Theme.of(context).colorScheme.primary,
               ),
               highlightText: 'Trực chỉ huy',
-              highlightBackgroundColor: ColorConstants.errorColor.withAlpha(
-                40,
-              ),
+              highlightBackgroundColor: ColorConstants.errorColor.withAlpha(40),
               highlightTextColor: ColorConstants.errorColor,
               detailText: chiHuy.donVi?.isNotEmpty == true
                   ? '• ${chiHuy.donVi}'
                   : null,
               subInfoWidget:
-                  (chiHuy.soDienThoai != null &&
-                      chiHuy.soDienThoai!.isNotEmpty)
+                  (chiHuy.soDienThoai != null && chiHuy.soDienThoai!.isNotEmpty)
                   ? Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -286,46 +294,31 @@ class _DanhSachTrucBanTabState extends State<DanhSachTrucBanTab>
       );
     }
 
+    final primary = Theme.of(context).colorScheme.primary;
+
     return BaseInfoCard(
       title: trucBan.hoTen,
       isActive: isActive,
-      onTap: () => _callPhone(trucBan.soDienThoai),
+      onTap: () => _showTrucBanDetail(trucBan),
       badge: Text(
         '${trucBan.caTruc}',
         style: TextStyle(
-          color: Theme.of(context).colorScheme.primary,
+          color: primary,
           fontWeight: FontWeight.bold,
         ),
       ),
-      highlightText: '${trucBan.thoiGianBatDau} - ${trucBan.thoiGianKetThuc}',
-      detailText: '• ${trucBan.donVi}',
-      subInfoWidget: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: ColorConstants.successColor,
-          borderRadius: BorderRadius.circular(
-            ColorConstants.defaultBorderRadius,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.phone,
-              size: 14,
-              color: ColorConstants.backgroundLight,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              trucBan.soDienThoai,
-              style: const TextStyle(
-                color: ColorConstants.backgroundLight,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
+      detailText: '${trucBan.thoiGianBatDau} - ${trucBan.thoiGianKetThuc}',
+    );
+  }
+
+  List<TrucBan> _sortedByCa(List<TrucBan> list) {
+    return [...list]..sort((a, b) => a.caTruc.compareTo(b.caTruc));
+  }
+
+  void _showTrucBanDetail(TrucBan trucBan) {
+    SamcomSheet.show(
+      context: context,
+      builder: (_) => TrucBanDetailSheet(trucBan: trucBan),
     );
   }
 

@@ -10,7 +10,7 @@ import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/app_theme.dart';
-import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
+import 'package:attendancebyface/core/widgets/samcom_tab_bar.dart';
 
 /// Màn hình xem camera RTSP giám sát
 /// Hỗ trợ chuyển đổi giữa nhiều camera, 1 player duy nhất để tiết kiệm tài nguyên
@@ -21,7 +21,8 @@ class CameraRTSPScreen extends StatefulWidget {
   State<CameraRTSPScreen> createState() => _CameraRTSPScreenState();
 }
 
-class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
+class _CameraRTSPScreenState extends State<CameraRTSPScreen>
+    with SingleTickerProviderStateMixin {
   Player? _player;
   VideoController? _videoController;
   bool _isPlayerInitialized = false;
@@ -32,6 +33,7 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   bool _forceSoftwareDecoding = false;
   final List<StreamSubscription<dynamic>> _cameraSubscriptions = [];
   static const int _cameraTimeout = 30;
+  late final TabController _tabController;
 
   VideoControllerConfiguration get _videoControllerConfiguration {
     if (Platform.isAndroid) {
@@ -47,12 +49,22 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(
+      length: AppConfig.camerasRTSP.length,
+      vsync: this,
+    );
+    _tabController.addListener(_onCameraTabChanged);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     _initializeCamera();
+  }
+
+  void _onCameraTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    _switchCamera(_tabController.index);
   }
 
   Future<void> _initializeCamera() async {
@@ -258,6 +270,8 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
   @override
   void dispose() {
     _isDisposed = true;
+    _tabController.removeListener(_onCameraTabChanged);
+    _tabController.dispose();
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
@@ -267,35 +281,6 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
 
     _releaseAll();
     super.dispose();
-  }
-
-  ButtonStyle _overlaySegmentStyle() {
-    return ButtonStyle(
-      textStyle: WidgetStatePropertyAll(TextConstants.appTextBold),
-      foregroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return ColorConstants.backgroundDark;
-        }
-        return ColorConstants.backgroundLight.withValues(alpha: 0.85);
-      }),
-      backgroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return ColorConstants.backgroundLight;
-        }
-        return ColorConstants.backgroundDark.withValues(alpha: 0.54);
-      }),
-      side: WidgetStateProperty.resolveWith((states) {
-        final color = states.contains(WidgetState.selected)
-            ? ColorConstants.backgroundLight
-            : ColorConstants.backgroundLight.withValues(alpha: 0.35);
-        return BorderSide(color: color, width: 1.2);
-      }),
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
-        ),
-      ),
-    );
   }
 
   @override
@@ -312,10 +297,21 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Center(
-              child: controller != null
-                  ? Video(controller: controller)
-                  : const SizedBox.shrink(),
+            // IgnorePointer: PlatformView video không nuốt gesture vuốt.
+            IgnorePointer(
+              child: Center(
+                child: controller != null
+                    ? Video(controller: controller)
+                    : const SizedBox.shrink(),
+              ),
+            ),
+            // Lớp vuốt: trang trong suốt, vẫn 1 player phía dưới.
+            TabBarView(
+              controller: _tabController,
+              children: [
+                for (final _ in AppConfig.camerasRTSP)
+                  const ColoredBox(color: Colors.transparent),
+              ],
             ),
             if (_cameraError != null)
               Container(
@@ -357,21 +353,42 @@ class _CameraRTSPScreenState extends State<CameraRTSPScreen> {
               left: 16,
               right: 16,
               child: SafeArea(
-                child: CustomSegmentedButton<int>(
-                  style: _overlaySegmentStyle(),
-                  options: [
-                    for (var i = 0; i < AppConfig.camerasRTSP.length; i++)
-                      CustomSegmentOption(
-                        value: i,
-                        label: AppConfig.camerasRTSP[i].label,
-                        icon: Icons.videocam,
+                child: Center(
+                  child: Theme(
+                    // Giống SamcomTabBar màn sáng: pill xanh, chữ trắng/đen, track xám đặc.
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: ColorConstants.primaryColor,
+                        onPrimary: ColorConstants.backgroundLight,
+                        onSurface: Color(0xFF1C1B1F),
                       ),
-                  ],
-                  selected: {_selectedCameraIndex},
-                  onSelectionChanged: (selected) {
-                    if (selected.isEmpty) return;
-                    _switchCamera(selected.first);
-                  },
+                    ),
+                    child: Builder(
+                      builder: (context) {
+                        final colorScheme = Theme.of(context).colorScheme;
+                        final trackColor = Color.alphaBlend(
+                          colorScheme.onSurface.withValues(alpha: 0.12),
+                          ColorConstants.backgroundLight,
+                        );
+                        return SamcomTabBar(
+                          controller: _tabController,
+                          center: true,
+                          unselectedBackgroundColor: trackColor,
+                          labelStyle: TextConstants.appTextBold.copyWith(
+                            color: colorScheme.onPrimary,
+                          ),
+                          unselectedLabelStyle:
+                              TextConstants.appTextBold.copyWith(
+                            color: colorScheme.onSurface,
+                          ),
+                          tabs: [
+                            for (final cam in AppConfig.camerasRTSP)
+                              Tab(text: cam.label),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),

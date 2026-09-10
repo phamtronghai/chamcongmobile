@@ -133,7 +133,8 @@ class TrucBanCubit extends Cubit<TrucBanState> {
 
   // ======== ĐĂNG KÝ RA NGOÀI ========
 
-  /// Đăng ký ra ngoài + gửi thông báo cho trưởng/phó phòng
+  /// Đăng ký ra ngoài + gửi thông báo cho trưởng/phó phòng.
+  /// LANH_DAO_PHONG / LANH_DAO: tự gọi API phê duyệt, không cần vào tab Duyệt.
   Future<void> dangKyRaNgoai({
     required DateTime thoiGianRa,
     required DateTime thoiGianVao,
@@ -146,24 +147,96 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     );
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.general));
     try {
-      await _repository.dangKyRaNgoai(
+      if (_cachedPhanQuyen == null) {
+        try {
+          _cachedPhanQuyen = await _repository.layPhanQuyen();
+        } catch (_) {}
+      }
+
+      final createdId = await _repository.dangKyRaNgoai(
         thoiGianRa: thoiGianRa,
         thoiGianVao: thoiGianVao,
         lyDo: lyDo,
       );
-      debugLog('[TrucBan/Cubit] dangKyRaNgoai API OK → emit Success');
+      debugLog('[TrucBan/Cubit] dangKyRaNgoai API OK id=$createdId');
+
+      final nhom = _cachedPhanQuyen?.nhomQuyen;
+      final autoDuyet = nhom == NhomQuyen.lanhDaoPhong ||
+          nhom == NhomQuyen.lanhDao;
+
+      if (autoDuyet) {
+        final idToApprove = createdId ??
+            await _timIdYeuCauChoDuyetMoi(
+              ngay: thoiGianRa,
+              lyDo: lyDo,
+              thoiGianRa: thoiGianRa,
+              thoiGianVao: thoiGianVao,
+            );
+        if (idToApprove != null && idToApprove.isNotEmpty) {
+          await _repository.duyetYeuCauRaNgoai(idToApprove);
+          debugLog('[TrucBan/Cubit] tự phê duyệt yêu cầu $idToApprove');
+          emit(
+            const TrucBanState.success(
+              message: 'Đăng ký ra ngoài thành công (đã tự phê duyệt)',
+            ),
+          );
+          return;
+        }
+        debugLog(
+          '[TrucBan/Cubit] auto-duyệt: không tìm được id — chỉ đăng ký',
+        );
+      }
+
       emit(const TrucBanState.success(message: 'Đăng ký ra ngoài thành công'));
 
-      // Gửi thông báo cho trưởng/phó phòng (không block UI)
-      _guiThongBaoDangKyRaNgoai(
-        tenNguoiDangKy: tenNguoiDangKy ?? '',
-        thoiGianRa: thoiGianRa,
-        thoiGianVao: thoiGianVao,
-        lyDo: lyDo,
-      );
+      if (!autoDuyet) {
+        _guiThongBaoDangKyRaNgoai(
+          tenNguoiDangKy: tenNguoiDangKy ?? '',
+          thoiGianRa: thoiGianRa,
+          thoiGianVao: thoiGianVao,
+          lyDo: lyDo,
+        );
+      }
     } catch (e, st) {
       debugLog('[TrucBan/Cubit] dangKyRaNgoai FAIL: $e\n$st');
       emit(TrucBanState.error(message: _cleanErrorMessage(e)));
+    }
+  }
+
+  /// Fallback: lấy lịch sử cá nhân trong ngày, tìm đơn chờ duyệt khớp vừa tạo.
+  Future<String?> _timIdYeuCauChoDuyetMoi({
+    required DateTime ngay,
+    required String lyDo,
+    required DateTime thoiGianRa,
+    required DateTime thoiGianVao,
+  }) async {
+    try {
+      final list = await _repository.layLichSuRaNgoaiCaNhan(ngay);
+      final pending = list
+          .where((e) => e.trangThai == TrangThaiRaNgoai.choDuyet)
+          .toList();
+      if (pending.isEmpty) return null;
+
+      final lyDoNorm = lyDo.trim();
+      final matched = pending.where((e) {
+        final sameLyDo = e.lyDo.trim() == lyDoNorm;
+        final sameRa = e.thoiGianRa.toLocal().hour == thoiGianRa.hour &&
+            e.thoiGianRa.toLocal().minute == thoiGianRa.minute;
+        final sameVao = e.thoiGianVao.toLocal().hour == thoiGianVao.hour &&
+            e.thoiGianVao.toLocal().minute == thoiGianVao.minute;
+        return sameLyDo && sameRa && sameVao;
+      });
+      if (matched.isNotEmpty) return matched.first.id;
+
+      pending.sort((a, b) {
+        final aT = a.thoiGianTao ?? a.thoiGianRa;
+        final bT = b.thoiGianTao ?? b.thoiGianRa;
+        return bT.compareTo(aT);
+      });
+      return pending.first.id;
+    } catch (e) {
+      debugLog('[TrucBan/Cubit] _timIdYeuCauChoDuyetMoi FAIL: $e');
+      return null;
     }
   }
 
@@ -215,10 +288,10 @@ class TrucBanCubit extends Cubit<TrucBanState> {
     }
   }
 
-  /// Lấy danh sách yêu cầu ra ngoài (cho Lãnh đạo)
+  /// Lấy danh sách yêu cầu ra ngoài (cho Lãnh đạo) — 1 trạng thái.
   Future<void> layDsYeuCauRaNgoai({
     required DateTime ngay,
-    TrangThaiRaNgoai? trangThai,
+    required TrangThaiRaNgoai trangThai,
   }) async {
     emit(const TrucBanState.loading(target: TrucBanLoadTarget.raNgoaiCaNhan));
     try {
@@ -227,6 +300,17 @@ class TrucBanCubit extends Cubit<TrucBanState> {
         trangThai: trangThai,
       );
       emit(TrucBanState.danhSachRaNgoaiLoaded(danhSach: danhSach));
+    } catch (e) {
+      emit(TrucBanState.error(message: _cleanErrorMessage(e)));
+    }
+  }
+
+  /// Lấy DS yêu cầu ra ngoài: gọi song song CHO_DUYET | DA_DUYET | TU_CHOI/TUCHOI.
+  Future<void> layDsYeuCauRaNgoaiTatCaTrangThai(DateTime ngay) async {
+    emit(const TrucBanState.loading(target: TrucBanLoadTarget.raNgoaiCaNhan));
+    try {
+      final bundle = await _repository.layDsYeuCauRaNgoaiTatCaTrangThai(ngay);
+      emit(TrucBanState.danhSachRaNgoaiLoaded(danhSach: bundle.items));
     } catch (e) {
       emit(TrucBanState.error(message: _cleanErrorMessage(e)));
     }

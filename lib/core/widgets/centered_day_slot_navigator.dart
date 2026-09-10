@@ -5,7 +5,7 @@ import 'package:attendancebyface/core/widgets/date_picker_bottom_sheet.dart';
 
 /// Strip chọn ngày dùng chung (vuốt xem, chạm chọn).
 ///
-/// Hàng: 1 ô tháng–năm cố định (`09` / `26`) + 4 ô ngày cuộn.
+/// Hàng: 1 ô tháng cố định + 4 ô ngày cuộn.
 class CenteredDaySlotNavigator extends StatefulWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
@@ -24,15 +24,19 @@ class CenteredDaySlotNavigator extends StatefulWidget {
 class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   /// Số ô ngày trong cửa sổ (không gồm ô tháng cố định).
   static const int _slotLength = 4;
+
   /// Ngày neo nằm gần giữa cửa sổ 4 ô (index 1).
   static const int _centerIndex = 1;
+
   /// Carousel 3 trang: trước / hiện tại / sau — recenter sau mỗi lần vuốt.
   static const int _centerPage = 1;
   static const int _pageCount = 3;
+
   /// 5 slot visual (1 tháng + 4 ngày) gần vuông → tỷ lệ hàng ≈ 5.
   static const double _dayRowAspectRatio = 5;
 
   PageController? _pageController;
+
   /// Ngày neo cửa sổ 4 ô đang hiển thị ở trang [_centerPage].
   DateTime? _viewAnchor;
   DateTime? _monthCursor;
@@ -58,8 +62,7 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
     _pageController ??= PageController(initialPage: _centerPage);
   }
 
-  DateTime get _safeViewAnchor =>
-      _viewAnchor ?? _dateOnly(widget.selectedDate);
+  DateTime get _safeViewAnchor => _viewAnchor ?? _dateOnly(widget.selectedDate);
 
   DateTime get _safeMonthCursor =>
       _monthCursor ??
@@ -121,9 +124,7 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
     _ensureInitialized();
 
     final deltaDays = page < _centerPage ? -_slotLength : _slotLength;
-    final anchor = _dateOnly(
-      _safeViewAnchor.add(Duration(days: deltaDays)),
-    );
+    final anchor = _dateOnly(_safeViewAnchor.add(Duration(days: deltaDays)));
 
     setState(() {
       _viewAnchor = anchor;
@@ -182,9 +183,7 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: _MonthBox(
                     month: monthSource.month,
-                    year: monthSource.year,
                     primary: primary,
-                    deActive: deActive,
                     textStyle: textStyle,
                     onTap: _pickMonthYear,
                   ),
@@ -243,20 +242,16 @@ class _CenteredDaySlotNavigatorState extends State<CenteredDaySlotNavigator> {
   }
 }
 
-/// Ô tháng–năm cố định: nền primary, gạch chéo 45° (phải → trái) chia tháng / năm.
+/// Ô tháng: 2 dòng — «Tháng» (normal) + số tháng (bold 24), primary, không vòng/viền.
 class _MonthBox extends StatelessWidget {
   final int month;
-  final int year;
   final Color primary;
-  final Color deActive;
   final TextStyle textStyle;
   final VoidCallback onTap;
 
   const _MonthBox({
     required this.month,
-    required this.year,
     required this.primary,
-    required this.deActive,
     required this.textStyle,
     required this.onTap,
   });
@@ -264,68 +259,39 @@ class _MonthBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final monthLabel = month.toString().padLeft(2, '0');
-    final yearLabel = (year % 100).toString().padLeft(2, '0');
-    final labelStyle = textStyle.copyWith(
-      fontSize: TextConstants.fontSizeApp,
-      color: deActive,
-      fontWeight: FontWeight.w600,
-    );
 
     return Material(
-      color: primary,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CustomPaint(
-              painter: _MonthDiagonalPainter(
-                color: deActive.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Tháng',
+                maxLines: 1,
+                style: textStyle.copyWith(
+                  fontSize: TextConstants.fontSizeApp,
+                  color: primary,
+                  fontWeight: FontWeight.normal,
+                ),
               ),
-            ),
-            // Phần trên-trái: tháng
-            Align(
-              alignment: const Alignment(-0.4, -0.35),
-              child: Text(monthLabel, maxLines: 1, style: labelStyle),
-            ),
-            // Phần dưới-phải: năm
-            Align(
-              alignment: const Alignment(0.4, 0.35),
-              child: Text(yearLabel, maxLines: 1, style: labelStyle),
-            ),
-          ],
+              Text(
+                monthLabel,
+                maxLines: 1,
+                style: TextConstants.appTextBold.copyWith(
+                  fontSize: 24,
+                  color: primary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-/// Gạch chéo 45° từ góc phải-trên sang trái-dưới.
-class _MonthDiagonalPainter extends CustomPainter {
-  final Color color;
-
-  const _MonthDiagonalPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.25
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(
-      Offset(size.width, 0),
-      Offset(0, size.height),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _MonthDiagonalPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 class _DayBox extends StatelessWidget {
@@ -351,14 +317,12 @@ class _DayBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final weekday = DateFormat('EEE', 'vi').format(date);
     final isToday = DateUtils.isSameDay(date, DateTime.now());
-    final fg = isSelectable
-        ? primary
-        : primary.withValues(alpha: 0.45);
+    final fg = isSelectable ? primary : primary.withValues(alpha: 0.45);
     final borderWidth = isSelected
         ? 2.5
         : isToday
-            ? 2.0
-            : 1.0;
+        ? 2.0
+        : 1.0;
     final borderColor = isSelected || isToday
         ? primary
         : primary.withValues(alpha: 0.35);

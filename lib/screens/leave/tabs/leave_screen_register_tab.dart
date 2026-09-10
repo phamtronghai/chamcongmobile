@@ -229,7 +229,7 @@ class _LeaveScreenRegisterTabState
           16,
           16,
           16,
-          MediaQuery.paddingOf(context).bottom + kFabFilledPillHeight,
+          fabListBottomPadding(context),
         ),
         itemCount: _requests.length + 1,
         itemBuilder: (context, index) {
@@ -296,8 +296,7 @@ class _LeaveScreenRegisterTabState
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.only(
-                          bottom: MediaQuery.paddingOf(context).bottom +
-                              kFabFilledPillHeight,
+                          bottom: fabListBottomPadding(context),
                         ),
                         children: const [BaseEmptyState()],
                       )
@@ -307,7 +306,7 @@ class _LeaveScreenRegisterTabState
           ),
           Positioned(
             right: kNavBarHorizontalPadding,
-            bottom: MediaQuery.paddingOf(context).bottom,
+            bottom: fabBottomOffset(context),
             child: IntrinsicWidth(
               child: CustomButton(
                 text: 'Đăng ký nghỉ phép',

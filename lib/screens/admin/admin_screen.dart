@@ -8,6 +8,7 @@ import 'package:attendancebyface/core/widgets/error_widget.dart';
 import 'package:attendancebyface/models/admin_org_models.dart';
 import 'package:attendancebyface/screens/admin/admin_department_employees_screen.dart';
 import 'package:attendancebyface/screens/admin/admin_employee_sheet.dart';
+import 'package:attendancebyface/screens/home/custom_navbar.dart';
 import 'package:avatar_stack/avatar_stack.dart';
 import 'package:avatar_stack/positions.dart';
 import 'package:flutter/material.dart';
@@ -139,11 +140,12 @@ class _AdminScreenState extends State<AdminScreen> {
         onRefresh: _loadDepartments,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            BaseEmptyState(
+          children: [
+            const BaseEmptyState(
               icon: Icons.apartment_outlined,
               title: 'Chưa có phòng ban',
             ),
+            SizedBox(height: fabListBottomPadding(context, fabRows: 0)),
           ],
         ),
       );
@@ -157,7 +159,7 @@ class _AdminScreenState extends State<AdminScreen> {
           16,
           12,
           16,
-          MediaQuery.paddingOf(context).bottom + 24,
+          fabListBottomPadding(context, fabRows: 0),
         ),
         itemCount: _departments.length,
         itemBuilder: (context, index) {

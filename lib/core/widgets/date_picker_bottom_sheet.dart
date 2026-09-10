@@ -62,6 +62,31 @@ class AppDatePickerBottomSheet {
     );
   }
 
+  // ── multi (ngày rời) ──────────────────────────────────────────────────
+
+  static Future<void> showMulti(
+    BuildContext context, {
+    Set<DateTime> initialDates = const {},
+    DateTime? initialDisplayDate,
+    DateTime? minDate,
+    DateTime? maxDate,
+    String title = 'Chọn ngày',
+    String? subtitle,
+    required void Function(Set<DateTime>) onDatesSelected,
+  }) {
+    return _present(
+      context,
+      title: title,
+      subtitle: subtitle,
+      initialDates: initialDates,
+      initialDisplayDate: initialDisplayDate,
+      initialMode: CustomDatePickerMode.multi,
+      minDate: minDate,
+      maxDate: maxDate,
+      onConfirm: onDatesSelected,
+    );
+  }
+
   // ── private helper ─────────────────────────────────────────────────────
 
   static Future<void> _present(

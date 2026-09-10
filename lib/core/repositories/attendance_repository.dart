@@ -13,17 +13,29 @@ class AttendanceRepository {
     await _apiClient.init();
   }
 
-  /// Lấy lịch sử chấm công theo ngày
-  Future<List<AttendanceModel>> getAttendancesByDate(String date) async {
+  /// Lấy lịch sử chấm công theo ngày.
+  ///
+  /// [userId] (tuỳ chọn): lấy bản ghi của user đó (vd. chấm công thủ công từ Quản trị).
+  /// Không truyền → theo session đăng nhập như trước.
+  Future<List<AttendanceModel>> getAttendancesByDate(
+    String date, {
+    String? userId,
+  }) async {
     try {
       // Format ngày theo định dạng yyyy-MM-dd
       final dateFormatted = date.isNotEmpty
           ? date
           : DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+      final queryParameters = <String, dynamic>{'date': dateFormatted};
+      final targetUserId = userId?.trim();
+      if (targetUserId != null && targetUserId.isNotEmpty) {
+        queryParameters['userId'] = targetUserId;
+      }
+
       final response = await _apiClient.get(
         '/api/attendances_date_face',
-        queryParameters: {'date': dateFormatted},
+        queryParameters: queryParameters,
       );
 
       // Parse response sử dụng helper
@@ -47,7 +59,14 @@ class AttendanceRepository {
         }
       }
 
-      return attendances;
+      if (targetUserId == null || targetUserId.isEmpty) {
+        return attendances;
+      }
+
+      // Lọc thêm phía client khi API trả nhiều user hoặc vẫn gắn user_id.
+      return attendances
+          .where((a) => a.userId.isEmpty || a.userId == targetUserId)
+          .toList();
     } catch (e) {
       return [];
     }

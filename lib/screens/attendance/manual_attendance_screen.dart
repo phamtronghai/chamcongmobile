@@ -11,6 +11,7 @@ import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/widgets/custom_button.dart';
 import 'package:attendancebyface/core/widgets/custom_segmented_button.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
+import 'package:attendancebyface/core/widgets/date_picker_bottom_sheet.dart';
 import 'package:attendancebyface/core/widgets/date_picker_field.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/samcom_chip.dart';
@@ -23,7 +24,15 @@ import 'package:intl/intl.dart';
 class ManualAttendanceScreen extends StatefulWidget {
   final UserModel user;
 
-  const ManualAttendanceScreen({super.key, required this.user});
+  /// Chấm hộ từ Admin: không có API lịch sử người khác → mọi mốc là
+  /// chấm bù (giờ ngẫu nhiên), không dùng lịch sử user đăng nhập.
+  final bool makeupOnly;
+
+  const ManualAttendanceScreen({
+    super.key,
+    required this.user,
+    this.makeupOnly = false,
+  });
 
   @override
   State<ManualAttendanceScreen> createState() => _ManualAttendanceScreenState();
@@ -50,6 +59,7 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   bool _isMultiDay = false;
   DateTime _singleDate = _dateOnly(DateTime.now());
   late DateTimeRange _range;
+  Set<DateTime> _selectedDates = {};
   bool _isLoading = false;
   List<_DayGap> _gaps = [];
 
@@ -61,6 +71,12 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
       start: DateTime(today.year, today.month, 1),
       end: today,
     );
+    if (widget.makeupOnly) {
+      _isMultiDay = true;
+      _selectedDates = {};
+      _gaps = [];
+      return;
+    }
     _loadCurrentMode();
   }
 
@@ -191,10 +207,13 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   Future<void> _loadSingleDay(DateTime date) async {
     setState(() => _isLoading = true);
     try {
-      await _repository.init();
       final d = _dateOnly(date);
-      final key = DateFormat('yyyy-MM-dd').format(d);
-      final records = await _repository.getAttendancesByDate(key);
+      List<AttendanceModel> records = const [];
+      if (!widget.makeupOnly) {
+        await _repository.init();
+        final key = DateFormat('yyyy-MM-dd').format(d);
+        records = await _repository.getAttendancesByDate(key);
+      }
       final gap = _buildGap(d, records);
 
       if (!mounted) return;
@@ -215,8 +234,8 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   Future<void> _loadRange() async {
     setState(() => _isLoading = true);
     try {
-      await _repository.init();
       final days = _daysInRange(_range);
+      await _repository.init();
       final results = await Future.wait(
         days.map((d) async {
           final key = DateFormat('yyyy-MM-dd').format(d);
@@ -245,6 +264,25 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _applySelectedMakeupDays(Set<DateTime> dates) {
+    final today = _dateOnly(DateTime.now());
+    final normalized = dates
+        .map(_dateOnly)
+        .where((d) => !d.isAfter(today))
+        .toList()
+      ..sort();
+    final existingByDay = <DateTime, _DayGap>{
+      for (final g in _gaps) _dateOnly(g.date): g,
+    };
+    setState(() {
+      _selectedDates = normalized.toSet();
+      _gaps = [
+        for (final d in normalized)
+          existingByDay[d] ?? _buildGap(d, const <AttendanceModel>[]),
+      ];
+    });
   }
 
   bool _sameDay(DateTime a, DateTime b) =>
@@ -277,6 +315,10 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
   void _removeDay(_DayGap gap) {
     setState(() {
       _gaps = _gaps.where((g) => !_sameDay(g.date, gap.date)).toList();
+      if (widget.makeupOnly) {
+        _selectedDates =
+            _selectedDates.where((d) => !_sameDay(d, gap.date)).toSet();
+      }
     });
   }
 
@@ -290,6 +332,9 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
           })
           .where((g) => _isMultiDay ? g.fills.isNotEmpty : true)
           .toList();
+      if (widget.makeupOnly) {
+        _selectedDates = _gaps.map((g) => g.date).toSet();
+      }
     });
   }
 
@@ -328,33 +373,71 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildUserHeader(theme),
-              if (!_isLoading) _buildStatsLegend(theme),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Center(
-                  child: CustomSegmentedButton<bool>(
-                    options: const [
-                      CustomSegmentOption(value: false, label: '1 ngày'),
-                      CustomSegmentOption(value: true, label: 'Nhiều ngày'),
-                    ],
-                    selected: {_isMultiDay},
-                    onSelectionChanged: (selected) {
-                      if (selected.isEmpty) return;
-                      final nextMode = selected.first;
-                      if (nextMode == _isMultiDay) return;
-                      setState(() {
-                        _isMultiDay = nextMode;
-                        if (!_isMultiDay) {
-                          _singleDate = _dateOnly(DateTime.now());
-                        }
-                      });
-                      _loadCurrentMode();
-                    },
+              if (!_isLoading && !widget.makeupOnly) _buildStatsLegend(theme),
+              if (!widget.makeupOnly) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Center(
+                    child: CustomSegmentedButton<bool>(
+                      options: const [
+                        CustomSegmentOption(value: false, label: '1 ngày'),
+                        CustomSegmentOption(value: true, label: 'Nhiều ngày'),
+                      ],
+                      selected: {_isMultiDay},
+                      onSelectionChanged: (selected) {
+                        if (selected.isEmpty) return;
+                        final nextMode = selected.first;
+                        if (nextMode == _isMultiDay) return;
+                        setState(() {
+                          _isMultiDay = nextMode;
+                          if (!_isMultiDay) {
+                            _singleDate = _dateOnly(DateTime.now());
+                          }
+                        });
+                        _loadCurrentMode();
+                      },
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              if (_isMultiDay)
+                const SizedBox(height: 8),
+              ] else
+                const SizedBox(height: 8),
+              if (widget.makeupOnly)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Ngày cần chấm',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      CustomButton(
+                        text: _selectedDates.isEmpty
+                            ? 'Chọn các ngày'
+                            : DatePickerField.formatMulti(_selectedDates),
+                        icon: Icons.event_available_outlined,
+                        variant: CustomButtonVariant.normalButton,
+                        onPressed: () {
+                          AppDatePickerBottomSheet.showMulti(
+                            context,
+                            initialDates: _selectedDates,
+                            maxDate: _dateOnly(DateTime.now()),
+                            title: 'Chọn ngày',
+                            subtitle: 'Chọn từng ngày cần tạo giờ chấm bù',
+                            onDatesSelected: _applySelectedMakeupDays,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              else if (_isMultiDay)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                   child: DatePickerField(
@@ -498,13 +581,14 @@ class _ManualAttendanceScreenState extends State<ManualAttendanceScreen> {
                 selected: true,
                 color: ColorConstants.errorColor,
               ),
-              SamcomChip(
-                label: 'Đã chấm',
-                dense: true,
-                variant: SamcomChipVariant.filled,
-                selected: true,
-                color: theme.colorScheme.primary,
-              ),
+              if (!widget.makeupOnly)
+                SamcomChip(
+                  label: 'Đã chấm',
+                  dense: true,
+                  variant: SamcomChipVariant.filled,
+                  selected: true,
+                  color: theme.colorScheme.primary,
+                ),
               SamcomChip(
                 label: 'Chấm bù',
                 dense: true,

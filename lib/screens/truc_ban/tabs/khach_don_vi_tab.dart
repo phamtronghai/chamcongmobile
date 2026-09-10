@@ -9,6 +9,7 @@ import 'package:attendancebyface/core/widgets/base_info_card.dart';
 import 'package:attendancebyface/core/widgets/error_widget.dart';
 import 'package:attendancebyface/models/truc_ban_enums.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
+import 'package:attendancebyface/screens/home/custom_navbar.dart';
 
 class KhachDonViTab extends StatefulWidget {
   const KhachDonViTab({super.key});
@@ -62,8 +63,11 @@ class _KhachDonViTabState extends State<KhachDonViTab>
               onRefresh: () async => _loadData(),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  BaseEmptyState(),
+                children: [
+                  const BaseEmptyState(),
+                  SizedBox(
+                    height: fabListBottomPadding(context, fabRows: 0),
+                  ),
                 ],
               ),
             );
@@ -72,8 +76,13 @@ class _KhachDonViTabState extends State<KhachDonViTab>
             onRefresh: () async => _loadData(),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              itemCount: _danhSach!.length,
+              itemCount: _danhSach!.length + 1,
               itemBuilder: (context, index) {
+                if (index == _danhSach!.length) {
+                  return SizedBox(
+                    height: fabListBottomPadding(context, fabRows: 0),
+                  );
+                }
                 return _KhachCard(khach: _danhSach![index]);
               },
             ),

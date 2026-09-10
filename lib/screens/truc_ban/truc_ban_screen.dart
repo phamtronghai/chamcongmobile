@@ -8,7 +8,6 @@ import 'package:attendancebyface/core/widgets/custom_app_bar.dart';
 import 'package:attendancebyface/core/app_router.dart';
 import 'package:attendancebyface/core/widgets/loading_overlay.dart';
 import 'package:attendancebyface/core/widgets/custom_snackbar.dart';
-import 'package:attendancebyface/models/truc_ban_enums.dart';
 import 'package:attendancebyface/models/truc_ban_model.dart';
 import 'package:attendancebyface/screens/truc_ban/tabs/danh_sach_truc_ban_tab.dart';
 import 'package:attendancebyface/screens/truc_ban/tabs/dang_ky_tab.dart';
@@ -79,8 +78,12 @@ class _TrucBanScreenState extends State<TrucBanScreen>
   }
 
   void _onTabChanged() {
-    if (!_tabController.indexIsChanging) return;
-    _loadDataForTab(_visibleTabKinds()[_tabController.index]);
+    if (_tabController.indexIsChanging) {
+      _loadDataForTab(_visibleTabKinds()[_tabController.index]);
+    } else {
+      // Cập nhật isActive cho tab Duyệt sau khi đổi tab.
+      setState(() {});
+    }
   }
 
   void _onDateChanged(DateTime date) {
@@ -99,10 +102,8 @@ class _TrucBanScreenState extends State<TrucBanScreen>
       case _TrucBanTabKind.khachDonVi:
         _cubit.layDsKhachToanDonVi(d);
       case _TrucBanTabKind.duyet:
-        _cubit.layDsYeuCauRaNgoai(
-          ngay: d,
-          trangThai: TrangThaiRaNgoai.choDuyet,
-        );
+        // Tab Duyệt tự load khi isActive — tránh lỗi server hiện ở tab khác.
+        break;
     }
   }
 
@@ -118,14 +119,19 @@ class _TrucBanScreenState extends State<TrucBanScreen>
   }
 
   List<Widget> _buildTabViews() {
-    return _visibleTabKinds().map((kind) {
+    final kinds = _visibleTabKinds();
+    final activeKind = kinds[_tabController.index];
+    return kinds.map((kind) {
       return switch (kind) {
         _TrucBanTabKind.trucBan => DanhSachTrucBanTab(
           selectedDate: _selectedDate,
         ),
         _TrucBanTabKind.dangKy => DangKyTab(selectedDate: _selectedDate),
         _TrucBanTabKind.khachDonVi => const KhachDonViTab(),
-        _TrucBanTabKind.duyet => const DuyetRaNgoaiTab(),
+        _TrucBanTabKind.duyet => DuyetRaNgoaiTab(
+          selectedDate: _selectedDate,
+          isActive: activeKind == _TrucBanTabKind.duyet,
+        ),
       };
     }).toList();
   }

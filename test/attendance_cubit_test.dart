@@ -22,7 +22,10 @@ class _FakeAttendanceRepository extends AttendanceRepository {
   Future<void> init() async {}
 
   @override
-  Future<List<AttendanceModel>> getAttendancesByDate(String date) async {
+  Future<List<AttendanceModel>> getAttendancesByDate(
+    String date, {
+    String? userId,
+  }) async {
     if (throwOnLoad) throw Exception('network');
     return List<AttendanceModel>.from(records);
   }

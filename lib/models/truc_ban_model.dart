@@ -347,7 +347,8 @@ class PhanQuyen {
       nhomQuyen == NhomQuyen.trucBan || nhomQuyen == NhomQuyen.lanhDao;
 
   /// Kiểm tra có quyền duyệt yêu cầu ra ngoài không
-  bool get canApproveRaNgoai => nhomQuyen == NhomQuyen.lanhDaoPhong;
+  bool get canApproveRaNgoai =>
+      nhomQuyen == NhomQuyen.lanhDaoPhong || nhomQuyen == NhomQuyen.lanhDao;
 
   /// Kiểm tra có quyền xem camera không
   bool get canViewCamera =>

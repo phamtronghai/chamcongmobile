@@ -46,6 +46,12 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
     // Xác định số tab cần thiết
     final tabCount = _getTabCount();
     _tabController = TabController(length: tabCount, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    setState(() {});
   }
 
   int _getTabCount() {
@@ -56,6 +62,7 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -120,9 +127,9 @@ class _LeaveScreenState extends State<_LeaveScreenContent>
       // Trưởng/Phó: có cả 2 tab
       return TabBarView(
         controller: _tabController,
-        children: [
-          const LeaveScreenRegisterTab(),
-          const LeaveScreenApprovalTab(),
+        children: const [
+          LeaveScreenRegisterTab(),
+          LeaveScreenApprovalTab(),
         ],
       );
     } else {

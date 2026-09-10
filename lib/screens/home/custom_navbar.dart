@@ -18,8 +18,51 @@ const double kNavBarHorizontalPadding = 16;
 /// Chiều cao pill FAB filled.
 const double kFabFilledPillHeight = ButtonConstants.heightButton;
 
+/// Khoảng cách dọc giữa các FAB xếp chồng.
+const double kFabStackGap = 12;
+
+/// Chiều cao pill [LiquidBottomNavBar].
+const double kNavBarHeight = 65;
+
+/// Trừ home indicator khi đặt navbar (giữ vị trí hiện tại).
+const double kNavBarBottomOverlap = 20;
+
+/// Khoảng trống giữa mép trên navbar và mép dưới FAB.
+const double kFabClearanceAboveNav = 12;
+
 /// Chiều rộng mỗi item trong navbar để navbar luôn ôm sát nội dung (fit-content).
 const double kNavItemWidth = 96.0;
+
+/// Padding đáy ngoài của navbar (trên home indicator).
+double navBarBottomPad(BuildContext context) =>
+    (MediaQuery.viewPaddingOf(context).bottom - kNavBarBottomOverlap).clamp(
+      0.0,
+      double.infinity,
+    );
+
+/// Inset đáy inject vào [MediaQuery.padding] dưới [CustomNavBar].
+///
+/// = chiều cao navbar + pad home indicator + khoảng trống FAB.
+double navContentBottomInset(BuildContext context) =>
+    kNavBarHeight + navBarBottomPad(context) + kFabClearanceAboveNav;
+
+/// Vị trí `bottom` của FAB (mép dưới) — dùng [MediaQuery.padding.bottom]
+/// (đã inject dưới navbar; ngoài navbar = safe area).
+double fabBottomOffset(BuildContext context) =>
+    MediaQuery.paddingOf(context).bottom;
+
+/// Padding đáy list/scroll khi có [fabRows] hàng FAB phía trên.
+double fabListBottomPadding(
+  BuildContext context, {
+  int fabRows = 1,
+  double stackGap = kFabStackGap,
+}) {
+  final inset = fabBottomOffset(context);
+  if (fabRows <= 0) return inset;
+  return inset +
+      fabRows * kFabFilledPillHeight +
+      (fabRows > 1 ? stackGap * (fabRows - 1) : 0);
+}
 
 List<LiquidGlassNavItem> _navItemsFor(UserModel user) {
   final items = <LiquidGlassNavItem>[
@@ -138,19 +181,15 @@ class _CustomNavBarState extends State<CustomNavBar> {
             child: Scaffold(body: Center(child: CircularProgressIndicator())),
           ),
           loaded: (_) {
-            final double navBarBottomPad =
-                (MediaQuery.viewPaddingOf(context).bottom - 20).clamp(
-                  0.0,
-                  double.infinity,
-                );
-            final double navTotalHeight = 65 + navBarBottomPad + 32;
+            final bottomPad = navBarBottomPad(context);
+            final contentInset = navContentBottomInset(context);
             return Scaffold(
               resizeToAvoidBottomInset: false,
               body: MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   padding: MediaQuery.of(
                     context,
-                  ).padding.copyWith(bottom: navTotalHeight),
+                  ).padding.copyWith(bottom: contentInset),
                 ),
                 child: PageView(
                   controller: _pageController,
@@ -164,14 +203,14 @@ class _CustomNavBarState extends State<CustomNavBar> {
                   kNavBarHorizontalPadding,
                   0,
                   kNavBarHorizontalPadding,
-                  navBarBottomPad,
+                  bottomPad,
                 ),
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
                     width: _navItems.length * kNavItemWidth,
                     child: LiquidBottomNavBar(
-                      height: 65,
+                      height: kNavBarHeight,
                       bubbleWidth: kNavItemWidth,
                       currentIndex: _currentIndex,
                       onTap: _onTabTap,

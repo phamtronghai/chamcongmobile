@@ -4,11 +4,14 @@ import 'package:attendancebyface/core/app_theme.dart';
 /// Khung card list item dùng chung (Trực ban, Nghỉ phép, …).
 class BaseInfoCard extends StatelessWidget {
   final String title;
+
   /// Hiển thị cùng hàng với [title] (bên phải, trước badge highlight).
   final Widget? titleTrailing;
+
   /// Dòng trên [title] (ví dụ: thời gian + chip trạng thái).
   final Widget? headerWidget;
-  final Widget badge;
+  /// Avatar / số / icon bên trái. `null` → ẩn cột trái.
+  final Widget? badge;
   final String? highlightText;
   final Color? highlightBackgroundColor;
   final Color? highlightTextColor;
@@ -25,7 +28,7 @@ class BaseInfoCard extends StatelessWidget {
     required this.title,
     this.titleTrailing,
     this.headerWidget,
-    required this.badge,
+    this.badge,
     this.highlightText,
     this.highlightBackgroundColor,
     this.highlightTextColor,
@@ -59,16 +62,20 @@ class BaseInfoCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: primary.withAlpha(isActive ? 80 : 25),
-                  borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+              if (badge != null) ...[
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: primary.withAlpha(isActive ? 80 : 25),
+                    borderRadius: BorderRadius.circular(
+                      ColorConstants.defaultBorderRadius,
+                    ),
+                  ),
+                  child: Center(child: badge),
                 ),
-                child: Center(child: badge),
-              ),
-              const SizedBox(width: 16),
+                const SizedBox(width: 16),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,8 +91,8 @@ class BaseInfoCard extends StatelessWidget {
                           child: Text(
                             title,
                             style: TextConstants.appTextRegular.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              fontWeight: FontWeight.w600,
+                            ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: titleMaxLines ?? 2,
                           ),
@@ -104,14 +111,16 @@ class BaseInfoCard extends StatelessWidget {
                               color:
                                   highlightBackgroundColor ??
                                   primary.withAlpha(50),
-                              borderRadius: BorderRadius.circular(ColorConstants.defaultBorderRadius),
+                              borderRadius: BorderRadius.circular(
+                                ColorConstants.defaultBorderRadius,
+                              ),
                             ),
                             child: Text(
                               highlightText!,
                               style: TextConstants.appTextRegular.copyWith(
-                                    color: highlightTextColor ?? primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                color: highlightTextColor ?? primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                       ],
@@ -129,10 +138,9 @@ class BaseInfoCard extends StatelessWidget {
                               detailText!,
                               style: TextStyle(
                                 fontSize: TextConstants.fontSizeApp,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.55),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.55),
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: detailMaxLines ?? 1,

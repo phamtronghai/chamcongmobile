@@ -54,8 +54,7 @@ class _DangKyTabState extends State<DangKyTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final fabBottomPadding =
-        MediaQuery.paddingOf(context).bottom + kFabFilledPillHeight;
+    final fabBottomPadding = fabListBottomPadding(context);
 
     return BlocListener<TrucBanCubit, TrucBanState>(
       listener: (context, state) {
@@ -106,7 +105,7 @@ class _DangKyTabState extends State<DangKyTab>
           ),
           Positioned(
             right: kNavBarHorizontalPadding,
-            bottom: MediaQuery.paddingOf(context).bottom,
+            bottom: fabBottomOffset(context),
             child: IntrinsicWidth(
               child: CustomButton(
                 text: 'Đăng ký',

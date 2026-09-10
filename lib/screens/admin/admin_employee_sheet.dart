@@ -170,7 +170,10 @@ class _AdminEmployeeSheetBodyState extends State<_AdminEmployeeSheetBody> {
       MaterialPageRoute<void>(
         builder: (_) => BlocProvider(
           create: (_) => AttendanceCubit(),
-          child: ManualAttendanceScreen(user: targetUser),
+          child: ManualAttendanceScreen(
+            user: targetUser,
+            makeupOnly: true,
+          ),
         ),
       ),
     );

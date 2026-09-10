@@ -30,32 +30,19 @@ class LichSuRaNgoaiList extends StatelessWidget {
                 yeuCau.trangThai,
               );
               final icon = TrucBanUIHelpers.getTrangThaiIcon(yeuCau.trangThai);
+              final timeLabel =
+                  '${DateFormat('HH:mm').format(yeuCau.thoiGianRa.toLocal())} - ${DateFormat('HH:mm').format(yeuCau.thoiGianVao.toLocal())}';
+              final lyDo = yeuCau.lyDo.trim().isNotEmpty
+                  ? yeuCau.lyDo.trim()
+                  : 'Ra ngoài';
 
               return BaseInfoCard(
-                title: yeuCau.lyDo,
+                title: lyDo,
+                titleMaxLines: 1,
                 badge: Icon(icon, size: 20, color: color),
-                highlightText:
-                    '${DateFormat('HH:mm').format(yeuCau.thoiGianRa.toLocal())} - ${DateFormat('HH:mm').format(yeuCau.thoiGianVao.toLocal())}',
-                subInfoWidget: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(25),
-                    borderRadius: BorderRadius.circular(
-                      ColorConstants.defaultBorderRadius,
-                    ),
-                  ),
-                  child: Text(
-                    yeuCau.trangThai.moTa,
-                    style: TextStyle(
-                      fontSize: TextConstants.fontSizeApp,
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                detailText: '$timeLabel · ${yeuCau.trangThai.moTa}',
+                detailMaxLines: 1,
+                margin: const EdgeInsets.only(bottom: 12),
               );
             }).toList(),
           );

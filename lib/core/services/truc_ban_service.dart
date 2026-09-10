@@ -151,7 +151,8 @@ class TrucBanService {
   ///
   /// Gọi API: POST /api/smartgate/ra-ngoai/dang-ky
   /// Body: { thoiGianRa, thoiGianVao, lyDo }
-  Future<bool> dangKyRaNgoai(YeuCauRaNgoai yeuCau) async {
+  /// Trả về `id` yêu cầu nếu API có trả trong `data`.
+  Future<String?> dangKyRaNgoai(YeuCauRaNgoai yeuCau) async {
     try {
       final response = await _apiClient.post(
         '/api/smartgate/ra-ngoai/dang-ky',
@@ -168,7 +169,12 @@ class TrucBanService {
       }
 
       debugLog('✅ Đăng ký ra ngoài thành công: ${responseData['data']}');
-      return true;
+      final data = responseData['data'];
+      if (data is Map) {
+        final id = data['id']?.toString();
+        if (id != null && id.isNotEmpty) return id;
+      }
+      return null;
     } catch (e) {
       debugLog('❌ Lỗi đăng ký ra ngoài: $e');
       rethrow;
@@ -277,13 +283,13 @@ class TrucBanService {
   /// Response: { success, data: [{ id, lyDo, batDau, ketThuc, trangThai, hoTen, donVi }] }
   Future<List<YeuCauRaNgoai>> danhSachYeuCauRaNgoai({
     required String ngay,
-    String? trangThai,
+    required String trangThai,
   }) async {
     try {
-      final queryParams = <String, dynamic>{'ngay': ngay};
-      if (trangThai != null) {
-        queryParams['trangThai'] = trangThai;
-      }
+      final queryParams = <String, dynamic>{
+        'ngay': ngay,
+        'trangThai': trangThai,
+      };
 
       final response = await _apiClient.get(
         '/api/smartgate/ra-ngoai/danh-sach-yeu-cau',
